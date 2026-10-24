@@ -1,5 +1,8 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.Maui.Authentication;
 using Phloem.Services.Api;
+using Phloem.Settings;
 using Phloem.Services.Api.Contracts;
 using Phloem.Services.Api.Contracts.Commands;
 using Phloem.Services.Api.Contracts.Dtos;
@@ -16,8 +19,12 @@ public sealed class AuthService(
     TokenStore tokens,
     AccountService account,
     SessionService session,
+    IOptions<ApiSettings> apiSettings,
     ILogger<AuthService> logger)
 {
+    /// <summary>No field problems (errors made here, not by the API).</summary>
+    private static readonly IReadOnlyDictionary<string, string[]> NoFieldErrors = new Dictionary<string, string[]>();
+
     // ───────────────────────────── 1. Sign in ─────────────────────────────
 
     /// <summary>Email + password.</summary>
@@ -56,6 +63,76 @@ public sealed class AuthService(
     {
         var result = await api.PostAsync<AuthTokensDto>("api/auth/register", command);
         return result.IsFailure ? result.Error! : await SignInAsync(result.Value!, remember: true);
+    }
+
+    // ───────────────────────────── 1b. Continue with Google ─────────────────────────────
+
+    /// <summary>Asks the API whether "Continue with Google" is switched on (its Google keys are set).</summary>
+    /// <param name="ct">Cancellation.</param>
+    /// <returns>True when the button should show; false when Google is off or the API can't be reached.</returns>
+    public async Task<bool> IsGoogleAvailableAsync(CancellationToken ct = default)
+    {
+        var providers = await api.GetAsync<ExternalProvidersDto>("api/auth/external/providers", ct);
+        return providers.IsSuccess && providers.Value!.Google;
+    }
+
+    /// <summary>
+    /// "Continue with Google": opens Google's page in the phone's secure sign-in sheet, then swaps the one-time code
+    /// the API sends back for a session.
+    /// </summary>
+    /// <param name="country">The country picked in the app (flag at the top); used only if a NEW account is
+    /// created.</param>
+    /// <param name="remember">Stay signed in after the app closes.</param>
+    /// <returns>
+    /// The API's answer, exactly like <see cref="LoginAsync"/>: when <see cref="AuthTokensDto.RequiresTwoFactor"/> is
+    /// true, ask for the code and call <see cref="CompleteTwoFactorAsync"/>. A closed sheet gives the error code
+    /// <see cref="ExternalSignIn.CancelledCode"/>.
+    /// </returns>
+    /// <remarks>Google answers the API, never the app: the app only ever sees the one-time code, then the API's own
+    /// tokens, the same as after a password login.</remarks>
+    public async Task<ApiResult<AuthTokensDto>> SignInWithGoogleAsync(Country country, bool remember)
+    {
+        // 1. Google's page, through the API (which keeps Google's secret)
+        var start = new Uri(apiSettings.Value.ResolveBaseAddress(), $"api/auth/external/google?country={country}");
+
+        WebAuthenticatorResult sheet;
+        try
+        {
+            sheet = await WebAuthenticator.Default.AuthenticateAsync(new WebAuthenticatorOptions
+            {
+                Url = start,
+                CallbackUrl = ExternalSignIn.CallbackUri
+            });
+        }
+        catch (OperationCanceledException)   // the person closed the sheet (TaskCanceledException included)
+        {
+            return new ApiError(0, ExternalSignIn.CancelledCode, "Sign-in cancelled.", NoFieldErrors);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "The Google sign-in sheet couldn't be opened.");
+            return ApiError.Unexpected(0);
+        }
+
+        // 2. The API said no (e.g. Google hasn't confirmed the email): its code and message come in the link
+        if (sheet.Properties.TryGetValue(ExternalSignIn.ErrorKey, out var errorCode))
+        {
+            var message = sheet.Properties.GetValueOrDefault(ExternalSignIn.MessageKey);
+            return new ApiError(0, errorCode,
+                                string.IsNullOrWhiteSpace(message) ? "Signing in with Google didn't finish. Please try again." : message,
+                                NoFieldErrors);
+        }
+
+        if (!sheet.Properties.TryGetValue(ExternalSignIn.CodeKey, out var code) || string.IsNullOrWhiteSpace(code))
+            return ApiError.Unexpected(0);
+
+        // 3. Swap the one-time code for the API's own tokens (suspension and 2FA are checked here)
+        var exchanged = await api.PostAsync<AuthTokensDto>("api/auth/external/exchange",
+                                                           new ExchangeLoginCodeCommand(code));
+        if (exchanged.IsFailure || exchanged.Value!.RequiresTwoFactor) return exchanged;
+
+        var signedIn = await SignInAsync(exchanged.Value, remember);
+        return signedIn.IsSuccess ? exchanged : signedIn.Error!;
     }
 
     // ───────────────────────────── 2. Session ─────────────────────────────

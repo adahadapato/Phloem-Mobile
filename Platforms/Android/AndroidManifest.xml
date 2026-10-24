@@ -8,5 +8,9 @@
     <intent>
       <action android:name="android.media.action.IMAGE_CAPTURE" />
     </intent>
+    <!-- "Continue with Google": lets the app open Google's page in Chrome Custom Tabs (Android 11+) -->
+    <intent>
+      <action android:name="android.support.customtabs.action.CustomTabsService" />
+    </intent>
   </queries>
 </manifest>

@@ -4,10 +4,12 @@ namespace Phloem.Views;
 
 public partial class LoginPage : ContentPage
 {
+    readonly LoginViewModel _vm;
+
     public LoginPage(LoginViewModel vm)
     {
         InitializeComponent();
-        BindingContext = vm;
+        BindingContext = _vm = vm;
     }
 
     protected override async void OnAppearing()
@@ -27,6 +29,9 @@ public partial class LoginPage : ContentPage
         // Flag of the country picked on Home
         var cart = services?.GetService<Phloem.Services.CartService>();
         FlagLabel.Text = cart?.SelectedCountry?.FlagEmoji ?? "🌍";
+
+        // "Continue with Google" only shows when the API has it switched on
+        await _vm.LoadSignInOptionsAsync();
     }
 
     // ☰ opens the side menu

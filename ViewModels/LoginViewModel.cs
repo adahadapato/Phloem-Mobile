@@ -11,10 +11,13 @@ namespace Phloem.ViewModels;
 /// <para>Signs in through the Phloem API (<see cref="AuthService"/>). When the account has two-step verification on,
 /// the 6-digit code (or a recovery code) is asked for in a pop-up, then sign-in finishes.</para>
 /// <para>"Remember me" keeps the user signed in after the app is closed.</para>
+/// <para>"Continue with Google" is an extra way in (shown only when the API has Google switched on); email and
+/// password work exactly as before. The same two-step pop-up is used for both.</para>
 /// </remarks>
 public partial class LoginViewModel : ObservableObject
 {
     private readonly AuthService _auth;
+    private readonly CartService _cart;
 
     /// <summary>
     /// property for the user's email address, which is observable and can be bound to the UI.
@@ -47,12 +50,20 @@ public partial class LoginViewModel : ObservableObject
     public partial bool IsError { get; set; }
 
     /// <summary>
+    /// true when "Continue with Google" works (the API has its Google keys); the button is hidden otherwise.
+    /// </summary>
+    [ObservableProperty]
+    public partial bool IsGoogleAvailable { get; set; }
+
+    /// <summary>
     /// creates a new instance of the LoginViewModel class with the service that signs in through the API.
     /// </summary>
     /// <param name="auth">Signs in and out through the Phloem API.</param>
-    public LoginViewModel(AuthService auth)
+    /// <param name="cart">Holds the country picked on Home (used if Google creates a new account).</param>
+    public LoginViewModel(AuthService auth, CartService cart)
     {
         _auth = auth;
+        _cart = cart;
     }
 
     /// <summary>
@@ -79,23 +90,7 @@ public partial class LoginViewModel : ObservableObject
         // Two-step verification: ask for the code, then finish signing in
         if (login.Value!.RequiresTwoFactor)
         {
-            var code = await Shell.Current.DisplayPromptAsync(
-                "Two-step verification",
-                "Enter the 6-digit code from your authenticator app, or one of your recovery codes.",
-                accept: "Verify", cancel: "Cancel", placeholder: "123456", maxLength: 20);
-
-            if (string.IsNullOrWhiteSpace(code))
-            {
-                ShowError("Sign-in cancelled.");
-                return;
-            }
-
-            // A 6-digit number is an authenticator code; anything else is a recovery code
-            var trimmed = code.Trim();
-            var isRecoveryCode = !(trimmed.Length == 6 && trimmed.All(char.IsDigit));
-
-            var verified = await _auth.CompleteTwoFactorAsync(login.Value.TwoFactorChallengeToken!, trimmed,
-                                                              isRecoveryCode, RememberMe);
+            var verified = await TwoFactorPrompt.CompleteAsync(_auth, login.Value.TwoFactorChallengeToken!, RememberMe);
             if (verified.IsFailure)
             {
                 ShowError(verified.Error!.DisplayMessage);
@@ -103,9 +98,49 @@ public partial class LoginViewModel : ObservableObject
             }
         }
 
+        await FinishSignInAsync();
+    }
+
+    /// <summary>
+    /// Checks whether "Continue with Google" works, so the button only shows when it will (called when the page
+    /// appears). Stays hidden while the API has no Google keys, or can't be reached.
+    /// </summary>
+    public async Task LoadSignInOptionsAsync() => IsGoogleAvailable = await _auth.IsGoogleAvailableAsync();
+
+    /// <summary>
+    /// command for "Continue with Google": Google's page in the secure sign-in sheet, then the two-step code if the
+    /// account has it on. The country (flag at the top) is only used if this creates a NEW account.
+    /// </summary>
+    [RelayCommand]
+    private async Task ContinueWithGoogle()
+    {
+        ShowInfo("Opening Google…");
+        var login = await _auth.SignInWithGoogleAsync(_cart.SelectedCountry.ApiCountry, RememberMe);
+        if (login.IsFailure)
+        {
+            ShowError(login.Error!.DisplayMessage);
+            return;
+        }
+
+        if (login.Value!.RequiresTwoFactor)
+        {
+            var verified = await TwoFactorPrompt.CompleteAsync(_auth, login.Value.TwoFactorChallengeToken!, RememberMe);
+            if (verified.IsFailure)
+            {
+                ShowError(verified.Error!.DisplayMessage);
+                return;
+            }
+        }
+
+        await FinishSignInAsync();
+    }
+
+    /// <summary>Signed in (by password or Google): back to Checkout if that's where they were heading, otherwise
+    /// close Log in and go Home.</summary>
+    private async Task FinishSignInAsync()
+    {
         Password = string.Empty;
         ShowInfo("Welcome back!");
-        // Back to Checkout if that's where they were heading; otherwise close Log in and go Home
         if (await AppNav.ResumeAfterLoginAsync()) return;
         await Shell.Current.Navigation.PopToRootAsync(false);
         await Shell.Current.GoToAsync("//home");

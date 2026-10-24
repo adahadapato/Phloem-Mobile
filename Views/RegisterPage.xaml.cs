@@ -12,12 +12,14 @@ public partial class RegisterPage : ContentPage
         BindingContext = _vm = vm;
     }
 
-    // Show the flag of the country picked on Home
-    protected override void OnAppearing()
+    // Show the flag of the country picked on Home, and "Continue with Google" when the API has it switched on
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
         var cart = IPlatformApplication.Current?.Services.GetService<Phloem.Services.CartService>();
         FlagLabel.Text = cart?.SelectedCountry?.FlagEmoji ?? "🌍";
+
+        await _vm.LoadSignInOptionsAsync();
     }
 
     // ☰ opens the side menu

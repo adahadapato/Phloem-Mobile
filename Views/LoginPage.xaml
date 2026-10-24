@@ -174,6 +174,24 @@
                             <Button Text="Log in" Command="{Binding LoginCommand}"
                                     BackgroundColor="{StaticResource BrandDark}" TextColor="White"
                                     FontAttributes="Bold" FontSize="16" CornerRadius="12" HeightRequest="52" />
+
+                            <!-- Or: Continue with Google (only when the API has Google switched on) -->
+                            <VerticalStackLayout Spacing="16" IsVisible="{Binding IsGoogleAvailable}">
+                                <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="10">
+                                    <BoxView HeightRequest="1" Color="{StaticResource BrandBorder}" VerticalOptions="Center" />
+                                    <Label Grid.Column="1" Text="or" FontSize="13"
+                                           TextColor="{StaticResource BrandTextMuted}" VerticalOptions="Center" />
+                                    <BoxView Grid.Column="2" HeightRequest="1" Color="{StaticResource BrandBorder}"
+                                             VerticalOptions="Center" />
+                                </Grid>
+                                <!-- Google's rules: white button, their official "G" logo, "Continue with Google".
+                                     Add the logo from Google's branding kit as Resources/Images/google_g.png, then
+                                     add ImageSource="google_g.png" ContentLayout="Left,10" to this button. -->
+                                <Button Text="Continue with Google" Command="{Binding ContinueWithGoogleCommand}"
+                                        BackgroundColor="White" TextColor="#1F1F1F"
+                                        BorderColor="#747775" BorderWidth="1"
+                                        FontAttributes="Bold" FontSize="15" CornerRadius="12" HeightRequest="52" />
+                            </VerticalStackLayout>
                         </VerticalStackLayout>
                     </Border>
 
