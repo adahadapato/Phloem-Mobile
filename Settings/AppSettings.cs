@@ -30,7 +30,7 @@ public static class AppSettings
         /// <summary>The whole section.</summary>
         public const string Section = "Api";
 
-        /// <summary>The API's address, without a trailing slash (e.g. "https://api.phloem.app").</summary>
+        /// <summary>The API's address, without a trailing slash (e.g. "https://phloemapi.phloemmarket.app").</summary>
         public const string BaseUrl = "Api:BaseUrl";
 
         /// <summary>
