@@ -141,8 +141,23 @@
                                   WidthRequest="22" HeightRequest="22" VerticalOptions="Start" />
                             <VerticalStackLayout Grid.Column="1" Spacing="2">
                                 <Label Text="Deliver to" Style="{StaticResource SmallMuted}" />
-                                <Label Text="{Binding AddressText}" FontSize="14" FontAttributes="Bold"
+                                <Label Text="{Binding RecipientText}" FontSize="15" FontAttributes="Bold"
+                                       TextColor="{StaticResource BrandTextDark}" />
+                                <Label Text="{Binding AddressText}" FontSize="14"
                                        TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+                                <!-- Tap to call -->
+                                <Label FontSize="14" FontAttributes="Bold" TextColor="{StaticResource BrandGreen}"
+                                       IsVisible="{Binding HasPhone}" Margin="0,2,0,0">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="📞  " />
+                                            <Span Text="{Binding PhoneText}" TextDecorations="Underline" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding CallCommand}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
                             </VerticalStackLayout>
                         </Grid>
                     </VerticalStackLayout>

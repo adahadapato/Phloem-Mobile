@@ -25,4 +25,6 @@ public sealed record OrderDetailsDto(
     bool NeedsRefund,
     bool ViewedBySeller,
     bool DeclinedByShop,
-    string? DeclineReason);
+    string? DeclineReason,
+    string? DeliveryRecipientName = null,
+    string? DeliveryPhone = null);

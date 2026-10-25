@@ -95,7 +95,9 @@ public class SessionService
             Label = a.Label,
             FullAddress = a.FullAddress,
             Country = CountryOption.NameOf(a.Country),
-            IsDefault = a.IsDefault
+            IsDefault = a.IsDefault,
+            RecipientName = a.RecipientName,
+            PhoneNumber = a.PhoneNumber
         }).ToList()
     };
 }

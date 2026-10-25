@@ -60,7 +60,8 @@ public partial class ShopOrderDetailsViewModel : ObservableObject, IQueryAttribu
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasOrder), nameof(Title), nameof(StatusText), nameof(IsWaiting),
                               nameof(IsPreparing), nameof(IsOutForDelivery), nameof(IsCancelled), nameof(WhenText),
-                              nameof(AddressText), nameof(SubtotalText), nameof(DeliveryFeeText), nameof(TotalText),
+                              nameof(AddressText), nameof(RecipientText), nameof(PhoneText), nameof(HasPhone),
+                              nameof(SubtotalText), nameof(DeliveryFeeText), nameof(TotalText),
                               nameof(ItemCountText), nameof(CancelledText))]
     public partial OrderDetailsDto? Order { get; set; }
 
@@ -109,6 +110,22 @@ public partial class ShopOrderDetailsViewModel : ObservableObject, IQueryAttribu
     public string AddressText => Order is null ? string.Empty
         : string.IsNullOrWhiteSpace(Order.DeliveryLabel) ? Order.DeliveryAddress
         : $"{Order.DeliveryLabel} · {Order.DeliveryAddress}";
+
+    /// <summary>Who receives it: the address's name, else the customer.</summary>
+    public string RecipientText => Order?.DeliveryRecipientName ?? Order?.CustomerName ?? string.Empty;
+
+    /// <summary>The number to call about the delivery; empty when there's none.</summary>
+    public string PhoneText => Order?.DeliveryPhone ?? string.Empty;
+    public bool HasPhone => !string.IsNullOrWhiteSpace(Order?.DeliveryPhone);
+
+    /// <summary>Tap the phone number: opens the phone app with it.</summary>
+    [RelayCommand]
+    private async Task Call()
+    {
+        if (!HasPhone) return;
+        try { await Launcher.Default.OpenAsync(new Uri($"tel:{Order!.DeliveryPhone}")); }
+        catch (Exception) { await Shell.Current.DisplayAlertAsync("Can't call from here", Order!.DeliveryPhone!, "OK"); }
+    }
 
     public string ItemCountText => Order is null ? string.Empty : $"{Order.Lines.Sum(l => l.Quantity)} item(s)";
     public string SubtotalText => Order is null ? string.Empty : $"{Symbol}{Order.Subtotal:N2}";

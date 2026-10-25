@@ -140,10 +140,13 @@
                                             <Border BackgroundColor="{StaticResource BrandMint}" StrokeThickness="0"
                                                     StrokeShape="RoundRectangle 8" Padding="7,1" VerticalOptions="Center"
                                                     IsVisible="{Binding IsDefault}">
-                                                <Label Text="Default" FontSize="10" FontAttributes="Bold"
+                                                <Label Text="Primary" FontSize="10" FontAttributes="Bold"
                                                        TextColor="{StaticResource BrandDark}" />
                                             </Border>
                                         </HorizontalStackLayout>
+                                        <Label Text="{Binding RecipientText}" FontSize="13" FontAttributes="Bold"
+                                               TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap"
+                                               IsVisible="{Binding HasRecipient}" />
                                         <Label Text="{Binding Details}" FontSize="13"
                                                TextColor="{StaticResource BrandTextMuted}" LineBreakMode="WordWrap" />
                                     </VerticalStackLayout>
@@ -229,6 +232,30 @@
                             </HorizontalStackLayout>
                         </VerticalStackLayout>
 
+                        <!-- Who receives it, and who the seller calls (start as mine; e.g. Mum and her number) -->
+                        <VerticalStackLayout Spacing="12" IsVisible="{Binding IsLoggedIn}">
+                            <VerticalStackLayout>
+                                <Label Text="Full name" Style="{StaticResource FieldLabel}" />
+                                <Border Style="{StaticResource FieldBox}" HeightRequest="48">
+                                    <Entry Text="{Binding NewRecipientName}" Placeholder="Who receives the food"
+                                           MaxLength="100" Keyboard="Text" BackgroundColor="Transparent" FontSize="14"
+                                           TextColor="{StaticResource BrandTextDark}"
+                                           PlaceholderColor="{StaticResource BrandTextMuted}" VerticalOptions="Center" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout>
+                                <Label Text="Phone number" Style="{StaticResource FieldLabel}" />
+                                <Border Style="{StaticResource FieldBox}" HeightRequest="48">
+                                    <Entry Text="{Binding NewPhone}" Placeholder="+44 7700 900123" Keyboard="Telephone"
+                                           BackgroundColor="Transparent" FontSize="14"
+                                           TextColor="{StaticResource BrandTextDark}"
+                                           PlaceholderColor="{StaticResource BrandTextMuted}" VerticalOptions="Center" />
+                                </Border>
+                                <Label Text="The seller calls this number about the delivery." FontSize="12"
+                                       TextColor="{StaticResource BrandTextMuted}" Margin="2,4,0,0" />
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+
                         <!-- Address -->
                         <VerticalStackLayout>
                             <Label Text="Address" Style="{StaticResource FieldLabel}" />
@@ -256,7 +283,7 @@
                         <HorizontalStackLayout Spacing="2" Margin="-6,0,0,0" IsVisible="{Binding IsLoggedIn}">
                             <CheckBox IsChecked="{Binding SaveAsDefault}" Color="{StaticResource BrandGreen}"
                                       VerticalOptions="Center" />
-                            <Label Text="Set as my default address" FontSize="13"
+                            <Label Text="Make this my primary address" FontSize="13"
                                    TextColor="{StaticResource BrandTextMuted}" VerticalOptions="Center" />
                         </HorizontalStackLayout>
 

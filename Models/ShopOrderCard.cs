@@ -18,8 +18,16 @@ public sealed class ShopOrderCard
         ? $"Paid {paid.ToLocalTime():HH:mm} · {DeliveryTimeOption.TextOf(Order.DeliveryWindow)}"
         : DeliveryTimeOption.TextOf(Order.DeliveryWindow);
 
-    /// <summary>"Home · 31 Camden High St, London".</summary>
-    public string AddressText => string.IsNullOrWhiteSpace(Order.DeliveryLabel)
-        ? Order.DeliveryAddress
-        : $"{Order.DeliveryLabel} · {Order.DeliveryAddress}";
+    /// <summary>"Home · 31 Camden High St, London", with "For Grace Mensah" first when it's for someone else.</summary>
+    public string AddressText
+    {
+        get
+        {
+            var where = string.IsNullOrWhiteSpace(Order.DeliveryLabel)
+                ? Order.DeliveryAddress
+                : $"{Order.DeliveryLabel} · {Order.DeliveryAddress}";
+            var forSomeoneElse = Order.DeliveryRecipientName is { } name && name != Order.CustomerName;
+            return forSomeoneElse ? $"For {Order.DeliveryRecipientName} · {where}" : where;
+        }
+    }
 }

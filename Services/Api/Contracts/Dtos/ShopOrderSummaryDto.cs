@@ -15,4 +15,6 @@ public sealed record ShopOrderSummaryDto(
     Currency Currency,
     DeliveryWindow DeliveryWindow,
     string DeliveryLabel,
-    string DeliveryAddress);
+    string DeliveryAddress,
+    string? DeliveryRecipientName = null,
+    string? DeliveryPhone = null);

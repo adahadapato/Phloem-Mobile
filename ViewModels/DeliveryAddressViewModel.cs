@@ -12,6 +12,22 @@ public partial class AddressOption : ObservableObject
 {
     public required DeliveryAddress Address { get; init; }
 
+    /// <summary>The account holder (their name and phone apply when the address has none).</summary>
+    public User? Owner { get; init; }
+
+    /// <summary>"For Grace Mensah · +447700900123": who receives it and who the seller calls.</summary>
+    public string RecipientText
+    {
+        get
+        {
+            var name = Address.RecipientName ?? Owner?.FullName;
+            var phone = Address.PhoneNumber ?? (string.IsNullOrWhiteSpace(Owner?.PhoneNumber) ? null : Owner!.PhoneNumber);
+            return string.Join(" · ", new[] { name is null ? null : $"For {name}", phone }.Where(s => !string.IsNullOrWhiteSpace(s)));
+        }
+    }
+
+    public bool HasRecipient => RecipientText.Length > 0;
+
     public string Label => string.IsNullOrWhiteSpace(Address.Label) ? "Address" : Address.Label;
     public string Details => string.IsNullOrWhiteSpace(Address.Country)
         ? Address.FullAddress
@@ -53,6 +69,14 @@ public partial class DeliveryAddressViewModel : ObservableObject
     [ObservableProperty]
     public partial string NewAddress { get; set; } = string.Empty;
 
+    /// <summary>Who receives it; starts as the account holder's name.</summary>
+    [ObservableProperty]
+    public partial string NewRecipientName { get; set; } = string.Empty;
+
+    /// <summary>Who the seller calls; starts as the account holder's phone.</summary>
+    [ObservableProperty]
+    public partial string NewPhone { get; set; } = string.Empty;
+
     [ObservableProperty]
     public partial CountryOption? NewCountry { get; set; }
 
@@ -90,7 +114,7 @@ public partial class DeliveryAddressViewModel : ObservableObject
         if (user is not null)
         {
             foreach (var a in user.Addresses.OrderByDescending(a => a.IsDefault))
-                Addresses.Add(new AddressOption { Address = a, IsSelected = ReferenceEquals(a, current) });
+                Addresses.Add(new AddressOption { Address = a, Owner = user, IsSelected = ReferenceEquals(a, current) });
         }
         else if (current is not null)
         {
@@ -102,6 +126,7 @@ public partial class DeliveryAddressViewModel : ObservableObject
             Addresses[0].IsSelected = true;
 
         NewCountry ??= Countries.FirstOrDefault(c => c.Name == _cart.SelectedCountry?.Name) ?? Countries.FirstOrDefault();
+        ResetRecipient();
         SaveAsDefault = Addresses.Count == 0;
         IsAddingNew = Addresses.Count == 0;   // nothing saved yet → open the form straight away
 
@@ -132,7 +157,16 @@ public partial class DeliveryAddressViewModel : ObservableObject
     {
         IsAddingNew = false;
         NewAddress = string.Empty;
+        ResetRecipient();
         StatusMessage = string.Empty;
+    }
+
+    /// <summary>Name and phone back to the account holder's own.</summary>
+    private void ResetRecipient()
+    {
+        var user = IsLoggedIn ? _session.CurrentUser : null;
+        NewRecipientName = user?.FullName ?? string.Empty;
+        NewPhone = user?.PhoneNumber ?? string.Empty;
     }
 
     /// <summary>
@@ -175,12 +209,27 @@ public partial class DeliveryAddressViewModel : ObservableObject
             return;
         }
 
+        var me = _session.CurrentUser!;
+        if (string.IsNullOrWhiteSpace(NewRecipientName))
+        {
+            IsError = true;
+            StatusMessage = "Please enter the name of the person who will receive the food.";
+            return;
+        }
+
+        // The account holder's own name / phone are saved as "use mine" (null), so they follow profile changes
+        var name = NewRecipientName.Trim();
+        var phone = NewPhone.Trim();
+        string? recipientName = name == me.FullName ? null : name;
+        string? phoneNumber = phone.Length == 0 || phone == me.PhoneNumber ? null : phone;
+
         IsSaving = true;
         try
         {
-            var makeDefault = SaveAsDefault || _session.CurrentUser!.Addresses.Count == 0;
+            var makeDefault = SaveAsDefault || me.Addresses.Count == 0;
             var saved = await _account.AddAddressAsync(
-                new AddAddressCommand(NewLabel, NewAddress.Trim(), country.ApiCountry, makeDefault));
+                new AddAddressCommand(NewLabel, NewAddress.Trim(), country.ApiCountry, makeDefault, recipientName,
+                                      phoneNumber));
             if (saved.IsFailure)
             {
                 IsError = true;
@@ -194,7 +243,7 @@ public partial class DeliveryAddressViewModel : ObservableObject
 
             NewAddress = string.Empty;
             IsError = false;
-            Load();   // rebuild the list with the new address selected
+            Load();   // rebuild the list with the new address selected (and the name / phone reset)
             StatusMessage = "Address saved.";
         }
         finally
