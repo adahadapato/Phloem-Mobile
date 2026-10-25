@@ -27,9 +27,23 @@ public partial class LegalPage : ContentPage
         => await Shell.Current.GoToAsync("..");
 
     /// <summary>
-    /// A link in the text: "/terms" and "/privacy" (with or without #section) open here in the app; a web or
-    /// email link opens in the browser / mail app. The WebView itself never leaves the page.
+    /// A link in the text: "/terms", "/privacy" and "/help" (with or without #section) open here in the app, and so
+    /// do website pages the app also has (My orders, Send food…); anything else opens in the browser / mail app.
+    /// The WebView itself never leaves the page.
     /// </summary>
+    /// <summary>The app's own screen for a website page linked from the Help text (null: open the website).</summary>
+    static string? AppRouteFor(string path) => path switch
+    {
+        "/send-parcel" => "international",
+        "/orders" => "//orders",
+        "/shipments" => "//account/myshipments",
+        "/account" => "//account",
+        "/account/password" => "//account/changepassword",
+        "/sell" => "sellersetup",
+        "/about" => "about",
+        _ => null
+    };
+
     async void OnLinkTapped(object? sender, WebNavigatingEventArgs e)
     {
         // The page's own HTML loads normally; only links the user taps are handled here
@@ -42,10 +56,15 @@ public partial class LegalPage : ContentPage
         var path = uri.AbsolutePath.TrimEnd('/');
         var ours = uri.Host.EndsWith(SimpleMarkdown.SiteHost, StringComparison.OrdinalIgnoreCase);
 
+        var inApp = ours ? AppRouteFor(path.ToLowerInvariant()) : null;
         if (ours && path.Equals("/terms", StringComparison.OrdinalIgnoreCase))
             await AppNav.OpenLegalAsync("Terms", section);
         else if (ours && path.Equals("/privacy", StringComparison.OrdinalIgnoreCase))
             await AppNav.OpenLegalAsync("Privacy", section);
+        else if (ours && path.Equals("/help", StringComparison.OrdinalIgnoreCase))
+            await AppNav.OpenLegalAsync("Help", section);
+        else if (inApp is not null)
+            await Shell.Current.GoToAsync(inApp);
         else
         {
             try { await Launcher.Default.OpenAsync(uri); }

@@ -536,6 +536,27 @@
                         </Grid>
                     </Border>
 
+                    <!-- What can be sent (NEW): the list customers see before booking -->
+                    <Border Style="{StaticResource WhiteCard}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenParcelRulesCommand}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                            <Border WidthRequest="44" HeightRequest="44" StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="{StaticResource BrandMintPale}" VerticalOptions="Center">
+                                <Label Text="🚫" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="What can be sent" FontSize="16" FontAttributes="Bold"
+                                       TextColor="{StaticResource BrandTextDark}" />
+                                <Label Text="Items parcels may not contain, or only with a condition"
+                                       Style="{StaticResource SmallSubtle}" LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="2" Text="›" FontSize="26" TextColor="{StaticResource BrandTextMuted}"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+
                     <!-- All shipments -->
                     <Border Style="{StaticResource WhiteCard}">
                         <Border.GestureRecognizers>

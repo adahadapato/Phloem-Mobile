@@ -1,0 +1,215 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    AdminParcelRulesPage (route "adminparcelrules"): Admin → What can be sent.
+    The list customers see before booking a parcel (Send food to the UK, and the website's Send a parcel).
+    Add an item, tap one to change it, ✕ to remove it, ↑ ↓ to move it. Changes show straight away.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:phloem="clr-namespace:Phloem"
+             xmlns:vm="clr-namespace:Phloem.ViewModels"
+             xmlns:controls="clr-namespace:Phloem.Views.Controls"
+             x:DataType="vm:AdminParcelRulesViewModel"
+             x:Class="Phloem.Views.AdminParcelRulesPage"
+             Shell.NavBarIsVisible="False"
+             Title="What can be sent">
+
+    <ContentPage.Resources>
+        <Style x:Key="WhiteCard" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="StrokeThickness" Value="0" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Shadow">
+                <Setter.Value>
+                    <Shadow Brush="Black" Opacity="0.06" Radius="10" Offset="0,3" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SmallMuted" TargetType="Label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextColor" Value="{StaticResource BrandTextMuted}" />
+        </Style>
+        <Style x:Key="CardTitle" TargetType="Label">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{StaticResource BrandTextMuted}" />
+        </Style>
+        <Style x:Key="FieldBox" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="{StaticResource BrandBorder}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="HeightRequest" Value="46" />
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="Label">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{StaticResource BrandTextDark}" />
+            <Setter Property="Margin" Value="2,0,0,6" />
+        </Style>
+        <Style x:Key="SmallButton" TargetType="Button">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="HeightRequest" Value="32" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="BackgroundColor" Value="{StaticResource BrandMintPale}" />
+            <Setter Property="TextColor" Value="{StaticResource BrandDark}" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- ============ GREEN HEADER (back arrow) ============ -->
+        <Grid Grid.Row="0" BackgroundColor="{StaticResource BrandDark}" HeightRequest="72">
+            <Ellipse Stroke="#1AFFFFFF" StrokeThickness="10" WidthRequest="320" HeightRequest="320"
+                     HorizontalOptions="Start" VerticalOptions="Start" Margin="-60,-30,0,0" InputTransparent="True" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14" Padding="14,0,16,0">
+                <Grid WidthRequest="40" HeightRequest="40" VerticalOptions="Center">
+                    <Path Data="M15,5 L8,12 L15,19" Stroke="White" StrokeThickness="2.6"
+                          StrokeLineCap="Round" StrokeLineJoin="Round" WidthRequest="24" HeightRequest="24"
+                          HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Grid.GestureRecognizers>
+                </Grid>
+                <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                    <HorizontalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{x:Static phloem:AppNav.GoHomeCommand}" />
+                    </HorizontalStackLayout.GestureRecognizers>
+                    <Image Source="header_logo.png" WidthRequest="34" HeightRequest="34" />
+                    <Label Text="Phloem" TextColor="White" FontSize="22" FontAttributes="Bold" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </Grid>
+        </Grid>
+
+        <RefreshView Grid.Row="1" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsLoading}">
+            <ScrollView>
+                <VerticalStackLayout Padding="16,18,16,28" Spacing="14" MaximumWidthRequest="560" HorizontalOptions="Fill">
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Margin="2,0,0,0">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="What can be sent" FontSize="26" FontAttributes="Bold"
+                                   TextColor="{StaticResource BrandTextDark}" />
+                            <Label Text="Items parcels may not contain, or only with a condition. Customers see this list before they book."
+                                   Style="{StaticResource SubtleLabel}" FontSize="13" LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+                        <Button Grid.Column="1" Text="+ Add item" Command="{Binding AddCommand}"
+                                Style="{StaticResource CtaButton}" HeightRequest="40" Padding="14,0"
+                                VerticalOptions="Center" />
+                    </Grid>
+
+                    <controls:StatusBanner Message="{Binding Message}" IsError="{Binding IsError}" />
+
+                    <!-- ============ FORM (new item / change item) ============ -->
+                    <Border Style="{StaticResource WhiteCard}" IsVisible="{Binding IsEditing}">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="{Binding FormTitle}" FontSize="17" FontAttributes="Bold"
+                                   TextColor="{StaticResource BrandTextDark}" />
+
+                            <VerticalStackLayout>
+                                <Label Text="Rule" Style="{StaticResource FieldLabel}" />
+                                <Border Style="{StaticResource FieldBox}">
+                                    <Picker ItemsSource="{Binding Kinds}" SelectedItem="{Binding Kind}"
+                                            ItemDisplayBinding="{Binding Name}" Title="Rule"
+                                            TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout>
+                                <Label Text="Item" Style="{StaticResource FieldLabel}" />
+                                <Border Style="{StaticResource FieldBox}">
+                                    <Entry Text="{Binding Name}" Placeholder="e.g. Fresh or frozen meat and fish" MaxLength="100"
+                                           Keyboard="Text" TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout>
+                                <Label Text="Detail (the condition, or a short note)" Style="{StaticResource FieldLabel}" />
+                                <Border Style="{StaticResource FieldBox}" HeightRequest="80" Padding="8,4">
+                                    <Editor Text="{Binding Detail}" Placeholder="e.g. Sealed bottles, 1 litre or less each" MaxLength="300"
+                                            AutoSize="Disabled" Keyboard="Text" TextColor="{StaticResource BrandTextDark}" />
+                                </Border>
+                                <Label Text="Needed for &quot;Only if…&quot;. Optional for &quot;Not allowed&quot; (e.g. &quot;Including knives&quot;)."
+                                       Style="{StaticResource SmallMuted}" LineBreakMode="WordWrap" Margin="2,6,0,0" />
+                            </VerticalStackLayout>
+
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <Button Text="Cancel" Command="{Binding CancelCommand}" Style="{StaticResource OutlineButton}" />
+                                <Button Grid.Column="1" Text="Save" Command="{Binding SaveCommand}"
+                                        Style="{StaticResource CtaButton}" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- ============ THE LIST (in the order customers see it) ============ -->
+                    <Border Style="{StaticResource WhiteCard}" Padding="6,4">
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Rules}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:AdminParcelRuleRow">
+                                    <VerticalStackLayout>
+                                        <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="2" Padding="10,10">
+                                            <!-- Tap the text to change it -->
+                                            <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                                                <VerticalStackLayout.GestureRecognizers>
+                                                    <TapGestureRecognizer
+                                                        Command="{Binding EditCommand, Source={RelativeSource AncestorType={x:Type vm:AdminParcelRulesViewModel}}}"
+                                                        CommandParameter="{Binding .}" />
+                                                </VerticalStackLayout.GestureRecognizers>
+                                                <Label Text="{Binding KindText}" FontSize="11" FontAttributes="Bold"
+                                                       CharacterSpacing="1" TextColor="{StaticResource BrandDanger}">
+                                                    <Label.Triggers>
+                                                        <DataTrigger TargetType="Label" Binding="{Binding IsRestricted}" Value="True">
+                                                            <Setter Property="TextColor" Value="{StaticResource BrandOrange}" />
+                                                        </DataTrigger>
+                                                    </Label.Triggers>
+                                                </Label>
+                                                <Label Text="{Binding Name}" FontSize="15" FontAttributes="Bold"
+                                                       TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+                                                <Label Text="{Binding Detail}" IsVisible="{Binding HasDetail}"
+                                                       Style="{StaticResource SmallMuted}" LineBreakMode="WordWrap" />
+                                            </VerticalStackLayout>
+                                            <Label Grid.Column="1" Text="↑" FontSize="18" FontAttributes="Bold" Padding="8,4"
+                                                   TextColor="{StaticResource BrandDark}" VerticalOptions="Center"
+                                                   IsVisible="{Binding CanMoveUp}">
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer
+                                                        Command="{Binding MoveUpCommand, Source={RelativeSource AncestorType={x:Type vm:AdminParcelRulesViewModel}}}"
+                                                        CommandParameter="{Binding .}" />
+                                                </Label.GestureRecognizers>
+                                            </Label>
+                                            <Label Grid.Column="2" Text="↓" FontSize="18" FontAttributes="Bold" Padding="8,4"
+                                                   TextColor="{StaticResource BrandDark}" VerticalOptions="Center"
+                                                   IsVisible="{Binding CanMoveDown}">
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer
+                                                        Command="{Binding MoveDownCommand, Source={RelativeSource AncestorType={x:Type vm:AdminParcelRulesViewModel}}}"
+                                                        CommandParameter="{Binding .}" />
+                                                </Label.GestureRecognizers>
+                                            </Label>
+                                            <Label Grid.Column="3" Text="✕" FontSize="16" Padding="8,4"
+                                                   TextColor="{StaticResource BrandDanger}" VerticalOptions="Center">
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer
+                                                        Command="{Binding DeleteCommand, Source={RelativeSource AncestorType={x:Type vm:AdminParcelRulesViewModel}}}"
+                                                        CommandParameter="{Binding .}" />
+                                                </Label.GestureRecognizers>
+                                            </Label>
+                                        </Grid>
+                                        <BoxView HeightRequest="1" Color="{StaticResource BrandBorder}" Margin="10,0">
+                                            <BoxView.Triggers>
+                                                <DataTrigger TargetType="BoxView" Binding="{Binding IsLast}" Value="True">
+                                                    <Setter Property="IsVisible" Value="False" />
+                                                </DataTrigger>
+                                            </BoxView.Triggers>
+                                        </BoxView>
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

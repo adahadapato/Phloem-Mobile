@@ -63,10 +63,13 @@ public static class AppNav
         return true;
     }
 
-    // ── Terms & Privacy (the text comes from the API; see LegalPage) ──
+    // ── Terms, Privacy and Help (the text comes from the API; see LegalPage) ──
 
     /// <summary>Terms &amp; Conditions.</summary>
     public static ICommand OpenTermsCommand { get; } = new Command(async () => await OpenLegalAsync("Terms"));
+
+    /// <summary>Help &amp; support.</summary>
+    public static ICommand OpenHelpCommand { get; } = new Command(async () => await OpenLegalAsync("Help"));
 
     /// <summary>Privacy Policy.</summary>
     public static ICommand OpenPrivacyCommand { get; } = new Command(async () => await OpenLegalAsync("Privacy"));
@@ -81,7 +84,7 @@ public static class AppNav
     public static ICommand OpenBuyerTermsCommand { get; } = new Command(async () => await OpenLegalAsync("Terms", "buyers"));
 
     /// <summary>Opens the Terms or the Privacy Policy, optionally at a section.</summary>
-    /// <param name="type">"Terms" or "Privacy".</param>
+    /// <param name="type">"Terms", "Privacy" or "Help".</param>
     /// <param name="section">An anchor in the text ("sellers", "parcels"…), or null for the top.</param>
     public static async Task OpenLegalAsync(string type, string? section = null)
     {

@@ -32,6 +32,15 @@ public partial class SpeedChoice : ObservableObject
     public partial bool IsSelected { get; set; }
 }
 
+/// <summary>One line of "What we can't carry" (from the API).</summary>
+public sealed class ParcelRuleRow
+{
+    public required ParcelItemRuleDto Rule { get; init; }
+    public string Name => Rule.Name;
+    public string? Detail => Rule.Detail;
+    public bool HasDetail => !string.IsNullOrWhiteSpace(Rule.Detail);
+}
+
 /// <summary>An item category in the item's picker.</summary>
 public sealed class CategoryChoice
 {
@@ -71,13 +80,16 @@ public partial class InternationalDeliveryViewModel : ObservableObject
     private readonly ShipmentService _shipments;
     private readonly SessionService _session;
     private readonly CartService _cart;
+    private readonly ParcelRulesService _rules;
     private CancellationTokenSource? _quoteLoad;
 
-    public InternationalDeliveryViewModel(ShipmentService shipments, SessionService session, CartService cart)
+    public InternationalDeliveryViewModel(ShipmentService shipments, SessionService session, CartService cart,
+                                          ParcelRulesService rules)
     {
         _shipments = shipments;
         _session = session;
         _cart = cart;
+        _rules = rules;
         Items.Add(NewItem());
     }
 
@@ -136,6 +148,20 @@ public partial class InternationalDeliveryViewModel : ObservableObject
     [ObservableProperty]
     public partial bool ConfirmedNoProhibitedItems { get; set; }
 
+    // ---------- What we can't carry (from the API; an admin keeps it up to date) ----------
+
+    public ObservableCollection<ParcelRuleRow> NotAllowedRules { get; } = new();
+    public ObservableCollection<ParcelRuleRow> RestrictedRules { get; } = new();
+    public bool HasNotAllowedRules => NotAllowedRules.Count > 0;
+    public bool HasRestrictedRules => RestrictedRules.Count > 0;
+
+    /// <summary>"We couldn't load the list…" when it can't be loaded and none is kept on the phone.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasRulesMessage))]
+    public partial string RulesMessage { get; set; } = string.Empty;
+
+    public bool HasRulesMessage => RulesMessage.Length > 0;
+
     [ObservableProperty]
     public partial bool AcceptedTerms { get; set; }
 
@@ -186,6 +212,7 @@ public partial class InternationalDeliveryViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(SenderPhone))
             SenderPhone = _session.Profile?.PhoneNumber ?? string.Empty;
 
+        await LoadRulesAsync();
         if (Routes.Count > 0) return;
 
         IsLoading = true;
@@ -210,6 +237,26 @@ public partial class InternationalDeliveryViewModel : ObservableObject
             OnPropertyChanged(nameof(HasRoutes));
             OnPropertyChanged(nameof(HasNoRoutes));
         }
+    }
+
+    /// <summary>Fills "What we can't carry" (each time the page appears, so a changed list shows).</summary>
+    private async Task LoadRulesAsync()
+    {
+        var (rules, _) = await _rules.GetAsync();
+        if (rules is null)
+        {
+            if (NotAllowedRules.Count == 0 && RestrictedRules.Count == 0)
+                RulesMessage = "We couldn't load the list right now. Please check your internet connection.";
+            return;
+        }
+
+        RulesMessage = string.Empty;
+        NotAllowedRules.Clear();
+        RestrictedRules.Clear();
+        foreach (var rule in rules)
+            (rule.Kind == ParcelItemRuleKind.Restricted ? RestrictedRules : NotAllowedRules).Add(new ParcelRuleRow { Rule = rule });
+        OnPropertyChanged(nameof(HasNotAllowedRules));
+        OnPropertyChanged(nameof(HasRestrictedRules));
     }
 
     partial void OnSelectedRouteChanged(RouteChoice? value)
@@ -363,7 +410,7 @@ public partial class InternationalDeliveryViewModel : ObservableObject
 
         if (!ConfirmedNoProhibitedItems || !AcceptedTerms)
         {
-            problem = "Please confirm there are no prohibited items, and accept the shipping terms.";
+            problem = "Please confirm your parcel has none of the items we can't carry, and accept the shipping terms.";
             return null;
         }
 

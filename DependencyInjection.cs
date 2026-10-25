@@ -32,7 +32,8 @@ public static class DependencyInjection
         services.AddSingleton<AuthService>();       // /api/auth
         services.AddSingleton<AccountService>();    // /api/me
         services.AddSingleton<CountryService>();    // /api/countries (fills CountryOption.All)
-        services.AddSingleton<LegalService>();      // /api/legal/{type}: Terms & Privacy (kept on the phone)
+        services.AddSingleton<LegalService>();      // /api/legal/{type}: Terms, Privacy, Help (kept on the phone)
+        services.AddSingleton<ParcelRulesService>(); // /api/parcel-rules: what can be sent (kept on the phone) + admin
         services.AddSingleton<DishService>();       // /api/dishes
         services.AddSingleton<ShopService>();       // /api/shops
         services.AddSingleton<OrderService>();      // /api/orders
@@ -78,6 +79,7 @@ public static class DependencyInjection
         services.AddTransient<ShopOrderDetailsViewModel>();
         services.AddTransient<AdminDishCatalogViewModel>();
         services.AddTransient<LegalViewModel>();
+        services.AddTransient<AdminParcelRulesViewModel>();
 
 
 
@@ -86,6 +88,7 @@ public static class DependencyInjection
         services.AddTransient<StartupPage>();       // first page: loads countries + sign-in, then opens AppShell
         services.AddTransient<AboutPage>();
         services.AddTransient<LegalPage>();
+        services.AddTransient<AdminParcelRulesPage>();
         services.AddTransient<HomePage>();
         services.AddTransient<RegisterPage>();
         services.AddTransient<SellerSetupPage>();

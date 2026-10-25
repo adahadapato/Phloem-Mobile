@@ -360,6 +360,10 @@ public partial class AdminViewModel : ObservableObject
     [RelayCommand]
     private async Task OpenShippingRoutes() => await Shell.Current.GoToAsync("adminroutes");
 
+    /// <summary>Shipments tab → What can be sent (the list customers see before booking).</summary>
+    [RelayCommand]
+    private async Task OpenParcelRules() => await Shell.Current.GoToAsync("adminparcelrules");
+
     /// <summary>Shipments tab → All shipments (receive at hub, next step).</summary>
     [RelayCommand]
     private async Task OpenAllShipments() => await Shell.Current.GoToAsync("adminshipments");

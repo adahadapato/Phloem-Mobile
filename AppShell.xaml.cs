@@ -12,7 +12,7 @@ public partial class AppShell : Shell
         // Pages that open on top of a tab (so the bottom bar stays visible).
         // These names must NOT also be used as a ShellContent Route in AppShell.xaml.
         Routing.RegisterRoute("about", typeof(AboutPage));
-        Routing.RegisterRoute("legal", typeof(LegalPage));    // ?type=Terms|Privacy&section=sellers
+        Routing.RegisterRoute("legal", typeof(LegalPage));    // ?type=Terms|Privacy|Help&section=sellers
         Routing.RegisterRoute("vendors", typeof(VendorsListPage));
         Routing.RegisterRoute("sellersetup", typeof(SellerSetupPage));
         Routing.RegisterRoute("dashboard", typeof(SellerDashboardPage));
@@ -34,6 +34,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute("adminshop", typeof(AdminShopDetailsPage));        // Admin → one shop + documents
         Routing.RegisterRoute("shoporder", typeof(ShopOrderDetailsPage));        // Seller dashboard → one order
         Routing.RegisterRoute("admindishes", typeof(AdminDishCatalogPage));      // Admin → dish names & price ranges
+        Routing.RegisterRoute("adminparcelrules", typeof(AdminParcelRulesPage)); // Admin → What can be sent
 
         // Checkout (was already reached with GoToAsync(nameof(CheckoutPage))).
         Routing.RegisterRoute(nameof(CheckoutPage), typeof(CheckoutPage));

@@ -6,7 +6,7 @@ using Phloem.Services.Api.Contracts.Enums;
 namespace Phloem.ViewModels;
 
 /// <summary>
-/// Terms &amp; Conditions / Privacy Policy page (route "legal?type=Terms&amp;section=sellers"): loads the current
+/// Terms &amp; Conditions / Privacy Policy / Help page (route "legal?type=Terms&amp;section=sellers"): loads the current
 /// version from the API (or the copy kept on the phone) and shows it as a simple HTML page.
 /// </summary>
 public partial class LegalViewModel(LegalService legal) : ObservableObject, IQueryAttributable
@@ -41,7 +41,12 @@ public partial class LegalViewModel(LegalService legal) : ObservableObject, IQue
         if (query.TryGetValue("type", out var t) && Enum.TryParse<LegalDocumentType>(t?.ToString(), true, out var type))
             _type = type;
         _section = query.TryGetValue("section", out var s) ? s?.ToString() : null;
-        Title = _type == LegalDocumentType.Privacy ? "Privacy Policy" : "Terms & Conditions";
+        Title = _type switch
+        {
+            LegalDocumentType.Privacy => "Privacy Policy",
+            LegalDocumentType.Help => "Help & support",
+            _ => "Terms & Conditions"
+        };
     }
 
     /// <summary>Loads the text (the page calls this when it opens).</summary>
@@ -63,7 +68,10 @@ public partial class LegalViewModel(LegalService legal) : ObservableObject, IQue
 
             Title = document.Title;
             IsDraft = document.IsDraft;
-            VersionText = $"Version {document.Version} · in effect from {document.PublishedAt.ToLocalTime():d MMM yyyy}";
+            var date = document.PublishedAt.ToLocalTime().ToString("d MMM yyyy");
+            VersionText = _type == LegalDocumentType.Help
+                ? $"Updated {date}"
+                : $"Version {document.Version} · in effect from {date}";
             // The page says "Draft" itself, so the file's own draft note (a quote at the top) isn't shown twice
             var text = document.IsDraft && document.Content.TrimStart().StartsWith('>')
                 ? string.Join('\n', document.Content.TrimStart().Split('\n').SkipWhile(l => l.StartsWith('>')))
