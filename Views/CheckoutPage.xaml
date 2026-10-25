@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!--
     CheckoutPage: redesigned to match "CheckoutPage.xaml / checkout / Proposed redesign".
     No AppHeaderBar: the green header is built into the page.
@@ -294,6 +294,21 @@
                             Command="{Binding PlaceOrderCommand}"
                             BackgroundColor="{StaticResource BrandDark}" TextColor="White"
                             FontAttributes="Bold" FontSize="16" CornerRadius="12" HeightRequest="52" />
+                    <Label FontSize="12" TextColor="{StaticResource BrandTextMuted}"
+                           HorizontalTextAlignment="Center" Margin="8,0">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="By placing your order you agree to Phloem's " />
+                                <Span Text="Terms for buyers" TextColor="{StaticResource BrandGreen}"
+                                              FontAttributes="Bold" TextDecorations="Underline">
+                                            <Span.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{x:Static phloem:AppNav.OpenBuyerTermsCommand}" />
+                                            </Span.GestureRecognizers>
+                                        </Span>
+                                <Span Text="." />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
 
                 </VerticalStackLayout>
             </ScrollView>

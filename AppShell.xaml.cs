@@ -12,6 +12,7 @@ public partial class AppShell : Shell
         // Pages that open on top of a tab (so the bottom bar stays visible).
         // These names must NOT also be used as a ShellContent Route in AppShell.xaml.
         Routing.RegisterRoute("about", typeof(AboutPage));
+        Routing.RegisterRoute("legal", typeof(LegalPage));    // ?type=Terms|Privacy&section=sellers
         Routing.RegisterRoute("vendors", typeof(VendorsListPage));
         Routing.RegisterRoute("sellersetup", typeof(SellerSetupPage));
         Routing.RegisterRoute("dashboard", typeof(SellerDashboardPage));

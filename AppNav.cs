@@ -62,4 +62,33 @@ public static class AppNav
         await Shell.Current.GoToAsync($"//orders/{nameof(CheckoutPage)}");
         return true;
     }
+
+    // ── Terms & Privacy (the text comes from the API; see LegalPage) ──
+
+    /// <summary>Terms &amp; Conditions.</summary>
+    public static ICommand OpenTermsCommand { get; } = new Command(async () => await OpenLegalAsync("Terms"));
+
+    /// <summary>Privacy Policy.</summary>
+    public static ICommand OpenPrivacyCommand { get; } = new Command(async () => await OpenLegalAsync("Privacy"));
+
+    /// <summary>Terms, at "Selling on Phloem".</summary>
+    public static ICommand OpenSellerTermsCommand { get; } = new Command(async () => await OpenLegalAsync("Terms", "sellers"));
+
+    /// <summary>Terms, at "Sending parcels".</summary>
+    public static ICommand OpenParcelTermsCommand { get; } = new Command(async () => await OpenLegalAsync("Terms", "parcels"));
+
+    /// <summary>Terms, at "Buying food".</summary>
+    public static ICommand OpenBuyerTermsCommand { get; } = new Command(async () => await OpenLegalAsync("Terms", "buyers"));
+
+    /// <summary>Opens the Terms or the Privacy Policy, optionally at a section.</summary>
+    /// <param name="type">"Terms" or "Privacy".</param>
+    /// <param name="section">An anchor in the text ("sellers", "parcels"…), or null for the top.</param>
+    public static async Task OpenLegalAsync(string type, string? section = null)
+    {
+        if (Shell.Current is null) return;
+        Shell.Current.FlyoutIsPresented = false;
+        var route = $"legal?type={type}";
+        if (!string.IsNullOrWhiteSpace(section)) route += $"&section={Uri.EscapeDataString(section)}";
+        await Shell.Current.GoToAsync(route);
+    }
 }

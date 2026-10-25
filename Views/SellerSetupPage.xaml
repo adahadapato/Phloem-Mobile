@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!--
     SellerSetupPage: redesigned to match "SellerSetupPage.xaml / sellersetup / Proposed redesign".
     No AppHeaderBar: the green header is built into the page.
@@ -106,8 +106,20 @@
                                     </FormattedString>
                                 </Label.FormattedText>
                             </Label>
-                            <Label Text="Your store goes live after approval"
-                                   Style="{StaticResource SubtleLabel}" />
+                            <Label Style="{StaticResource SubtleLabel}">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="Your store goes live after approval. By opening a shop you agree to the " />
+                                        <Span Text="Seller terms" TextColor="{StaticResource BrandGreen}"
+                                              FontAttributes="Bold" TextDecorations="Underline">
+                                            <Span.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{x:Static phloem:AppNav.OpenSellerTermsCommand}" />
+                                            </Span.GestureRecognizers>
+                                        </Span>
+                                        <Span Text="." />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
                         </VerticalStackLayout>
                         <Button Grid.Column="1" Text="Log in" Command="{Binding GoToLoginCommand}"
                                 BackgroundColor="{StaticResource BrandDark}" TextColor="White"
@@ -130,7 +142,20 @@
                             </Label.FormattedText>
                         </Label>
                         <Label Text="{Binding LoggedInAsText}" Style="{StaticResource SubtleLabel}" />
-                        <Label Text="Your store goes live after approval" Style="{StaticResource SubtleLabel}" />
+                        <Label Style="{StaticResource SubtleLabel}">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="Your store goes live after approval. By opening a shop you agree to the " />
+                                        <Span Text="Seller terms" TextColor="{StaticResource BrandGreen}"
+                                              FontAttributes="Bold" TextDecorations="Underline">
+                                            <Span.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{x:Static phloem:AppNav.OpenSellerTermsCommand}" />
+                                            </Span.GestureRecognizers>
+                                        </Span>
+                                        <Span Text="." />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
                     </VerticalStackLayout>
                 </Border>
 

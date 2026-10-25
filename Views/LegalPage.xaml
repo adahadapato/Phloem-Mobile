@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    LegalPage (NEW): Terms & Conditions or Privacy Policy (route "legal?type=Terms&section=sellers").
+    The wording comes from the API's database, so it is never built into the app.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:phloem="clr-namespace:Phloem"
+             xmlns:vm="clr-namespace:Phloem.ViewModels"
+             x:DataType="vm:LegalViewModel"
+             x:Class="Phloem.Views.LegalPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource BrandCream}"
+             Title="{Binding Title}">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+
+        <!-- ============ GREEN HEADER (back arrow) ============ -->
+        <Grid Grid.Row="0" BackgroundColor="{StaticResource BrandDark}" HeightRequest="72">
+            <Ellipse Stroke="#1AFFFFFF" StrokeThickness="10"
+                     WidthRequest="320" HeightRequest="320"
+                     HorizontalOptions="Start" VerticalOptions="Start"
+                     Margin="-60,-30,0,0" InputTransparent="True" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14" Padding="14,0,16,0">
+                <Grid WidthRequest="40" HeightRequest="40" VerticalOptions="Center">
+                    <Path Data="M15,5 L8,12 L15,19" Stroke="White" StrokeThickness="2.6"
+                          StrokeLineCap="Round" StrokeLineJoin="Round"
+                          WidthRequest="24" HeightRequest="24"
+                          HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Grid.GestureRecognizers>
+                </Grid>
+                <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                    <HorizontalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{x:Static phloem:AppNav.GoHomeCommand}" />
+                    </HorizontalStackLayout.GestureRecognizers>
+                    <Image Source="header_logo.png" WidthRequest="34" HeightRequest="34" />
+                    <Label Text="Phloem" TextColor="White" FontSize="22" FontAttributes="Bold"
+                           VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </Grid>
+        </Grid>
+
+        <!-- ============ TITLE, VERSION, DRAFT NOTE ============ -->
+        <VerticalStackLayout Grid.Row="1" Padding="18,16,18,4" Spacing="4"
+                             MaximumWidthRequest="720" HorizontalOptions="Fill">
+            <Label Text="{Binding Title}" FontSize="24" FontAttributes="Bold"
+                   TextColor="{StaticResource BrandTextDark}" />
+            <Label Text="{Binding VersionText}" FontSize="13" TextColor="{StaticResource BrandTextMuted}" />
+            <Border IsVisible="{Binding IsDraft}" Margin="0,8,0,0" Padding="12,10"
+                    BackgroundColor="{StaticResource BrandPeach}" StrokeThickness="0" StrokeShape="RoundRectangle 12">
+                <Label FontSize="13" TextColor="{StaticResource BrandTextDark}"
+                       Text="Draft: this is a temporary version while the final wording is prepared. We'll ask you to read the final version when it's ready." />
+            </Border>
+            <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}"
+                               Color="{StaticResource BrandGreen}" Margin="0,16,0,0" />
+            <Label Text="{Binding Message}" FontSize="15" TextColor="{StaticResource BrandTextMuted}"
+                   Margin="0,12,0,0">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding Message}" Value="">
+                        <Setter Property="IsVisible" Value="False" />
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+        </VerticalStackLayout>
+
+        <!-- ============ THE TEXT ============ -->
+        <WebView x:Name="Text" Grid.Row="2" Source="{Binding Page}"
+                 BackgroundColor="{StaticResource BrandCream}"
+                 MaximumWidthRequest="720" HorizontalOptions="Fill"
+                 Navigating="OnLinkTapped" />
+    </Grid>
+</ContentPage>

@@ -332,6 +332,40 @@
                                 </VerticalStackLayout>
                                 <Path Grid.Column="2" Style="{StaticResource Chevron}" />
                             </Grid>
+                            <BoxView HeightRequest="1" Color="{StaticResource BrandBorder}" Margin="64,0,10,0" />
+
+                            <!-- Terms &amp; Conditions (text from the API) -->
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14" Padding="10,12">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{x:Static phloem:AppNav.OpenTermsCommand}" />
+                                </Grid.GestureRecognizers>
+                                <Border Style="{StaticResource RowIcon}">
+                                    <Path Style="{StaticResource IconPath}"
+                                          Data="M6,3 L15,3 L19,7 L19,21 L6,21 Z M15,3 L15,7 L19,7 M9,11 L16,11 M9,14 L16,14 M9,17 L13,17" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="Terms &amp; Conditions" Style="{StaticResource RowTitle}" />
+                                    <Label Text="The rules for buying, selling and sending parcels" Style="{StaticResource RowSub}" />
+                                </VerticalStackLayout>
+                                <Path Grid.Column="2" Style="{StaticResource Chevron}" />
+                            </Grid>
+                            <BoxView HeightRequest="1" Color="{StaticResource BrandBorder}" Margin="64,0,10,0" />
+
+                            <!-- Privacy Policy (text from the API) -->
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14" Padding="10,12">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{x:Static phloem:AppNav.OpenPrivacyCommand}" />
+                                </Grid.GestureRecognizers>
+                                <Border Style="{StaticResource RowIcon}">
+                                    <Path Style="{StaticResource IconPath}"
+                                          Data="M12,3 L20,6 L20,12 C20,16.5 16.5,20 12,21 C7.5,20 4,16.5 4,12 L4,6 Z M9,12 L11,14 L15,10" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="Privacy Policy" Style="{StaticResource RowTitle}" />
+                                    <Label Text="What we keep about you and why" Style="{StaticResource RowSub}" />
+                                </VerticalStackLayout>
+                                <Path Grid.Column="2" Style="{StaticResource Chevron}" />
+                            </Grid>
                         </VerticalStackLayout>
                     </Border>
 

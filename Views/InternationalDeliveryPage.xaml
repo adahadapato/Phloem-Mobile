@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!--
     InternationalDeliveryPage (route "international"): Send Food to UK, booked on the API.
     Its own booking (not part of the basket):
@@ -362,8 +362,21 @@
                         </Grid>
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
                             <CheckBox IsChecked="{Binding AcceptedTerms}" Color="{StaticResource BrandDark}" />
-                            <Label Grid.Column="1" Text="I accept the shipping terms."
-                                   FontSize="13" TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                            <Label Grid.Column="1" FontSize="13" TextColor="{StaticResource BrandTextDark}"
+                                   VerticalOptions="Center" LineBreakMode="WordWrap">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="I accept the " />
+                                        <Span Text="shipping terms" TextColor="{StaticResource BrandGreen}"
+                                              FontAttributes="Bold" TextDecorations="Underline">
+                                            <Span.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{x:Static phloem:AppNav.OpenParcelTermsCommand}" />
+                                            </Span.GestureRecognizers>
+                                        </Span>
+                                        <Span Text="." />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
                         </Grid>
 
                         <controls:StatusBanner Message="{Binding StatusMessage}" IsError="{Binding IsError}" />

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!--
     RegisterPage: redesigned to match "RegisterPage.xaml / register / Proposed redesign".
     No AppHeaderBar: the green header is built into the page.
@@ -229,8 +229,28 @@
                         <HorizontalStackLayout Spacing="4" Margin="-6,0,0,0">
                             <CheckBox IsChecked="{Binding AgreedToTerms}" Color="{StaticResource BrandGreen}"
                                       VerticalOptions="Center" />
-                            <Label Text="I agree to the Terms &amp; Conditions" FontSize="13"
-                                   TextColor="{StaticResource BrandTextMuted}" VerticalOptions="Center" />
+                            <!-- The two names open the texts (from the API) on top of this page -->
+                            <Label FontSize="13" TextColor="{StaticResource BrandTextMuted}" VerticalOptions="Center"
+                                   LineBreakMode="WordWrap">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="I agree to the " />
+                                        <Span Text="Terms &amp; Conditions" TextColor="{StaticResource BrandGreen}"
+                                              FontAttributes="Bold" TextDecorations="Underline">
+                                            <Span.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{x:Static phloem:AppNav.OpenTermsCommand}" />
+                                            </Span.GestureRecognizers>
+                                        </Span>
+                                        <Span Text=" and the " />
+                                        <Span Text="Privacy Policy" TextColor="{StaticResource BrandGreen}"
+                                              FontAttributes="Bold" TextDecorations="Underline">
+                                            <Span.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{x:Static phloem:AppNav.OpenPrivacyCommand}" />
+                                            </Span.GestureRecognizers>
+                                        </Span>
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
                         </HorizontalStackLayout>
                     </VerticalStackLayout>
                 </Border>
@@ -262,9 +282,28 @@
                             BackgroundColor="White" TextColor="#1F1F1F"
                             BorderColor="#747775" BorderWidth="1"
                             FontAttributes="Bold" FontSize="15" CornerRadius="12" HeightRequest="52" />
-                    <Label Text="By continuing with Google you agree to the Terms &amp; Conditions."
-                           FontSize="12" TextColor="{StaticResource BrandTextMuted}"
-                           HorizontalOptions="Center" HorizontalTextAlignment="Center" />
+                    <Label FontSize="12" TextColor="{StaticResource BrandTextMuted}"
+                           HorizontalOptions="Center" HorizontalTextAlignment="Center">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="By continuing with Google you agree to the " />
+                                <Span Text="Terms &amp; Conditions" TextColor="{StaticResource BrandGreen}"
+                                      FontAttributes="Bold" TextDecorations="Underline">
+                                    <Span.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{x:Static phloem:AppNav.OpenTermsCommand}" />
+                                    </Span.GestureRecognizers>
+                                </Span>
+                                <Span Text=" and the " />
+                                <Span Text="Privacy Policy" TextColor="{StaticResource BrandGreen}"
+                                      FontAttributes="Bold" TextDecorations="Underline">
+                                    <Span.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{x:Static phloem:AppNav.OpenPrivacyCommand}" />
+                                    </Span.GestureRecognizers>
+                                </Span>
+                                <Span Text="." />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
                 </VerticalStackLayout>
 
                 <controls:StatusBanner Message="{Binding StatusMessage}" IsError="{Binding IsError}" />
