@@ -1,3 +1,4 @@
+using Phloem.Services.Api.Contracts;
 using Phloem.Services.Api.Contracts.Dtos;
 using Phloem.Services.Api.Contracts.Enums;
 
@@ -54,11 +55,15 @@ public sealed class AdminUserCard
     public bool HasPhoto => !string.IsNullOrWhiteSpace(PhotoUrl);
     public bool HasNoPhoto => !HasPhoto;
 
-    public string FullName => User.FullName;
+    public string FullName => User.IsYou ? $"{User.FullName} (you)" : User.FullName;
+    public bool IsYou => User.IsYou;
     public string Email => User.Email;
     public string PhoneText => User.PhoneNumber ?? string.Empty;
     public bool HasPhone => !string.IsNullOrWhiteSpace(User.PhoneNumber);
-    public string RolesText => string.Join(" · ", User.Roles.OrderBy(r => r));
+    public string RolesText => string.Join(" · ", User.Roles.OrderBy(r => r).Select(Roles.DisplayName));
+
+    /// <summary>True when they have this role (any letter case).</summary>
+    public bool Has(string role) => User.Roles.Contains(role, StringComparer.OrdinalIgnoreCase);
     public string DetailsText =>
         $"{ShipmentText.CountryName(User.Country)}  ·  Joined {User.MemberSince.ToLocalTime():d MMM yyyy}";
     public string? ShopText => User.ShopName is null ? null : $"Shop: {User.ShopName}";

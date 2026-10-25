@@ -103,4 +103,13 @@ public sealed class AdminService(ApiClient api)
     /// <summary>Lifts a suspension.</summary>
     public Task<ApiResult> ReinstateAsync(Guid userId, CancellationToken ct = default) =>
         api.PostAsync($"{Users}/{userId}/reinstate", null, ct);
+
+    /// <summary>Gives someone a role (one of <see cref="Roles.Assignable"/>).</summary>
+    public Task<ApiResult> GrantRoleAsync(Guid userId, string role, CancellationToken ct = default) =>
+        api.PutAsync($"{Users}/{userId}/roles/{Uri.EscapeDataString(role)}", null, ct);
+
+    /// <summary>Takes a role away (they're signed out everywhere). The API refuses your own Admin role and the last
+    /// admin's.</summary>
+    public Task<ApiResult> RemoveRoleAsync(Guid userId, string role, CancellationToken ct = default) =>
+        api.DeleteAsync($"{Users}/{userId}/roles/{Uri.EscapeDataString(role)}", ct);
 }

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Phloem.Models;
 using Phloem.Services;
 using Phloem.Services.Api;
+using Phloem.Services.Api.Contracts;
 using Phloem.Services.Api.Contracts.Dtos;
 using Phloem.Services.Api.Contracts.Enums;
 using Phloem.Settings;
@@ -353,6 +354,55 @@ public partial class AdminViewModel : ObservableObject
 
         await DoAsync(() => _admin.ReinstateAsync(card.User.Id), $"{card.FullName} can sign in again.");
     }
+
+    /// <summary>
+    /// Roles: lists the roles an admin can give (✓ = they have it); tapping one gives it or takes it away after a
+    /// "Sure?". Your own Admin role can't be taken away (another admin must do it); Seller follows the person's shop.
+    /// </summary>
+    [RelayCommand]
+    private async Task ManageRoles(AdminUserCard card)
+    {
+        var name = card.User.FullName;
+        var options = Roles.Assignable.ToDictionary(
+            role => (card.Has(role) ? "✓ " : "") + Roles.DisplayName(role) + (card.IsYou && role == Roles.Admin ? " (you)" : ""),
+            role => role);
+        var picked = await Shell.Current.DisplayActionSheetAsync(
+            $"Roles for {name}\n✓ = has it. Tap one to give it or take it away. Seller follows their shop.",
+            "Close", null, options.Keys.ToArray());
+        if (picked is null || !options.TryGetValue(picked, out var role)) return;
+
+        var display = Roles.DisplayName(role);
+        if (card.Has(role))
+        {
+            if (card.IsYou && role == Roles.Admin)
+            {
+                await Shell.Current.DisplayAlertAsync("This is your Admin role",
+                    "You can't remove your own Admin role, so you can't lock yourself out. Ask another admin to do it.",
+                    "OK");
+                return;
+            }
+
+            var remove = await Shell.Current.DisplayAlertAsync($"Take {display} from {name}?",
+                $"{Roles.Description(role)}\n\nThey'll be signed out everywhere so the change applies straight away.",
+                "Take it away", "Keep it");
+            if (!remove) return;
+            await DoAsync(() => _admin.RemoveRoleAsync(card.User.Id, role), $"{name} is no longer {Article(display)}.");
+        }
+        else
+        {
+            var give = await Shell.Current.DisplayAlertAsync($"Make {name} {Article(display)}?",
+                $"{Roles.Description(role)}" +
+                (role == Roles.Admin ? "\n\nAdmins must use two-step sign-in. They'll be asked to turn it on." : string.Empty) +
+                "\n\nIt applies the next time they sign in (or within a few minutes).",
+                "Give role", "Cancel");
+            if (!give) return;
+            await DoAsync(() => _admin.GrantRoleAsync(card.User.Id, role), $"{name} is now {Article(display)}.");
+        }
+    }
+
+    /// <summary>"an Admin", "a Support agent".</summary>
+    private static string Article(string roleName) =>
+        ("AEIOU".Contains(char.ToUpperInvariant(roleName[0])) ? "an " : "a ") + roleName;
 
     // ═════════════════════════════ Shipments tab ═════════════════════════════
 

@@ -20,4 +20,29 @@ public static class Roles
 
     /// <summary>Helps customers.</summary>
     public const string SupportAgent = "SupportAgent";
+
+    /// <summary>
+    /// The roles an admin can give or take on Admin → Users (same as the API's <c>Roles.Assignable</c>). Customer is
+    /// everyone's, and Seller follows the person's shop.
+    /// </summary>
+    public static readonly IReadOnlyList<string> Assignable = [Admin, CatalogManager, ShipmentManager, SupportAgent];
+
+    /// <summary>A role as people read it: "CatalogManager" → "Catalog manager".</summary>
+    public static string DisplayName(string role) => role switch
+    {
+        CatalogManager => "Catalog manager",
+        ShipmentManager => "Shipment manager",
+        SupportAgent => "Support agent",
+        _ => role
+    };
+
+    /// <summary>What a role lets someone do, for the "give this role?" question.</summary>
+    public static string Description(string role) => role switch
+    {
+        Admin => "Everything: shops, users, prices, shipping and staff.",
+        CatalogManager => "Reviews dish-name suggestions and edits the dish list.",
+        ShipmentManager => "Receives parcels at the hub and moves them along their journey.",
+        SupportAgent => "Looks up orders and users, and cancels orders for customers.",
+        _ => string.Empty
+    };
 }

@@ -3,7 +3,7 @@
     AdminPage: the admin dashboard, from the API (AdminViewModel).
       Sellers:   waiting for approval (Approve / Reject), dish name suggestions, every shop WITH ITS LOGO
                  (✓ badge, Block / Unblock, Details → documents)
-      Users:     search, "suspended only", Suspend (how long + why) / Lift suspension
+      Users:     search, "suspended only", Roles (give / take Admin and staff roles), Suspend (how long + why) / Lift suspension
       Shipments: Shipping routes and All shipments
     No AppHeaderBar: the green header is built into the page.
 -->
@@ -479,6 +479,11 @@
                                             </Border>
 
                                             <HorizontalStackLayout Spacing="8" Margin="0,6,0,0">
+                                                <!-- Roles: give or take Admin and the staff roles (not your own Admin) -->
+                                                <Button Text="Roles" Style="{StaticResource ChipButton}"
+                                                        BackgroundColor="{StaticResource BrandMintPale}" TextColor="{StaticResource BrandDark}"
+                                                        Command="{Binding ManageRolesCommand, Source={RelativeSource AncestorType={x:Type vm:AdminViewModel}}}"
+                                                        CommandParameter="{Binding .}" />
                                                 <Button Text="Suspend" Style="{StaticResource ChipButton}"
                                                         BackgroundColor="{StaticResource BrandPeach}" TextColor="{StaticResource BrandDanger}"
                                                         IsVisible="{Binding ShowSuspend}"

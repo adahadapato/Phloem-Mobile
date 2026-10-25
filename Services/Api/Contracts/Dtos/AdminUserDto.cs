@@ -3,7 +3,8 @@ using Phloem.Services.Api.Contracts.Enums;
 namespace Phloem.Services.Api.Contracts.Dtos;
 
 /// <summary>
-/// One person on Admin → Users. <see cref="CanBeSuspended"/> is false for admins (and yourself).
+/// One person on Admin → Users. <see cref="CanBeSuspended"/> is false for admins (and yourself); <see cref="IsYou"/>
+/// marks the admin looking at the list (they can't take their own Admin role away).
 /// Same shape as the API's <c>AdminUserDto</c>.
 /// </summary>
 public sealed record AdminUserDto(
@@ -19,4 +20,5 @@ public sealed record AdminUserDto(
     DateTime? SuspendedUntil,
     string? SuspensionReason,
     bool CanBeSuspended,
-    string? PhotoUrl);
+    string? PhotoUrl,
+    bool IsYou = false);
