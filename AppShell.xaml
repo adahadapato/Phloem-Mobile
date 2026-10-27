@@ -4,7 +4,7 @@
 
     Bottom bar (always visible): Home · Explore · Orders (basket + recent orders) · Account
     Every other page opens ON TOP of a tab, so the bottom bar stays on screen:
-        About, Help, Log In, Sign Up, Admin → open under the Account tab (Account stays highlighted)
+        About, Help, Contact us, Log In, Sign Up, Admin → open under the Account tab (Account stays highlighted)
         Vendors, Become a Seller,
         Seller Dashboard           → open under the Home tab
     Those page routes are registered in AppShell.xaml.cs.
@@ -104,11 +104,11 @@
                     </Border>
                 </Grid>
 
-                <!-- Divider line: only shown under "Help & support" (About and Help sit together at the top) -->
+                <!-- Divider line: only shown under "Contact us" (About, Help and Contact sit together at the top) -->
                 <BoxView HeightRequest="1" Color="{StaticResource BrandBorder}"
                      Margin="26,6,26,6" IsVisible="False">
                     <BoxView.Triggers>
-                        <DataTrigger TargetType="BoxView" Binding="{Binding Text}" Value="Help &amp; support">
+                        <DataTrigger TargetType="BoxView" Binding="{Binding Text}" Value="Contact us">
                             <Setter Property="IsVisible" Value="True" />
                         </DataTrigger>
                     </BoxView.Triggers>
@@ -140,6 +140,7 @@
     <!-- Items with x:Name are shown or hidden by who is signed in (see AppShell.xaml.cs, UpdateMenu) -->
     <MenuItem Text="About"            CommandParameter="//account/about"      Clicked="OnMenuItemClicked" />
     <MenuItem Text="Help &amp; support" CommandParameter="//account/legal?type=Help" Clicked="OnMenuItemClicked" />
+    <MenuItem Text="Contact us"       CommandParameter="//account/contact"    Clicked="OnMenuItemClicked" />
     <MenuItem x:Name="AdminMenuItem"         Text="Admin Dashboard"  CommandParameter="//account/admin"      Clicked="OnMenuItemClicked" />
     <MenuItem Text="Send Food to UK"  CommandParameter="//home/international" Clicked="OnMenuItemClicked" />
     <MenuItem Text="Sellers &amp; Vendors" CommandParameter="//home/vendors" Clicked="OnMenuItemClicked" />

@@ -36,11 +36,16 @@ public partial class LegalViewModel(LegalService legal) : ObservableObject, IQue
     public partial bool IsLoading { get; set; }
 
     /// <summary>Reads "type" (Terms / Privacy) and "section" (an anchor such as "sellers").</summary>
+    /// <summary>True on Help &amp; support: shows "Still need help? Contact us".</summary>
+    [ObservableProperty]
+    public partial bool IsHelp { get; set; }
+
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         if (query.TryGetValue("type", out var t) && Enum.TryParse<LegalDocumentType>(t?.ToString(), true, out var type))
             _type = type;
         _section = query.TryGetValue("section", out var s) ? s?.ToString() : null;
+        IsHelp = _type == LegalDocumentType.Help;
         Title = _type switch
         {
             LegalDocumentType.Privacy => "Privacy Policy",

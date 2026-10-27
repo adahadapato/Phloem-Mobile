@@ -77,6 +77,14 @@ public static class AppNav
     /// <summary>Help &amp; support, at "Sending parcels".</summary>
     public static ICommand OpenParcelHelpCommand { get; } = new Command(async () => await OpenLegalAsync("Help", "parcels"));
 
+    /// <summary>Contact us (the form and the other ways to reach the team).</summary>
+    public static ICommand OpenContactCommand { get; } = new Command(async () =>
+    {
+        if (Shell.Current is null) return;
+        Shell.Current.FlyoutIsPresented = false;
+        await Shell.Current.GoToAsync("contact");
+    });
+
     /// <summary>Privacy Policy.</summary>
     public static ICommand OpenPrivacyCommand { get; } = new Command(async () => await OpenLegalAsync("Privacy"));
 

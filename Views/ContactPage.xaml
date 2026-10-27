@@ -1,0 +1,295 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    ContactPage (route "contact"): Contact us, the same as the website's page.
+    The form (name, email, topic tiles, order / tracking number when it helps, message) → POST /api/contact/messages;
+    then the other ways to reach us (from GET /api/contact) and quick answers in Help.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Phloem.ViewModels"
+             xmlns:controls="clr-namespace:Phloem.Views.Controls"
+             xmlns:phloem="clr-namespace:Phloem"
+             x:DataType="vm:ContactViewModel"
+             x:Class="Phloem.Views.ContactPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource BrandCream}"
+             Title="Contact us">
+
+    <ContentPage.Resources>
+        <Style x:Key="FieldLabel" TargetType="Label">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{StaticResource BrandTextDark}" />
+            <Setter Property="Margin" Value="2,0,0,6" />
+        </Style>
+        <Style x:Key="FieldBox" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="{StaticResource BrandBorder}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="HeightRequest" Value="50" />
+        </Style>
+        <Style x:Key="WhiteCard" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="StrokeThickness" Value="0" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 18" />
+            <Setter Property="Padding" Value="16,18" />
+            <Setter Property="Shadow">
+                <Setter.Value>
+                    <Shadow Brush="Black" Opacity="0.06" Radius="12" Offset="0,3" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="WayIcon" TargetType="Border">
+            <Setter Property="WidthRequest" Value="36" />
+            <Setter Property="HeightRequest" Value="36" />
+            <Setter Property="StrokeThickness" Value="0" />
+            <Setter Property="StrokeShape" Value="Ellipse" />
+            <Setter Property="BackgroundColor" Value="{StaticResource BrandMintPale}" />
+            <Setter Property="VerticalOptions" Value="Start" />
+        </Style>
+        <Style x:Key="WayTitle" TargetType="Label">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{StaticResource BrandTextMuted}" />
+            <Setter Property="CharacterSpacing" Value="0.5" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- ============ GREEN HEADER (back arrow) ============ -->
+        <Grid Grid.Row="0" BackgroundColor="{StaticResource BrandDark}" HeightRequest="72">
+            <Ellipse Stroke="#1AFFFFFF" StrokeThickness="10" WidthRequest="320" HeightRequest="320"
+                     HorizontalOptions="Start" VerticalOptions="Start" Margin="-60,-30,0,0" InputTransparent="True" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14" Padding="14,0,16,0">
+                <Grid WidthRequest="40" HeightRequest="40" VerticalOptions="Center">
+                    <Path Data="M15,5 L8,12 L15,19" Stroke="White" StrokeThickness="2.6"
+                          StrokeLineCap="Round" StrokeLineJoin="Round" WidthRequest="24" HeightRequest="24"
+                          HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Grid.GestureRecognizers>
+                </Grid>
+                <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                    <HorizontalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{x:Static phloem:AppNav.GoHomeCommand}" />
+                    </HorizontalStackLayout.GestureRecognizers>
+                    <Image Source="header_logo.png" WidthRequest="34" HeightRequest="34" />
+                    <Label Text="Phloem" TextColor="White" FontSize="22" FontAttributes="Bold" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </Grid>
+        </Grid>
+
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="16,18,16,28" Spacing="14" MaximumWidthRequest="560" HorizontalOptions="Fill">
+
+                <VerticalStackLayout Spacing="4" Margin="2,0,0,0">
+                    <Label Text="Contact us" FontSize="26" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                    <Label Text="{Binding IntroText}" Style="{StaticResource SubtleLabel}" FontSize="13" LineBreakMode="WordWrap" />
+                </VerticalStackLayout>
+
+                <!-- ============ THANK YOU (after sending) ============ -->
+                <Border Style="{StaticResource WhiteCard}" IsVisible="{Binding IsSent}">
+                    <VerticalStackLayout Spacing="12">
+                        <Border WidthRequest="56" HeightRequest="56" StrokeThickness="0" StrokeShape="Ellipse"
+                                BackgroundColor="{StaticResource BrandMintPale}" HorizontalOptions="Start">
+                            <Label Text="✓" FontSize="26" FontAttributes="Bold" TextColor="{StaticResource BrandGreen}"
+                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Label Text="{Binding ThanksTitle}" FontSize="22" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                        <Label Text="{Binding ThanksText}" FontSize="14" TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+                        <Button Text="Send another message" Command="{Binding SendAnotherCommand}" Style="{StaticResource OutlineButton}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ THE FORM ============ -->
+                <Border Style="{StaticResource WhiteCard}" IsVisible="{Binding IsFormVisible}">
+                    <VerticalStackLayout Spacing="16">
+                        <Label Text="Send us a message" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+
+                        <VerticalStackLayout>
+                            <Label Text="Your name" Style="{StaticResource FieldLabel}" />
+                            <Border Style="{StaticResource FieldBox}">
+                                <Entry Text="{Binding Name}" MaxLength="100" Keyboard="Text"
+                                       TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout>
+                            <Label Text="Email" Style="{StaticResource FieldLabel}" />
+                            <Border Style="{StaticResource FieldBox}">
+                                <Entry Text="{Binding Email}" MaxLength="256" Keyboard="Email"
+                                       TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                            </Border>
+                            <Label Text="We'll reply to this address." Style="{StaticResource SubtleLabel}" FontSize="12" Margin="2,4,0,0" />
+                        </VerticalStackLayout>
+
+                        <!-- Topic tiles (two per row) -->
+                        <VerticalStackLayout>
+                            <Label Text="What's it about?" Style="{StaticResource FieldLabel}" />
+                            <FlexLayout Wrap="Wrap" Direction="Row" JustifyContent="SpaceBetween" Margin="-4,0"
+                                        BindableLayout.ItemsSource="{Binding Topics}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ContactTopicOption">
+                                        <ContentView FlexLayout.Basis="50%" Padding="4">
+                                            <Border StrokeShape="RoundRectangle 12" StrokeThickness="1" Padding="12,10"
+                                                    Stroke="{StaticResource BrandBorder}" BackgroundColor="White">
+                                                <Border.Triggers>
+                                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="Stroke" Value="{StaticResource BrandGreen}" />
+                                                        <Setter Property="StrokeThickness" Value="2" />
+                                                        <Setter Property="BackgroundColor" Value="{StaticResource BrandMintPale}" />
+                                                    </DataTrigger>
+                                                </Border.Triggers>
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer
+                                                        Command="{Binding SelectTopicCommand, Source={RelativeSource AncestorType={x:Type vm:ContactViewModel}}}"
+                                                        CommandParameter="{Binding .}" />
+                                                </Border.GestureRecognizers>
+                                                <VerticalStackLayout Spacing="2">
+                                                    <Label Text="{Binding Label}" FontSize="14" FontAttributes="Bold"
+                                                           TextColor="{StaticResource BrandTextDark}" />
+                                                    <Label Text="{Binding Hint}" FontSize="11" LineBreakMode="WordWrap"
+                                                           TextColor="{StaticResource BrandTextMuted}" />
+                                                </VerticalStackLayout>
+                                            </Border>
+                                        </ContentView>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </FlexLayout>
+                        </VerticalStackLayout>
+
+                        <!-- Order / tracking number: only when it helps -->
+                        <VerticalStackLayout IsVisible="{Binding ShowReference}">
+                            <Label Text="{Binding ReferenceLabel}" Style="{StaticResource FieldLabel}" />
+                            <Border Style="{StaticResource FieldBox}">
+                                <Entry Text="{Binding Reference}" MaxLength="40" Placeholder="{Binding ReferencePlaceholder}"
+                                       Keyboard="Text" TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout>
+                            <Label Text="Your message" Style="{StaticResource FieldLabel}" />
+                            <Border Style="{StaticResource FieldBox}" HeightRequest="150" Padding="8,4">
+                                <Editor Text="{Binding Message}" MaxLength="2000" AutoSize="Disabled"
+                                        Keyboard="Chat" TextColor="{StaticResource BrandTextDark}" />
+                            </Border>
+                            <Label Text="{Binding CounterText}" Style="{StaticResource SubtleLabel}" FontSize="12"
+                                   HorizontalOptions="End" Margin="0,4,2,0" />
+                        </VerticalStackLayout>
+
+                        <controls:StatusBanner Message="{Binding StatusMessage}" IsError="{Binding IsError}" />
+
+                        <Button Text="Send message" Command="{Binding SendCommand}" Style="{StaticResource CtaButton}"
+                                HeightRequest="52" />
+                        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                                           Color="{StaticResource BrandDark}" HeightRequest="24" />
+                        <Label Text="We use your details only to answer you." Style="{StaticResource SubtleLabel}"
+                               FontSize="12" HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ OTHER WAYS TO REACH US ============ -->
+                <Border Style="{StaticResource WhiteCard}" IsVisible="{Binding HasDetails}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="Other ways to reach us" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                            <Grid ColumnDefinitions="36,*" ColumnSpacing="12">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding EmailUsCommand}" />
+                                </Grid.GestureRecognizers>
+                                <Border Style="{StaticResource WayIcon}">
+                                    <Label Text="✉" FontSize="15" HorizontalOptions="Center" VerticalOptions="Center" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="EMAIL" Style="{StaticResource WayTitle}" />
+                                    <Label Text="{Binding Details.Email}" FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource BrandGreen}" LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                            </Grid>
+                            <Grid ColumnDefinitions="36,*" ColumnSpacing="12" IsVisible="{Binding HasWhatsApp}">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding WhatsAppUsCommand}" />
+                                </Grid.GestureRecognizers>
+                                <Border Style="{StaticResource WayIcon}">
+                                    <Label Text="💬" FontSize="15" HorizontalOptions="Center" VerticalOptions="Center" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="WHATSAPP" Style="{StaticResource WayTitle}" />
+                                    <Label Text="{Binding Details.WhatsApp}" FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource BrandGreen}" LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                            </Grid>
+                            <Grid ColumnDefinitions="36,*" ColumnSpacing="12" IsVisible="{Binding HasPhone}">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding CallUsCommand}" />
+                                </Grid.GestureRecognizers>
+                                <Border Style="{StaticResource WayIcon}">
+                                    <Label Text="☎" FontSize="15" HorizontalOptions="Center" VerticalOptions="Center" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="PHONE" Style="{StaticResource WayTitle}" />
+                                    <Label Text="{Binding Details.Phone}" FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource BrandGreen}" LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                            </Grid>
+                            <Grid ColumnDefinitions="36,*" ColumnSpacing="12" IsVisible="{Binding HasOpeningHours}">
+                                <Border Style="{StaticResource WayIcon}">
+                                    <Label Text="🕘" FontSize="15" HorizontalOptions="Center" VerticalOptions="Center" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="OPENING HOURS" Style="{StaticResource WayTitle}" />
+                                    <Label Text="{Binding Details.OpeningHours}" FontSize="14"
+                                           TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                            </Grid>
+                            <Grid ColumnDefinitions="36,*" ColumnSpacing="12" IsVisible="{Binding HasAddress}">
+                                <Border Style="{StaticResource WayIcon}">
+                                    <Label Text="📍" FontSize="15" HorizontalOptions="Center" VerticalOptions="Center" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="ADDRESS" Style="{StaticResource WayTitle}" />
+                                    <Label Text="{Binding Details.Address}" FontSize="14"
+                                           TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                            </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ QUICK ANSWERS (Help sections) ============ -->
+                <Border Style="{StaticResource WhiteCard}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Quick answers" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                        <Label Text="Most questions are answered in Help &amp; support." Style="{StaticResource SubtleLabel}" FontSize="13" />
+                            <Label Text="Orders, delivery and refunds ›" Style="{StaticResource LinkLabel}" FontSize="14"
+                                   TextColor="{StaticResource BrandGreen}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding OpenHelpCommand}" CommandParameter="orders" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                            <Label Text="Sending parcels ›" Style="{StaticResource LinkLabel}" FontSize="14"
+                                   TextColor="{StaticResource BrandGreen}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding OpenHelpCommand}" CommandParameter="parcels" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                            <Label Text="Selling on Phloem ›" Style="{StaticResource LinkLabel}" FontSize="14"
+                                   TextColor="{StaticResource BrandGreen}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding OpenHelpCommand}" CommandParameter="selling" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                            <Label Text="Your account ›" Style="{StaticResource LinkLabel}" FontSize="14"
+                                   TextColor="{StaticResource BrandGreen}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding OpenHelpCommand}" CommandParameter="account" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

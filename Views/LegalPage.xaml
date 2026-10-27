@@ -13,7 +13,7 @@
              BackgroundColor="{StaticResource BrandCream}"
              Title="{Binding Title}">
 
-    <Grid RowDefinitions="Auto,Auto,*">
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
 
         <!-- ============ GREEN HEADER (back arrow) ============ -->
         <Grid Grid.Row="0" BackgroundColor="{StaticResource BrandDark}" HeightRequest="72">
@@ -70,5 +70,20 @@
                  BackgroundColor="{StaticResource BrandCream}"
                  MaximumWidthRequest="720" HorizontalOptions="Fill"
                  Navigating="OnLinkTapped" />
+
+        <!-- ============ HELP ONLY: STILL NEED HELP? ============ -->
+        <Border Grid.Row="3" IsVisible="{Binding IsHelp}" Margin="16,8,16,16" Padding="16,12"
+                BackgroundColor="{StaticResource BrandMintPale}" StrokeThickness="0" StrokeShape="RoundRectangle 14"
+                MaximumWidthRequest="720" HorizontalOptions="Fill">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                    <Label Text="Still need help?" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                    <Label Text="Send us a message and a person will reply." FontSize="12" TextColor="{StaticResource BrandTextMuted}" />
+                </VerticalStackLayout>
+                <Button Grid.Column="1" Text="Contact us ›" Command="{x:Static phloem:AppNav.OpenContactCommand}"
+                        BackgroundColor="{StaticResource BrandGreen}" TextColor="White" FontAttributes="Bold"
+                        FontSize="14" CornerRadius="20" HeightRequest="40" Padding="16,0" VerticalOptions="Center" />
+            </Grid>
+        </Border>
     </Grid>
 </ContentPage>
