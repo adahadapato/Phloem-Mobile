@@ -16,6 +16,42 @@
              Shell.NavBarIsVisible="False"
              Title="Phloem">
 
+    <ContentPage.Resources>
+        <!-- A dish card in the suggestion rows: photo + rating, name, shop, why it was picked, price and "+" -->
+        <DataTemplate x:Key="SuggestionCard" x:DataType="models:SuggestedDish">
+            <Border Style="{StaticResource DishCard}" WidthRequest="170" Margin="0,0,0,8">
+                <Grid RowDefinitions="110,Auto">
+                    <Image Source="{Binding Dish.ImageUrl}" Aspect="AspectFill" />
+                    <Border Style="{StaticResource RatingBadge}" HorizontalOptions="End" VerticalOptions="Start" Margin="8">
+                        <Label FontSize="11" FontAttributes="Bold" TextColor="White">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="★ " TextColor="{StaticResource BrandStar}" />
+                                    <Span Text="{Binding Dish.Rating, StringFormat='{0:0.0}'}" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                    </Border>
+
+                    <Grid Grid.Row="1" Padding="10,8,10,10" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
+                        <Label Grid.ColumnSpan="2" Text="{Binding Dish.Name}" FontAttributes="Bold" FontSize="13"
+                               TextColor="{StaticResource BrandTextDark}" MaxLines="1" LineBreakMode="TailTruncation" />
+                        <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Dish.VendorName, StringFormat='🌿 {0}'}"
+                               Style="{StaticResource SubtleLabel}" FontSize="10" MaxLines="1" LineBreakMode="TailTruncation" />
+                        <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding Reason}" IsVisible="{Binding HasReason}"
+                               FontSize="10" FontAttributes="Bold" TextColor="{StaticResource BrandGreen}"
+                               MaxLines="2" LineBreakMode="TailTruncation" Margin="0,3,0,0" />
+                        <Label Grid.Row="3" Text="{Binding Dish.PriceText}" Style="{StaticResource PriceLabel}"
+                               VerticalOptions="Center" Margin="0,4,0,0" />
+                        <Button Grid.Row="3" Grid.Column="1" Text="+" Style="{StaticResource CircleIconButton}"
+                                Command="{Binding BindingContext.AddToCartCommand, Source={x:Reference RootPage}}"
+                                CommandParameter="{Binding Dish}" />
+                    </Grid>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </ContentPage.Resources>
+
     <Grid RowDefinitions="*,Auto">
 
         <!--
@@ -161,6 +197,35 @@
                             </Grid>
                         </Grid>
                     </Border>
+
+                    <!-- ============ ORDER AGAIN (signed in, after a first order) ============ -->
+                    <VerticalStackLayout Spacing="10" IsVisible="{Binding HasOrderAgain}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Order again" Style="{StaticResource SectionTitle}" />
+                            <Label Grid.Column="1" Text="My orders ›" Style="{StaticResource LinkLabel}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding GoToMyOrdersCommand}" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </Grid>
+                        <CollectionView ItemsSource="{Binding OrderAgain}" HeightRequest="232"
+                                        ItemTemplate="{StaticResource SuggestionCard}">
+                            <CollectionView.ItemsLayout>
+                                <LinearItemsLayout Orientation="Horizontal" ItemSpacing="12" />
+                            </CollectionView.ItemsLayout>
+                        </CollectionView>
+                    </VerticalStackLayout>
+
+                    <!-- ============ YOU MIGHT LIKE / POPULAR IN … (each card says why) ============ -->
+                    <VerticalStackLayout Spacing="10" IsVisible="{Binding HasForYou}">
+                        <Label Text="{Binding ForYouTitle}" Style="{StaticResource SectionTitle}" />
+                        <CollectionView ItemsSource="{Binding ForYou}" HeightRequest="262"
+                                        ItemTemplate="{StaticResource SuggestionCard}">
+                            <CollectionView.ItemsLayout>
+                                <LinearItemsLayout Orientation="Horizontal" ItemSpacing="12" />
+                            </CollectionView.ItemsLayout>
+                        </CollectionView>
+                    </VerticalStackLayout>
 
                     <!-- ============ CATEGORY CHIPS ============ -->
                     <CollectionView ItemsSource="{Binding Categories}" SelectionMode="Single"

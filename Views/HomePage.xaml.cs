@@ -12,6 +12,13 @@ public partial class HomePage : ContentPage
         BindingContext = _vm = vm;
     }
 
+    // Back on Home (e.g. after ordering): refresh "Order again" / "You might like"
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        _vm.RefreshSuggestions();
+    }
+
     // ☰ opens the side menu
     void OnMenuTapped(object? sender, TappedEventArgs e)
     {

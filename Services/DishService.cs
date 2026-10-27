@@ -64,8 +64,8 @@ public sealed class DishService(ApiClient api, IOptions<ApiSettings> settings)
         CategoryNames.FirstOrDefault(c => string.Equals(c.Value, name, StringComparison.OrdinalIgnoreCase)) is
             { Value: not null } match ? match.Key : null;
 
-    /// <summary>The API's dish card as the app's <see cref="Dish"/>.</summary>
-    private Dish ToDish(DishCardDto d) => new()
+    /// <summary>The API's dish card as the app's <see cref="Dish"/> (also used by <see cref="SuggestionService"/>).</summary>
+    internal Dish ToDish(DishCardDto d) => new()
     {
         Id = d.Id.ToString(),
         Name = d.Name,

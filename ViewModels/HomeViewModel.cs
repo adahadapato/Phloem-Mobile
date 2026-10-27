@@ -20,8 +20,10 @@ public partial class HomeViewModel : ObservableObject
     private readonly ShopService _shops;
     private readonly CartService _cart;
     private readonly SessionService _session;
+    private readonly SuggestionService _suggestions;
     private CancellationTokenSource? _dishesLoad;
     private CancellationTokenSource? _shopsLoad;
+    private CancellationTokenSource? _suggestionsLoad;
 
     /// <summary>
     /// Gets the collection of available countries.
@@ -42,6 +44,24 @@ public partial class HomeViewModel : ObservableObject
     /// gets the collection of top sellers.
     /// </summary>
     public ObservableCollection<Vendor> TopSellers { get; } = new();
+
+    // ---------- Suggestions (same as the website's Home) ----------
+
+    /// <summary>"Order again": dishes I've bought, on sale now here (signed in only).</summary>
+    public ObservableCollection<SuggestedDish> OrderAgain { get; } = new();
+
+    /// <summary>"You might like" (with the reason on each card), or "Popular in Ghana".</summary>
+    public ObservableCollection<SuggestedDish> ForYou { get; } = new();
+
+    [ObservableProperty]
+    public partial bool HasOrderAgain { get; set; }
+
+    [ObservableProperty]
+    public partial bool HasForYou { get; set; }
+
+    /// <summary>"You might like", or "Popular in Ghana" for a new customer or someone signed out.</summary>
+    [ObservableProperty]
+    public partial string ForYouTitle { get; set; } = "You might like";
 
     [ObservableProperty]
     public partial CountryOption SelectedCountry { get; set; }
@@ -70,15 +90,20 @@ public partial class HomeViewModel : ObservableObject
     /// <param name="dishes">Dishes from the API.</param>
     /// <param name="shops">Shops from the API.</param>
     /// <param name="cart">The service that manages the shopping cart.</param>
-    /// <param name="session">The signed-in user (used by Sell Food).</param>
-    public HomeViewModel(DishService dishes, ShopService shops, CartService cart, SessionService session)
+    /// <param name="session">The signed-in user (used by Sell Food and the suggestions).</param>
+    /// <param name="suggestions">"Order again" / "You might like" / "Popular in …".</param>
+    public HomeViewModel(DishService dishes, ShopService shops, CartService cart, SessionService session,
+                         SuggestionService suggestions)
     {
         _dishes = dishes;
         _shops = shops;
         _cart = cart;
         _session = session;
+        _suggestions = suggestions;
         SelectedCountry = _cart.SelectedCountry;
         _cart.Items.CollectionChanged += (_, _) => RefreshCartCount();
+        // Signing in or out changes the rows ("Popular in …" ↔ "Order again" + "You might like")
+        _session.Changed += (_, _) => MainThread.BeginInvokeOnMainThread(RefreshSuggestions);
         RefreshDishes();
         RefreshTopSellers();
         RefreshCartCount();
@@ -91,6 +116,7 @@ public partial class HomeViewModel : ObservableObject
         _cart.SelectedCountry = value;
         RefreshDishes();
         RefreshTopSellers();
+        RefreshSuggestions();
     }
 
     partial void OnSelectedCategoryChanged(string value) => RefreshDishes();
@@ -139,6 +165,58 @@ public partial class HomeViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Reloads the suggestion rows for the chosen country (also each time Home appears, so a new order shows up).
+    /// A row with nothing to show, or that couldn't load, is simply hidden: "Popular Dishes" is always there.
+    /// </summary>
+    public async void RefreshSuggestions()
+    {
+        _suggestionsLoad?.Cancel();
+        var load = _suggestionsLoad = new CancellationTokenSource();
+        try
+        {
+            if (SelectedCountry is null) return;
+            var result = await _suggestions.GetForHomeAsync(SelectedCountry.ApiCountry, load.Token);
+            if (load.IsCancellationRequested) return;
+            if (result.IsFailure)
+            {
+                OrderAgain.Clear();
+                ForYou.Clear();
+            }
+            else
+            {
+                var rows = result.Value!;
+                Replace(OrderAgain, rows.OrderAgain);
+                Replace(ForYou, rows.ForYou);
+                ForYouTitle = rows.IsPersonal ? "You might like" : $"Popular in {SelectedCountry.Name}";
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // The country changed again
+        }
+        catch (Exception)
+        {
+            // Suggestions are extra: hide them rather than show an error
+            OrderAgain.Clear();
+            ForYou.Clear();
+        }
+        finally
+        {
+            if (_suggestionsLoad == load)
+            {
+                HasOrderAgain = OrderAgain.Count > 0;
+                HasForYou = ForYou.Count > 0;
+            }
+        }
+    }
+
+    private static void Replace(ObservableCollection<SuggestedDish> target, IReadOnlyList<SuggestedDish> items)
+    {
+        target.Clear();
+        foreach (var item in items) target.Add(item);
+    }
+
     /// <summary>Reloads "Top Sellers" for the chosen country.</summary>
     private async void RefreshTopSellers()
     {
@@ -179,6 +257,10 @@ public partial class HomeViewModel : ObservableObject
     /// <summary>Buy Food → Browse &amp; Order (Explore tab).</summary>
     [RelayCommand]
     private async Task GoToBuy() => await Shell.Current.GoToAsync("//listing");
+
+    /// <summary>"Order again" → "My orders ›": the Orders tab (basket and recent orders).</summary>
+    [RelayCommand]
+    private async Task GoToMyOrders() => await Shell.Current.GoToAsync("//orders");
 
     [RelayCommand]
     private async Task GoToVendors() => await Shell.Current.GoToAsync("//home/vendors");
