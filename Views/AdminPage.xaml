@@ -271,6 +271,27 @@
                         </Grid>
                     </Border>
 
+                    <!-- ============ PRICING ============ -->
+                    <Border Style="{StaticResource WhiteCard}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenPricingCommand}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                            <Border WidthRequest="44" HeightRequest="44" StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="{StaticResource BrandMintPale}" VerticalOptions="Center">
+                                <Label Text="💷" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Pricing" FontSize="16" FontAttributes="Bold"
+                                       TextColor="{StaticResource BrandTextDark}" />
+                                <Label Text="Commission, shop delivery fees and delivery times in each country"
+                                       Style="{StaticResource SmallSubtle}" LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="2" Text="›" FontSize="26" TextColor="{StaticResource BrandTextMuted}"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+
                     <!-- ============ DISH NAME SUGGESTIONS ============ -->
                     <VerticalStackLayout Spacing="12" Margin="0,10,0,0" IsVisible="{Binding HasDishSuggestions}">
                         <Label Text="Dish name suggestions" Style="{StaticResource SectionTitle}" Margin="2,4,0,0" />

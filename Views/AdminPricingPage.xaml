@@ -1,0 +1,306 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    AdminPricingPage (route "adminpricing"): Admin → Pricing, the same as the website's.
+    One card per country (countries not set up yet come first):
+      Phloem's commission · shop delivery-fee range · delivery times and what each adds.
+    "Change" opens one form at the top of the page.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:phloem="clr-namespace:Phloem"
+             xmlns:vm="clr-namespace:Phloem.ViewModels"
+             xmlns:controls="clr-namespace:Phloem.Views.Controls"
+             x:DataType="vm:AdminPricingViewModel"
+             x:Class="Phloem.Views.AdminPricingPage"
+             Shell.NavBarIsVisible="False"
+             Title="Pricing">
+
+    <ContentPage.Resources>
+        <Style x:Key="WhiteCard" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="StrokeThickness" Value="0" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Shadow">
+                <Setter.Value>
+                    <Shadow Brush="Black" Opacity="0.06" Radius="10" Offset="0,3" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SmallMuted" TargetType="Label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextColor" Value="{StaticResource BrandTextMuted}" />
+        </Style>
+        <Style x:Key="CardTitle" TargetType="Label">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{StaticResource BrandTextMuted}" />
+        </Style>
+        <Style x:Key="FieldBox" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="{StaticResource BrandBorder}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="HeightRequest" Value="46" />
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="Label">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{StaticResource BrandTextDark}" />
+            <Setter Property="Margin" Value="2,0,0,6" />
+        </Style>
+        <Style x:Key="SmallButton" TargetType="Button">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="HeightRequest" Value="32" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="BackgroundColor" Value="{StaticResource BrandMintPale}" />
+            <Setter Property="TextColor" Value="{StaticResource BrandDark}" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- ============ GREEN HEADER (back arrow) ============ -->
+        <Grid Grid.Row="0" BackgroundColor="{StaticResource BrandDark}" HeightRequest="72">
+            <Ellipse Stroke="#1AFFFFFF" StrokeThickness="10" WidthRequest="320" HeightRequest="320"
+                     HorizontalOptions="Start" VerticalOptions="Start" Margin="-60,-30,0,0" InputTransparent="True" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14" Padding="14,0,16,0">
+                <Grid WidthRequest="40" HeightRequest="40" VerticalOptions="Center">
+                    <Path Data="M15,5 L8,12 L15,19" Stroke="White" StrokeThickness="2.6"
+                          StrokeLineCap="Round" StrokeLineJoin="Round" WidthRequest="24" HeightRequest="24"
+                          HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Grid.GestureRecognizers>
+                </Grid>
+                <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                    <HorizontalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{x:Static phloem:AppNav.GoHomeCommand}" />
+                    </HorizontalStackLayout.GestureRecognizers>
+                    <Image Source="header_logo.png" WidthRequest="34" HeightRequest="34" />
+                    <Label Text="Phloem" TextColor="White" FontSize="22" FontAttributes="Bold" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </Grid>
+        </Grid>
+
+        <RefreshView Grid.Row="1" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsLoading}">
+            <ScrollView x:Name="Scroller">
+                <VerticalStackLayout Padding="16,18,16,28" Spacing="14" MaximumWidthRequest="560" HorizontalOptions="Fill">
+
+                    <VerticalStackLayout Spacing="2" Margin="2,0,0,0">
+                        <Label Text="Pricing" FontSize="26" FontAttributes="Bold"
+                               TextColor="{StaticResource BrandTextDark}" />
+                        <Label Text="Phloem's commission, what shops may charge for delivery, and the delivery times in each country."
+                               Style="{StaticResource SubtleLabel}" FontSize="13" LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+
+                    <controls:StatusBanner Message="{Binding Message}" IsError="{Binding IsError}" />
+
+                    <!-- ============ EDIT FORM ============ -->
+                    <Border Style="{StaticResource WhiteCard}" IsVisible="{Binding IsEditing}"
+                            Stroke="{StaticResource BrandMint}" StrokeThickness="1.5">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="{Binding FormTitle}" FontSize="17" FontAttributes="Bold"
+                                   TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <VerticalStackLayout>
+                                    <Label Text="{Binding FirstLabel}" Style="{StaticResource FieldLabel}" />
+                                    <Border Style="{StaticResource FieldBox}">
+                                        <Entry x:Name="FirstEntry" Text="{Binding FirstValue}" Placeholder="{Binding FirstPlaceholder}"
+                                               Keyboard="Numeric" TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                                    </Border>
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="1" IsVisible="{Binding HasSecondField}">
+                                    <Label Text="{Binding SecondLabel}" Style="{StaticResource FieldLabel}" />
+                                    <Border Style="{StaticResource FieldBox}">
+                                        <Entry Text="{Binding SecondValue}" Placeholder="e.g. 15"
+                                               Keyboard="Numeric" TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                                    </Border>
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <Label Text="{Binding FormHint}" Style="{StaticResource SmallMuted}" LineBreakMode="WordWrap" />
+
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <Button Text="Cancel" Command="{Binding CancelCommand}" Style="{StaticResource OutlineButton}" />
+                                <Button Grid.Column="1" Text="Save" Command="{Binding SaveCommand}"
+                                        Style="{StaticResource CtaButton}" />
+                            </Grid>
+                            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                                               Color="{StaticResource BrandDark}" HeightRequest="24" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- ============ ONE CARD PER COUNTRY ============ -->
+                    <VerticalStackLayout Spacing="14" BindableLayout.ItemsSource="{Binding Cards}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:PricingCountryCard">
+                                <Border Style="{StaticResource WhiteCard}">
+                                    <VerticalStackLayout Spacing="12">
+
+                                        <!-- Country · currency · status -->
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                            <VerticalStackLayout Spacing="1">
+                                                <Label Text="{Binding Title}" FontSize="17" FontAttributes="Bold"
+                                                       TextColor="{StaticResource BrandTextDark}" />
+                                                <Label Text="{Binding CurrencyText}" Style="{StaticResource SmallMuted}" />
+                                            </VerticalStackLayout>
+                                            <Border Grid.Column="1" StrokeThickness="0" StrokeShape="RoundRectangle 10"
+                                                    Padding="10,4" VerticalOptions="Start" BackgroundColor="{StaticResource BrandPeach}">
+                                                <Border.Triggers>
+                                                    <DataTrigger TargetType="Border" Binding="{Binding IsReady}" Value="True">
+                                                        <Setter Property="BackgroundColor" Value="{StaticResource BrandMintPale}" />
+                                                    </DataTrigger>
+                                                </Border.Triggers>
+                                                <Label Text="{Binding StatusText}" FontSize="12" FontAttributes="Bold"
+                                                       TextColor="{StaticResource BrandOrange}">
+                                                    <Label.Triggers>
+                                                        <DataTrigger TargetType="Label" Binding="{Binding IsReady}" Value="True">
+                                                            <Setter Property="TextColor" Value="{StaticResource BrandGreen}" />
+                                                        </DataTrigger>
+                                                    </Label.Triggers>
+                                                </Label>
+                                            </Border>
+                                        </Grid>
+
+                                        <BoxView HeightRequest="1" Color="{StaticResource BrandBorder}" />
+
+                                        <!-- Commission -->
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                            <VerticalStackLayout Spacing="2">
+                                                <Label Text="Phloem's commission" FontSize="14" FontAttributes="Bold"
+                                                       TextColor="{StaticResource BrandTextDark}" />
+                                                <Label Text="On the dishes of each delivered order. Delivery fees go to the seller."
+                                                       Style="{StaticResource SmallMuted}" LineBreakMode="WordWrap" />
+                                            </VerticalStackLayout>
+                                            <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="End">
+                                                <Label Text="{Binding CommissionText}" FontSize="15" FontAttributes="Bold"
+                                                       HorizontalOptions="End" TextColor="{StaticResource BrandTextMuted}">
+                                                    <Label.Triggers>
+                                                        <DataTrigger TargetType="Label" Binding="{Binding CommissionIsSet}" Value="True">
+                                                            <Setter Property="TextColor" Value="{StaticResource BrandTextDark}" />
+                                                        </DataTrigger>
+                                                    </Label.Triggers>
+                                                </Label>
+                                                <Label Text="Change" Style="{StaticResource LinkLabel}" FontSize="13"
+                                                       TextColor="{StaticResource BrandDark}" HorizontalOptions="End">
+                                                    <Label.GestureRecognizers>
+                                                        <TapGestureRecognizer
+                                                            Command="{Binding ChangeCommissionCommand, Source={RelativeSource AncestorType={x:Type vm:AdminPricingViewModel}}}"
+                                                            CommandParameter="{Binding .}" />
+                                                    </Label.GestureRecognizers>
+                                                </Label>
+                                            </VerticalStackLayout>
+                                        </Grid>
+
+                                        <BoxView HeightRequest="1" Color="{StaticResource BrandBorder}" />
+
+                                        <!-- Shop delivery fee range -->
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                            <VerticalStackLayout Spacing="2">
+                                                <Label Text="Shop delivery fee" FontSize="14" FontAttributes="Bold"
+                                                       TextColor="{StaticResource BrandTextDark}" />
+                                                <Label Text="Each shop sets its own fee inside this range."
+                                                       Style="{StaticResource SmallMuted}" LineBreakMode="WordWrap" />
+                                            </VerticalStackLayout>
+                                            <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="End"
+                                                                 IsVisible="{Binding HasPricing}">
+                                                <Label Text="{Binding FeeRangeText}" FontSize="15" FontAttributes="Bold"
+                                                       HorizontalOptions="End" TextColor="{StaticResource BrandTextDark}" />
+                                                <Label Text="Change" Style="{StaticResource LinkLabel}" FontSize="13"
+                                                       TextColor="{StaticResource BrandDark}" HorizontalOptions="End">
+                                                    <Label.GestureRecognizers>
+                                                        <TapGestureRecognizer
+                                                            Command="{Binding ChangeFeeRangeCommand, Source={RelativeSource AncestorType={x:Type vm:AdminPricingViewModel}}}"
+                                                            CommandParameter="{Binding .}" />
+                                                    </Label.GestureRecognizers>
+                                                </Label>
+                                            </VerticalStackLayout>
+                                            <Button Grid.Column="1" Text="+ Set up" Style="{StaticResource SmallButton}"
+                                                    BackgroundColor="{StaticResource BrandPeach}" TextColor="{StaticResource BrandOrange}"
+                                                    VerticalOptions="Start" IsVisible="{Binding HasNoPricing}"
+                                                    Command="{Binding ChangeFeeRangeCommand, Source={RelativeSource AncestorType={x:Type vm:AdminPricingViewModel}}}"
+                                                    CommandParameter="{Binding .}" />
+                                        </Grid>
+                                        <Label Text="{Binding SetUpNote}" FontSize="12" TextColor="{StaticResource BrandOrange}"
+                                               LineBreakMode="WordWrap" IsVisible="{Binding HasNoPricing}" />
+
+                                        <!-- Delivery times (once the fee range is set) -->
+                                        <VerticalStackLayout Spacing="10" IsVisible="{Binding HasPricing}">
+                                            <BoxView HeightRequest="1" Color="{StaticResource BrandBorder}" />
+                                            <Label Text="Delivery times buyers can pick" FontSize="14" FontAttributes="Bold"
+                                                   TextColor="{StaticResource BrandTextDark}" />
+                                            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Windows}">
+                                                <BindableLayout.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:PricingWindowRow">
+                                                        <Border StrokeThickness="1" Stroke="{StaticResource BrandBorder}"
+                                                                StrokeShape="RoundRectangle 12" Padding="12,10" BackgroundColor="White">
+                                                            <Border.Triggers>
+                                                                <DataTrigger TargetType="Border" Binding="{Binding IsOffered}" Value="True">
+                                                                    <Setter Property="BackgroundColor" Value="{StaticResource BrandMintPale}" />
+                                                                    <Setter Property="Stroke" Value="{StaticResource BrandMint}" />
+                                                                </DataTrigger>
+                                                            </Border.Triggers>
+                                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                                                <VerticalStackLayout Spacing="1" VerticalOptions="Center">
+                                                                    <Label Text="{Binding Title}" FontSize="14" FontAttributes="Bold"
+                                                                           TextColor="{StaticResource BrandTextMuted}">
+                                                                        <Label.Triggers>
+                                                                            <DataTrigger TargetType="Label" Binding="{Binding IsOffered}" Value="True">
+                                                                                <Setter Property="TextColor" Value="{StaticResource BrandTextDark}" />
+                                                                            </DataTrigger>
+                                                                        </Label.Triggers>
+                                                                    </Label>
+                                                                    <Label Text="{Binding ChargeText}" FontSize="12"
+                                                                           TextColor="{StaticResource BrandTextMuted}">
+                                                                        <Label.Triggers>
+                                                                            <DataTrigger TargetType="Label" Binding="{Binding IsOffered}" Value="True">
+                                                                                <Setter Property="TextColor" Value="{StaticResource BrandGreen}" />
+                                                                                <Setter Property="FontAttributes" Value="Bold" />
+                                                                            </DataTrigger>
+                                                                        </Label.Triggers>
+                                                                    </Label>
+                                                                </VerticalStackLayout>
+
+                                                                <!-- Offered: Change · ✕ -->
+                                                                <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center"
+                                                                                       IsVisible="{Binding IsOffered}">
+                                                                    <Button Text="Change" Style="{StaticResource SmallButton}" BackgroundColor="White"
+                                                                            Command="{Binding ChangeWindowCommand, Source={RelativeSource AncestorType={x:Type vm:AdminPricingViewModel}}}"
+                                                                            CommandParameter="{Binding .}" />
+                                                                    <Label Text="✕" FontSize="16" TextColor="{StaticResource BrandDanger}"
+                                                                           VerticalOptions="Center" Padding="8,4"
+                                                                           SemanticProperties.Description="Stop offering">
+                                                                        <Label.GestureRecognizers>
+                                                                            <TapGestureRecognizer
+                                                                                Command="{Binding RemoveWindowCommand, Source={RelativeSource AncestorType={x:Type vm:AdminPricingViewModel}}}"
+                                                                                CommandParameter="{Binding .}" />
+                                                                        </Label.GestureRecognizers>
+                                                                    </Label>
+                                                                </HorizontalStackLayout>
+
+                                                                <!-- Not offered: + Offer -->
+                                                                <Button Grid.Column="1" Text="+ Offer" Style="{StaticResource SmallButton}"
+                                                                        VerticalOptions="Center" IsVisible="{Binding IsNotOffered}"
+                                                                        Command="{Binding OfferWindowCommand, Source={RelativeSource AncestorType={x:Type vm:AdminPricingViewModel}}}"
+                                                                        CommandParameter="{Binding .}" />
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </BindableLayout.ItemTemplate>
+                                            </VerticalStackLayout>
+                                        </VerticalStackLayout>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

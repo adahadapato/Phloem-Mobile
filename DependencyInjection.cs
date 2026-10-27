@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddSingleton<OrderService>();      // /api/orders
         services.AddSingleton<ShipmentService>();   // /api/shipments, /api/staff/shipments
         services.AddSingleton<ShipmentRouteService>(); // /api/admin/shipment-routes
+        services.AddSingleton<PricingService>();    // /api/admin/commissions, /api/admin/delivery-pricing
         services.AddSingleton<SellerService>();     // /api/shops/mine, /api/shops/mine/orders
         services.AddSingleton<AdminService>();      // /api/admin/shops, /api/admin/users, /api/admin/dish-catalog
 
@@ -80,6 +81,7 @@ public static class DependencyInjection
         services.AddTransient<AdminDishCatalogViewModel>();
         services.AddTransient<LegalViewModel>();
         services.AddTransient<AdminParcelRulesViewModel>();
+        services.AddTransient<AdminPricingViewModel>();
 
 
 
@@ -115,5 +117,6 @@ public static class DependencyInjection
         services.AddTransient<AdminShopDetailsPage>();
         services.AddTransient<ShopOrderDetailsPage>();
         services.AddTransient<AdminDishCatalogPage>();
+        services.AddTransient<AdminPricingPage>();
     }
 }

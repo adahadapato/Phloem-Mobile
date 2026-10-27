@@ -274,6 +274,10 @@ public partial class AdminViewModel : ObservableObject
     [RelayCommand]
     private async Task OpenDishNames() => await Shell.Current.GoToAsync("admindishes");
 
+    /// <summary>Sellers tab → Pricing (commission, shop delivery-fee range and delivery times per country).</summary>
+    [RelayCommand]
+    private async Task OpenPricing() => await Shell.Current.GoToAsync("adminpricing");
+
     [RelayCommand]
     private async Task RejectDishName(DishSuggestionCard card)
     {
