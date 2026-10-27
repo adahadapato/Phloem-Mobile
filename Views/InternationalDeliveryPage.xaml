@@ -455,6 +455,20 @@
 
                         <Button Text="Book parcel" Command="{Binding BookCommand}" IsEnabled="{Binding IsNotBusy}"
                                 Style="{StaticResource CtaButton}" HeightRequest="52" Margin="0,4,0,0" />
+                        <!-- Need help? → Help & support -->
+                        <Label FontSize="13" TextColor="{StaticResource BrandTextMuted}"
+                               HorizontalTextAlignment="Center" Margin="8,4,8,0">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="💬 Questions about prices, weighing or customs? " />
+                                    <Span Text="Help &amp; support ›" TextColor="{StaticResource BrandGreen}" FontAttributes="Bold">
+                                        <Span.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{x:Static phloem:AppNav.OpenParcelHelpCommand}" />
+                                        </Span.GestureRecognizers>
+                                    </Span>
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
                     </VerticalStackLayout>
                 </VerticalStackLayout>
 

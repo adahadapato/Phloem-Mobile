@@ -309,6 +309,20 @@
                             </FormattedString>
                         </Label.FormattedText>
                     </Label>
+                    <!-- Need help? → Help & support -->
+                    <Label FontSize="13" TextColor="{StaticResource BrandTextMuted}"
+                           HorizontalTextAlignment="Center" Margin="8,0">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="💬 Questions about delivery or refunds? " />
+                                <Span Text="Help &amp; support ›" TextColor="{StaticResource BrandGreen}" FontAttributes="Bold">
+                                    <Span.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{x:Static phloem:AppNav.OpenOrdersHelpCommand}" />
+                                    </Span.GestureRecognizers>
+                                </Span>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
 
                 </VerticalStackLayout>
             </ScrollView>

@@ -71,6 +71,12 @@ public static class AppNav
     /// <summary>Help &amp; support.</summary>
     public static ICommand OpenHelpCommand { get; } = new Command(async () => await OpenLegalAsync("Help"));
 
+    /// <summary>Help &amp; support, at "Orders, delivery and refunds".</summary>
+    public static ICommand OpenOrdersHelpCommand { get; } = new Command(async () => await OpenLegalAsync("Help", "orders"));
+
+    /// <summary>Help &amp; support, at "Sending parcels".</summary>
+    public static ICommand OpenParcelHelpCommand { get; } = new Command(async () => await OpenLegalAsync("Help", "parcels"));
+
     /// <summary>Privacy Policy.</summary>
     public static ICommand OpenPrivacyCommand { get; } = new Command(async () => await OpenLegalAsync("Privacy"));
 

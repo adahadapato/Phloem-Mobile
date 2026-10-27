@@ -294,6 +294,20 @@
                         FontAttributes="Bold" FontSize="15" CornerRadius="12" HeightRequest="50" />
                 <Label Text="You can cancel within 30 minutes of ordering." Style="{StaticResource SmallMuted}"
                        HorizontalOptions="Center" IsVisible="{Binding Order.CanCancel}" />
+                <!-- Need help? → Help & support -->
+                <Label FontSize="13" TextColor="{StaticResource BrandTextMuted}"
+                       HorizontalTextAlignment="Center" Margin="8,4,8,0">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="💬 Something wrong with this order? " />
+                            <Span Text="Help &amp; support ›" TextColor="{StaticResource BrandGreen}" FontAttributes="Bold">
+                                <Span.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{x:Static phloem:AppNav.OpenOrdersHelpCommand}" />
+                                </Span.GestureRecognizers>
+                            </Span>
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
 
             </VerticalStackLayout>
         </ScrollView>
