@@ -24,4 +24,5 @@ public sealed record ProfileDto(
     bool NotifyOffers,
     bool NotifyNewDishes,
     bool NotifyShopOrders,
-    IReadOnlyList<AddressDto> Addresses);
+    IReadOnlyList<AddressDto> Addresses,
+    TermsStatusDto? Terms = null);

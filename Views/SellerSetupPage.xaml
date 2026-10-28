@@ -239,6 +239,26 @@
                     </VerticalStackLayout>
                 </Border>
 
+                <!-- ============ SELLER TERMS (required) ============ -->
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                    <CheckBox IsChecked="{Binding AgreedToSellerTerms}" Color="{StaticResource BrandDark}" VerticalOptions="Start" />
+                    <Label Grid.Column="1" FontSize="13" TextColor="{StaticResource BrandTextDark}"
+                           VerticalOptions="Center" LineBreakMode="WordWrap">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="I agree to the " />
+                                <Span Text="Seller terms" TextColor="{StaticResource BrandGreen}"
+                                      FontAttributes="Bold" TextDecorations="Underline">
+                                    <Span.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{x:Static phloem:AppNav.OpenSellerTermsCommand}" />
+                                    </Span.GestureRecognizers>
+                                </Span>
+                                <Span Text=", including food safety, pricing within the allowed range and Phloem's commission." />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                </Grid>
+
                 <!-- ============ SUBMIT ============ -->
                 <Button Text="Submit seller profile" Command="{Binding CreateVendorProfileCommand}"
                         Style="{StaticResource CtaButton}" HeightRequest="52" Margin="0,6,0,0" />

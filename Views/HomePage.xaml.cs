@@ -17,6 +17,7 @@ public partial class HomePage : ContentPage
     {
         base.OnAppearing();
         _vm.RefreshSuggestions();
+        _ = _vm.CheckTermsAsync();   // "We've updated our Terms" / Privacy notice, when needed
     }
 
     // ☰ opens the side menu

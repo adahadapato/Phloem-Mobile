@@ -414,6 +414,7 @@ public partial class DishEditorViewModel : ObservableObject, IQueryAttributable
                 if (created.IsFailure)
                 {
                     ShowError(created.Error!.DisplayMessage);
+                    if (created.Error.Code == AppNav.TermsNotAcceptedCode) await AppNav.OpenTermsUpdateAsync();
                     return;
                 }
                 dishId = created.Value;

@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    TermsUpdatePage (route "termsupdate", modal): "We've updated our Terms & Conditions" → I accept / Not now.
+    Shown after sign-in when the profile says so, and when the API refuses an action with Terms.NotAccepted.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Phloem.ViewModels"
+             xmlns:controls="clr-namespace:Phloem.Views.Controls"
+             x:DataType="vm:TermsUpdateViewModel"
+             x:Class="Phloem.Views.TermsUpdatePage"
+             Shell.NavBarIsVisible="False"
+             Shell.PresentationMode="ModalAnimated"
+             BackgroundColor="#8C012411"
+             Title="Terms &amp; Conditions">
+
+    <Border BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 22" Padding="22,24"
+            Margin="20" VerticalOptions="Center" MaximumWidthRequest="460">
+        <Border.Shadow>
+            <Shadow Brush="Black" Opacity="0.2" Radius="20" Offset="0,8" />
+        </Border.Shadow>
+        <VerticalStackLayout Spacing="14">
+            <Border WidthRequest="52" HeightRequest="52" StrokeThickness="0" StrokeShape="Ellipse"
+                    BackgroundColor="{StaticResource BrandMintPale}" HorizontalOptions="Start">
+                <Label Text="📄" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+            <Label Text="{Binding Title}" FontSize="21" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}"
+                   LineBreakMode="WordWrap" />
+            <Label Text="{Binding Text}" FontSize="15" TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+            <Label Text="You can still look around without accepting." Style="{StaticResource SubtleLabel}" FontSize="13" />
+            <Label Text="Read the Terms &amp; Conditions ›" Style="{StaticResource LinkLabel}" FontSize="15"
+                   TextColor="{StaticResource BrandGreen}">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ReadTermsCommand}" />
+                </Label.GestureRecognizers>
+            </Label>
+            <controls:StatusBanner Message="{Binding StatusMessage}" IsError="{Binding IsError}" />
+            <Button Text="I accept" Command="{Binding AcceptCommand}" Style="{StaticResource CtaButton}" HeightRequest="52" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                               Color="{StaticResource BrandDark}" HeightRequest="24" />
+            <Button Text="Not now" Command="{Binding NotNowCommand}" Style="{StaticResource OutlineButton}" HeightRequest="48" />
+        </VerticalStackLayout>
+    </Border>
+</ContentPage>

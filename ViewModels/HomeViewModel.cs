@@ -21,6 +21,7 @@ public partial class HomeViewModel : ObservableObject
     private readonly CartService _cart;
     private readonly SessionService _session;
     private readonly SuggestionService _suggestions;
+    private readonly TermsPromptService _terms;
     private CancellationTokenSource? _dishesLoad;
     private CancellationTokenSource? _shopsLoad;
     private CancellationTokenSource? _suggestionsLoad;
@@ -101,9 +102,11 @@ public partial class HomeViewModel : ObservableObject
     /// <param name="cart">The service that manages the shopping cart.</param>
     /// <param name="session">The signed-in user (used by Sell Food and the suggestions).</param>
     /// <param name="suggestions">"Order again" / "You might like" / "Popular in …".</param>
+    /// <param name="terms">"We've updated our Terms" / Privacy notice when the signed-in person needs them.</param>
     public HomeViewModel(DishService dishes, ShopService shops, CartService cart, SessionService session,
-                         SuggestionService suggestions)
+                         SuggestionService suggestions, TermsPromptService terms)
     {
+        _terms = terms;
         _dishes = dishes;
         _shops = shops;
         _cart = cart;
@@ -305,6 +308,9 @@ public partial class HomeViewModel : ObservableObject
             }
         }
     }
+
+    /// <summary>"We've updated our Terms" / the Privacy notice, if the signed-in person needs them (Home appearing).</summary>
+    public Task CheckTermsAsync() => _terms.CheckAsync();
 
     private static void Replace(ObservableCollection<SuggestedDish> target, IReadOnlyList<SuggestedDish> items)
     {

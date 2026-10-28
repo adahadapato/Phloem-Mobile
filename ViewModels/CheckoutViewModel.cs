@@ -361,6 +361,12 @@ public partial class CheckoutViewModel : ObservableObject
 
         // 3. Place: one order per shop
         var placed = await _orders.PlaceAsync(items, addressId, SelectedDeliveryWindow);
+        if (placed.IsFailure && placed.Error!.Code == AppNav.TermsNotAcceptedCode)
+        {
+            // New Terms: accept them (then tap Place order again)
+            await AppNav.OpenTermsUpdateAsync();
+            return;
+        }
         if (placed.IsFailure)
         {
             await Shell.Current.DisplayAlertAsync("Couldn't place order", placed.Error!.DisplayMessage, "OK");

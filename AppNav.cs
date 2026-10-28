@@ -77,6 +77,20 @@ public static class AppNav
     /// <summary>Help &amp; support, at "Sending parcels".</summary>
     public static ICommand OpenParcelHelpCommand { get; } = new Command(async () => await OpenLegalAsync("Help", "parcels"));
 
+    /// <summary>
+    /// "We've updated our Terms" (modal): from <see cref="Services.TermsPromptService"/> after sign-in, and when the API
+    /// refuses an action with "Terms.NotAccepted" (the person then tries again).
+    /// </summary>
+    public static async Task OpenTermsUpdateAsync()
+    {
+        if (Shell.Current is null) return;
+        Shell.Current.FlyoutIsPresented = false;
+        await Shell.Current.GoToAsync("termsupdate");
+    }
+
+    /// <summary>The API's code for "accept the latest Terms first".</summary>
+    public const string TermsNotAcceptedCode = "Terms.NotAccepted";
+
     /// <summary>Contact us (the form and the other ways to reach the team).</summary>
     public static ICommand OpenContactCommand { get; } = new Command(async () =>
     {

@@ -26,6 +26,14 @@ public sealed class AccountService(ApiClient api)
         api.GetAsync<ProfileDto>("api/me", ct);
 
     /// <summary>Saves the name, country and phone number.</summary>
+    /// <summary>Accepts the Terms version shown (409 "Terms.Outdated" if a newer one was published meanwhile).</summary>
+    public Task<ApiResult> AcceptTermsAsync(int version, CancellationToken ct = default) =>
+        api.PostAsync("api/me/terms/accept", new { version }, ct);
+
+    /// <summary>"Got it" on the updated Privacy Policy notice.</summary>
+    public Task<ApiResult> AcknowledgePrivacyAsync(int version, CancellationToken ct = default) =>
+        api.PostAsync("api/me/privacy/seen", new { version }, ct);
+
     public Task<ApiResult> UpdateProfileAsync(UpdateProfileCommand command, CancellationToken ct = default) =>
         api.PutAsync("api/me", command, ct);
 

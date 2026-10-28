@@ -41,6 +41,10 @@ public partial class SellerSetupViewModel : ObservableObject
     [ObservableProperty]
     public partial string LogoFileName { get; set; } = string.Empty;
 
+    /// <summary>"I agree to the Seller terms" (required to open a shop; recorded as proof).</summary>
+    [ObservableProperty]
+    public partial bool AgreedToSellerTerms { get; set; }
+
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = string.Empty;
 
@@ -122,6 +126,11 @@ public partial class SellerSetupViewModel : ObservableObject
             ShowError("Please enter your shop's name.");
             return;
         }
+        if (!AgreedToSellerTerms)
+        {
+            ShowError("Please read and agree to the Seller terms to open your shop.");
+            return;
+        }
 
         _busy = true;
         IsLoading = true;
@@ -129,7 +138,7 @@ public partial class SellerSetupViewModel : ObservableObject
         {
             var email = string.IsNullOrWhiteSpace(BusinessEmail) ? null : BusinessEmail.Trim();
             var phone = string.IsNullOrWhiteSpace(BusinessPhone) ? null : BusinessPhone.Trim();
-            var opened = await _seller.OpenShopAsync(new OpenShopCommand(BusinessName.Trim(), email, phone));
+            var opened = await _seller.OpenShopAsync(new OpenShopCommand(BusinessName.Trim(), email, phone, AgreedToSellerTerms));
             if (opened.IsFailure)
             {
                 ShowError(opened.Error!.DisplayMessage);
