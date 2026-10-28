@@ -479,7 +479,7 @@
                            PlaceholderColor="{StaticResource BrandTextMuted}"
                            TextColor="{StaticResource BrandTextDark}"
                            BackgroundColor="Transparent"
-                           FontSize="14" ReturnType="Search"
+                           FontSize="14" ReturnType="Search" ReturnCommand="{Binding SearchNowCommand}"
                            VerticalOptions="Center" />
                     <BoxView Grid.Column="2" WidthRequest="1" HeightRequest="24"
                              Color="{StaticResource BrandBorder}" VerticalOptions="Center" />
@@ -491,6 +491,43 @@
                 </Grid>
             </Border>
         </Grid>
+
+        <!-- ============ SEARCH PREDICTIONS (under the search bar, over the page) ============ -->
+        <Border Grid.Row="0" VerticalOptions="Start" Margin="16,114,16,0" Padding="6"
+                IsVisible="{Binding HasPredictions}" BackgroundColor="White"
+                Stroke="{StaticResource BrandBorder}" StrokeThickness="1" StrokeShape="RoundRectangle 14">
+            <Border.Shadow>
+                <Shadow Brush="Black" Opacity="0.18" Radius="16" Offset="0,6" />
+            </Border.Shadow>
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Predictions}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="models:SearchPrediction">
+                        <Grid ColumnDefinitions="30,*,Auto" ColumnSpacing="10" Padding="8,0" HeightRequest="46">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding BindingContext.PickPredictionCommand, Source={x:Reference RootPage}}"
+                                                      CommandParameter="{Binding .}" />
+                            </Grid.GestureRecognizers>
+                            <Border WidthRequest="30" HeightRequest="30" StrokeThickness="0" StrokeShape="Ellipse"
+                                    BackgroundColor="{StaticResource BrandCream}" VerticalOptions="Center">
+                                <Label Text="{Binding Icon}" FontSize="14" HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+                            <Label Grid.Column="1" FontSize="15" TextColor="{StaticResource BrandTextDark}"
+                                   VerticalOptions="Center" MaxLines="1" LineBreakMode="TailTruncation">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding Before}" />
+                                        <Span Text="{Binding Match}" FontAttributes="Bold" TextColor="{StaticResource BrandGreen}" />
+                                        <Span Text="{Binding After}" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Label Grid.Column="2" Text="{Binding Meta}" FontSize="11"
+                                   TextColor="{StaticResource BrandTextMuted}" VerticalOptions="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </Border>
 
         <!-- ============ CHECKOUT BAR ============ -->
         <Border Grid.Row="1"

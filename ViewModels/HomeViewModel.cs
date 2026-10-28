@@ -24,6 +24,7 @@ public partial class HomeViewModel : ObservableObject
     private CancellationTokenSource? _dishesLoad;
     private CancellationTokenSource? _shopsLoad;
     private CancellationTokenSource? _suggestionsLoad;
+    private CancellationTokenSource? _predictionsLoad;
 
     /// <summary>
     /// Gets the collection of available countries.
@@ -44,6 +45,14 @@ public partial class HomeViewModel : ObservableObject
     /// gets the collection of top sellers.
     /// </summary>
     public ObservableCollection<Vendor> TopSellers { get; } = new();
+
+    // ---------- Search predictions (the list under the search bar, like the website's) ----------
+
+    /// <summary>Dish names (then shops) containing what's typed in the search bar.</summary>
+    public ObservableCollection<SearchPrediction> Predictions { get; } = new();
+
+    [ObservableProperty]
+    public partial bool HasPredictions { get; set; }
 
     // ---------- Suggestions (same as the website's Home) ----------
 
@@ -121,7 +130,93 @@ public partial class HomeViewModel : ObservableObject
 
     partial void OnSelectedCategoryChanged(string value) => RefreshDishes();
 
-    partial void OnSearchTextChanged(string value) => RefreshDishes();
+    partial void OnSearchTextChanged(string value)
+    {
+        RefreshDishes();
+        RefreshPredictions();
+    }
+
+    /// <summary>When true, the next text change came from picking a prediction: don't open the list again.</summary>
+    private bool _picking;
+
+    /// <summary>
+    /// Reloads the predictions after a short pause in typing (a newer letter cancels the older request). Needs at
+    /// least 2 characters; the list is hidden if it can't load (the search itself still works).
+    /// </summary>
+    private async void RefreshPredictions()
+    {
+        _predictionsLoad?.Cancel();
+        var load = _predictionsLoad = new CancellationTokenSource();
+        var text = SearchText.Trim();
+        if (_picking || text.Length < 2)
+        {
+            _picking = false;
+            HidePredictions();
+            return;
+        }
+
+        try
+        {
+            await Task.Delay(200, load.Token);
+            var result = await _dishes.SuggestAsync(text, SelectedCountry?.ApiCountry, load.Token);
+            if (load.IsCancellationRequested) return;
+            Predictions.Clear();
+            if (result.IsSuccess)
+                foreach (var s in result.Value!)
+                    Predictions.Add(new SearchPrediction
+                    {
+                        Text = s.Text, Kind = s.Kind, DishCount = s.DishCount, ShopId = s.ShopId, Typed = text
+                    });
+            HasPredictions = Predictions.Count > 0;
+        }
+        catch (OperationCanceledException)
+        {
+            // Another letter was typed
+        }
+        catch (Exception)
+        {
+            HidePredictions();   // predictions are extra
+        }
+    }
+
+    private void HidePredictions()
+    {
+        Predictions.Clear();
+        HasPredictions = false;
+    }
+
+    /// <summary>
+    /// A prediction was tapped: a dish name opens Explore searched for it; a shop opens its menu (like "View Shop").
+    /// </summary>
+    [RelayCommand]
+    private async Task PickPrediction(SearchPrediction prediction)
+    {
+        _predictionsLoad?.Cancel();
+        HidePredictions();
+        if (prediction.IsShop && prediction.ShopId is { } shopId)
+        {
+            await Shell.Current.GoToAsync(
+                $"//listing?vendorId={Uri.EscapeDataString(shopId.ToString())}&vendorName={Uri.EscapeDataString(prediction.Text)}");
+            return;
+        }
+
+        if (SearchText != prediction.Text)
+        {
+            _picking = true;   // the text change below shouldn't open the list again
+            SearchText = prediction.Text;
+        }
+        await Shell.Current.GoToAsync($"//listing?search={Uri.EscapeDataString(prediction.Text)}");
+    }
+
+    /// <summary>The keyboard's Search key: Explore searched for what was typed.</summary>
+    [RelayCommand]
+    private async Task SearchNow()
+    {
+        _predictionsLoad?.Cancel();
+        HidePredictions();
+        var text = SearchText.Trim();
+        await Shell.Current.GoToAsync(text.Length == 0 ? "//listing" : $"//listing?search={Uri.EscapeDataString(text)}");
+    }
 
     /// <summary>Reloads the dishes; a newer request (another letter typed) cancels the older one.</summary>
     private async void RefreshDishes()

@@ -59,6 +59,21 @@ public sealed class DishService(ApiClient api, IOptions<ApiSettings> settings)
             new PagedResult<Dish>(paged.Items.Select(ToDish).ToList(), paged.TotalCount, paged.Page, paged.PageSize));
     }
 
+    /// <summary>
+    /// Search predictions while typing (<c>GET /api/dishes/suggest</c>): full dish names containing the text, best
+    /// first, then matching shops. Needs at least 2 characters.
+    /// </summary>
+    /// <param name="text">What has been typed.</param>
+    /// <param name="country">The country shown; null = every country.</param>
+    /// <param name="ct">Cancels the call (another letter was typed).</param>
+    public Task<ApiResult<List<SearchSuggestionDto>>> SuggestAsync(string text, Country? country,
+                                                                   CancellationToken ct = default) =>
+        api.GetAsync<List<SearchSuggestionDto>>(ApiQuery.Build("api/dishes/suggest", new Dictionary<string, string?>
+        {
+            ["q"] = text.Trim(),
+            ["country"] = country?.ToString()
+        }), ct);
+
     /// <summary>A chip's name as the API's category; null for "All" / "Popular" (no filter).</summary>
     public static DishCategory? CategoryFromName(string? name) =>
         CategoryNames.FirstOrDefault(c => string.Equals(c.Value, name, StringComparison.OrdinalIgnoreCase)) is

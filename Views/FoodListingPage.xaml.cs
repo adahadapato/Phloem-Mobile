@@ -15,6 +15,14 @@ public partial class FoodListingPage : ContentPage, IQueryAttributable
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
+        // From Home's search (typed, or a picked prediction): show that search, all shops
+        if (query.TryGetValue("search", out var search))
+        {
+            _vm.SetVendorFilter(null, null);
+            _vm.SearchText = search?.ToString() ?? string.Empty;
+            return;
+        }
+
         if (query.TryGetValue("vendorId", out var vendorId))
         {
             query.TryGetValue("vendorName", out var vendorName);
