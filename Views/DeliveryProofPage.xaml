@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    DeliveryProofPage (route "deliveryproof"): "Delivered" for a courier. The camera opens straight away; then
+    how it was handed over (and to whom, for a neighbour), an optional note, and Confirm. The photo is required.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Phloem.ViewModels"
+             xmlns:helpers="clr-namespace:Phloem.Helpers"
+             x:DataType="vm:DeliveryProofViewModel"
+             x:Class="Phloem.Views.DeliveryProofPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource BrandCream}"
+             Title="Delivered">
+
+    <ContentPage.Behaviors>
+        <helpers:KeepScreenAwakeBehavior />
+    </ContentPage.Behaviors>
+
+    <ContentPage.Resources>
+        <Style x:Key="FieldLabel" TargetType="Label">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{StaticResource BrandTextDark}" />
+            <Setter Property="Margin" Value="2,0,0,6" />
+        </Style>
+        <Style x:Key="FieldBox" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="{StaticResource BrandBorder}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="HeightRequest" Value="50" />
+        </Style>
+        <Style x:Key="WhiteCard" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="StrokeThickness" Value="0" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 18" />
+            <Setter Property="Padding" Value="16,18" />
+            <Setter Property="Shadow">
+                <Setter.Value>
+                    <Shadow Brush="Black" Opacity="0.06" Radius="12" Offset="0,3" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- ============ GREEN HEADER (back arrow) ============ -->
+        <Grid Grid.Row="0" BackgroundColor="{StaticResource BrandDark}" HeightRequest="72">
+            <Ellipse Stroke="#1AFFFFFF" StrokeThickness="10" WidthRequest="320" HeightRequest="320"
+                     HorizontalOptions="Start" VerticalOptions="Start" Margin="-60,-30,0,0" InputTransparent="True" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14" Padding="14,0,16,0">
+                <Grid WidthRequest="40" HeightRequest="40" VerticalOptions="Center">
+                    <Path Data="M15,5 L8,12 L15,19" Stroke="White" StrokeThickness="2.6"
+                          StrokeLineCap="Round" StrokeLineJoin="Round" WidthRequest="24" HeightRequest="24"
+                          HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Grid.GestureRecognizers>
+                </Grid>
+                <Label Grid.Column="1" Text="Delivered" TextColor="White" FontSize="22" FontAttributes="Bold"
+                       VerticalOptions="Center" />
+            </Grid>
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="16,18,16,28" Spacing="14" MaximumWidthRequest="560" HorizontalOptions="Fill">
+
+                <VerticalStackLayout Spacing="2" Margin="2,0,0,0">
+                    <Label Text="{Binding TitleText}" FontSize="22" FontAttributes="Bold"
+                           TextColor="{StaticResource BrandTextDark}" />
+                    <Label Text="{Binding ForText}" Style="{StaticResource SubtleLabel}" FontSize="14" />
+                </VerticalStackLayout>
+
+                <!-- ============ PHOTO ============ -->
+                <Border Style="{StaticResource WhiteCard}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="1. Photo of where you left it" FontSize="16" FontAttributes="Bold"
+                               TextColor="{StaticResource BrandTextDark}" />
+                        <Border StrokeThickness="0" StrokeShape="RoundRectangle 12" HeightRequest="240"
+                                BackgroundColor="{StaticResource BrandMintPale}">
+                            <Grid>
+                                <Image Source="{Binding PhotoPath}" Aspect="AspectFill" IsVisible="{Binding HasPhoto}" />
+                                <VerticalStackLayout Spacing="6" VerticalOptions="Center" HorizontalOptions="Center"
+                                                     IsVisible="{Binding HasNoPhoto}">
+                                    <Label Text="📷" FontSize="40" HorizontalOptions="Center" />
+                                    <Label Text="The door, the parcel on the step, or the person holding it"
+                                           FontSize="13" TextColor="{StaticResource BrandTextMuted}"
+                                           HorizontalTextAlignment="Center" Margin="24,0" LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                            </Grid>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding TakePhotoCommand}" />
+                            </Border.GestureRecognizers>
+                        </Border>
+                        <Button Text="{Binding PhotoButtonText}" Command="{Binding TakePhotoCommand}"
+                                Style="{StaticResource OutlineButton}" />
+                        <Label Text="Only the customer, the shop and Phloem staff can see it."
+                               Style="{StaticResource SubtleLabel}" FontSize="12" LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ HANDOVER ============ -->
+                <Border Style="{StaticResource WhiteCard}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="2. How did you hand it over?" FontSize="16" FontAttributes="Bold"
+                               TextColor="{StaticResource BrandTextDark}" />
+                        <FlexLayout Wrap="Wrap" Direction="Row" JustifyContent="Start" Margin="-4,0"
+                                    BindableLayout.ItemsSource="{Binding Handovers}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:HandoverOption">
+                                    <ContentView FlexLayout.Basis="50%" Padding="4">
+                                        <Border StrokeShape="RoundRectangle 12" StrokeThickness="1" Padding="12,12"
+                                                Stroke="{StaticResource BrandBorder}" BackgroundColor="White">
+                                            <Border.Triggers>
+                                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="Stroke" Value="{StaticResource BrandGreen}" />
+                                                    <Setter Property="StrokeThickness" Value="2" />
+                                                    <Setter Property="BackgroundColor" Value="{StaticResource BrandMintPale}" />
+                                                </DataTrigger>
+                                            </Border.Triggers>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding SelectHandoverCommand, Source={RelativeSource AncestorType={x:Type vm:DeliveryProofViewModel}}}"
+                                                    CommandParameter="{Binding .}" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="{Binding Label}" FontSize="14" FontAttributes="Bold"
+                                                   TextColor="{StaticResource BrandTextDark}" />
+                                        </Border>
+                                    </ContentView>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </FlexLayout>
+
+                        <VerticalStackLayout IsVisible="{Binding ShowReceivedBy}">
+                            <Label Text="{Binding ReceivedByLabel}" Style="{StaticResource FieldLabel}" />
+                            <Border Style="{StaticResource FieldBox}">
+                                <Entry Text="{Binding ReceivedBy}" MaxLength="100" Placeholder="{Binding ReceivedByPlaceholder}"
+                                       Keyboard="Text" TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout>
+                            <Label Text="Note for the customer (optional)" Style="{StaticResource FieldLabel}" />
+                            <Border Style="{StaticResource FieldBox}" HeightRequest="96" Padding="8,4">
+                                <Editor Text="{Binding Note}" MaxLength="300" AutoSize="Disabled"
+                                        Placeholder="e.g. Behind the blue gate" Keyboard="Chat"
+                                        TextColor="{StaticResource BrandTextDark}" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border BackgroundColor="#FDECEA" StrokeThickness="0" StrokeShape="RoundRectangle 12" Padding="14,10"
+                        IsVisible="{Binding HasMessage}">
+                    <Label Text="{Binding Message}" FontSize="13" TextColor="{StaticResource BrandDanger}"
+                           LineBreakMode="WordWrap" />
+                </Border>
+
+                <Button Text="✓  Confirm delivered" Command="{Binding ConfirmCommand}" Style="{StaticResource CtaButton}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                                   Color="{StaticResource BrandDark}" HeightRequest="28" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

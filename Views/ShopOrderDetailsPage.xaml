@@ -1,17 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
     ShopOrderDetailsPage: the seller's view of one order (route "shoporder", from the Seller dashboard).
-    What the customer ordered first, then Accept / Decline (waiting), Send out (being prepared) or
-    Mark delivered (out for delivery).
+    What the customer ordered first, then Accept / Decline (waiting), Send out with a courier (being prepared),
+    Change courier / Delivered with a photo when delivering it yourself (out for delivery), and the courier's
+    photo once delivered.
 -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:phloem="clr-namespace:Phloem"
              xmlns:vm="clr-namespace:Phloem.ViewModels"
+             xmlns:controls="clr-namespace:Phloem.Views.Controls"
+             xmlns:helpers="clr-namespace:Phloem.Helpers"
              x:DataType="vm:ShopOrderDetailsViewModel"
              x:Class="Phloem.Views.ShopOrderDetailsPage"
              Shell.NavBarIsVisible="False"
              Title="Order">
+
+    <ContentPage.Behaviors>
+        <helpers:KeepScreenAwakeBehavior />
+    </ContentPage.Behaviors>
 
     <ContentPage.Resources>
         <Style x:Key="WhiteCard" TargetType="Border">
@@ -235,9 +242,20 @@
                 <Button Text="🛵  Send out for delivery" Command="{Binding SendOutCommand}"
                         Style="{StaticResource StepButton}" Margin="0,6,0,0" IsVisible="{Binding IsPreparing}" />
 
-                <!-- Out for delivery → delivered -->
-                <Button Text="✓  Mark delivered" Command="{Binding MarkDeliveredCommand}"
-                        Style="{StaticResource StepButton}" Margin="0,6,0,0" IsVisible="{Binding IsOutForDelivery}" />
+                <!-- Who's delivering it -->
+                <Label Text="{Binding CourierText}" FontSize="14" FontAttributes="Bold"
+                       TextColor="{StaticResource BrandDark}" Margin="2,6,0,0" IsVisible="{Binding HasCourier}" />
+
+                <!-- Out for delivery: I'm delivering it → photo; or give it to someone else -->
+                <Button Text="📷  Delivered · take a photo" Command="{Binding MarkDeliveredCommand}"
+                        Style="{StaticResource StepButton}" IsVisible="{Binding CanMarkDelivered}" />
+                <Button Text="Change courier" Command="{Binding ChangeCourierCommand}" IsVisible="{Binding IsOutForDelivery}"
+                        BackgroundColor="White" TextColor="{StaticResource BrandDark}"
+                        BorderColor="{StaticResource BrandDark}" BorderWidth="1.5"
+                        FontAttributes="Bold" FontSize="15" CornerRadius="12" HeightRequest="50" />
+
+                <!-- Delivered: the courier's photo -->
+                <controls:DeliveryProofCard Proof="{Binding Proof}" Margin="0,6,0,0" />
 
             </VerticalStackLayout>
         </ScrollView>

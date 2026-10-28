@@ -55,8 +55,15 @@ public partial class PlacedOrder : ObservableObject
     public IReadOnlyList<OrderLine> Lines { get; init; } = Array.Empty<OrderLine>();
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsCancelled), nameof(CanCancel), nameof(StatusText), nameof(IsPreparing))]
+    [NotifyPropertyChangedFor(nameof(IsCancelled), nameof(CanCancel), nameof(StatusText), nameof(IsPreparing),
+                              nameof(IsOnItsWay), nameof(ThirdStepTitle), nameof(ThirdStepText))]
     public partial OrderStatus Status { get; set; } = OrderStatus.Paid;
+
+    /// <summary>Who is bringing it (or brought it); null until the shop sends it out.</summary>
+    public string? CourierName { get; init; }
+
+    /// <summary>The courier's photo once delivered (Order details only); null before.</summary>
+    public DeliveryProofView? Proof { get; init; }
 
     /// <summary>The API's answer to "can it still be cancelled?" when the order was loaded.</summary>
     [ObservableProperty]
@@ -102,7 +109,19 @@ public partial class PlacedOrder : ObservableObject
     /// <summary>Step 2 done once the shop has started.</summary>
     public bool IsPreparing => Status is OrderStatus.Preparing or OrderStatus.OutForDelivery or OrderStatus.Delivered;
     public string PlacedAtText => PlacedAt.ToString("d MMM yyyy, HH:mm");
-    public string ThirdStepTitle => "On its way";
+
+    /// <summary>Step 3 done once it has left the shop.</summary>
+    public bool IsOnItsWay => Status is OrderStatus.OutForDelivery or OrderStatus.Delivered;
+
+    public string ThirdStepTitle => Status == OrderStatus.Delivered ? "Delivered" : "On its way";
+
+    /// <summary>"Kwame is bringing it", "Left at the front door", or what happens next.</summary>
+    public string ThirdStepText => Status switch
+    {
+        OrderStatus.Delivered => Proof?.Summary ?? "Enjoy your meal!",
+        OrderStatus.OutForDelivery => CourierName is null ? "On its way to you" : $"{CourierName} is bringing it",
+        _ => "We'll let you know when it's on the move"
+    };
 
     /// <summary>Re-check the time-based cancel window (called when the Orders page refreshes).</summary>
     public void RefreshTiming()
@@ -110,6 +129,7 @@ public partial class PlacedOrder : ObservableObject
         OnPropertyChanged(nameof(CanCancel));
         OnPropertyChanged(nameof(StatusText));
         OnPropertyChanged(nameof(IsPreparing));
+        OnPropertyChanged(nameof(IsOnItsWay));
     }
 }
 
@@ -335,7 +355,9 @@ public class OrderHistoryService
             AllowsCancel = o.CanCancel,
             CancelDeadline = o.CancelSecondsLeft is { } seconds ? DateTime.Now.AddSeconds(seconds) : null,
             CancelledAt = o.CancelledAt?.ToLocalTime(),
-            DeclineReason = o.DeclinedByShop ? o.DeclineReason ?? string.Empty : null
+            DeclineReason = o.DeclinedByShop ? o.DeclineReason ?? string.Empty : null,
+            CourierName = o.CourierName,
+            Proof = DeliveryProofView.From(o.DeliveryProof, _api)
         };
     }
 

@@ -73,9 +73,26 @@ public sealed class ShipmentService(ApiClient api)
         api.PostAsync<decimal>($"api/staff/shipments/{Uri.EscapeDataString(trackingNumber)}/receive",
                                new ReceiveRequest(weighedWeightKg), ct);
 
-    /// <summary>Moves a paid parcel to its next step (in transit → arrived → out for delivery → delivered).</summary>
+    /// <summary>Moves a paid parcel to its next step: in transit, then arrived. (Out for delivery needs a courier:
+    /// <see cref="SendOutForDeliveryAsync"/>; the courier marks it delivered with a photo.)</summary>
     public Task<ApiResult> UpdateProgressAsync(string trackingNumber, ShipmentStatus newStatus, string? note,
                                                CancellationToken ct = default) =>
         api.PostAsync($"api/staff/shipments/{Uri.EscapeDataString(trackingNumber)}/progress",
                       new ProgressRequest(newStatus, string.IsNullOrWhiteSpace(note) ? null : note.Trim()), ct);
+
+    /// <summary>Gives an arrived parcel to a courier in the destination country (they're emailed).</summary>
+    public Task<ApiResult> SendOutForDeliveryAsync(string trackingNumber, Guid courierId, string? note,
+                                                   CancellationToken ct = default) =>
+        api.PostAsync($"api/staff/shipments/{Uri.EscapeDataString(trackingNumber)}/out-for-delivery",
+                      new OutForDeliveryRequest(courierId, string.IsNullOrWhiteSpace(note) ? null : note.Trim()), ct);
+
+    /// <summary>Gives a parcel that's out for delivery to another courier.</summary>
+    public Task<ApiResult> ChangeCourierAsync(string trackingNumber, Guid courierId, CancellationToken ct = default) =>
+        api.PutAsync($"api/staff/shipments/{Uri.EscapeDataString(trackingNumber)}/courier",
+                     new ChangeCourierRequest(courierId), ct);
+
+    /// <summary>The couriers who deliver in a country, by name.</summary>
+    public Task<ApiResult<IReadOnlyList<CourierOptionDto>>> GetCouriersAsync(Country country,
+                                                                             CancellationToken ct = default) =>
+        api.GetAsync<IReadOnlyList<CourierOptionDto>>($"api/staff/couriers?country={country}", ct);
 }

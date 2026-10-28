@@ -27,4 +27,7 @@ public sealed record OrderDetailsDto(
     bool DeclinedByShop,
     string? DeclineReason,
     string? DeliveryRecipientName = null,
-    string? DeliveryPhone = null);
+    string? DeliveryPhone = null,
+    string? CourierName = null,
+    DeliveryProofDto? DeliveryProof = null,
+    bool CanMarkDelivered = false);

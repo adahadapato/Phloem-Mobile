@@ -22,6 +22,6 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Phloem uses your photos so you can add your profile photo, shop logo and dish photos.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Phloem uses the camera so you can take your profile photo, shop logo and dish photos.</string>
+	<string>Phloem uses the camera so you can take your profile photo, shop logo and dish photos, and a photo when you deliver an order.</string>
 </dict>
 </plist>

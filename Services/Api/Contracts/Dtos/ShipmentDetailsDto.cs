@@ -31,4 +31,6 @@ public sealed record ShipmentDetailsDto(
     IReadOnlyList<ShipmentEventDto> Timeline,
     bool CanCancel,
     bool CanPay,
-    bool NeedsRefund);
+    bool NeedsRefund,
+    string? CourierName = null,
+    DeliveryProofDto? DeliveryProof = null);

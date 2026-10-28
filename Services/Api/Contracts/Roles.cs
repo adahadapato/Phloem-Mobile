@@ -21,11 +21,15 @@ public static class Roles
     /// <summary>Helps customers.</summary>
     public const string SupportAgent = "SupportAgent";
 
+    /// <summary>Delivers food orders and parcels, with a photo as proof of delivery.</summary>
+    public const string Courier = "Courier";
+
     /// <summary>
     /// The roles an admin can give or take on Admin → Users (same as the API's <c>Roles.Assignable</c>). Customer is
     /// everyone's, and Seller follows the person's shop.
     /// </summary>
-    public static readonly IReadOnlyList<string> Assignable = [Admin, CatalogManager, ShipmentManager, SupportAgent];
+    public static readonly IReadOnlyList<string> Assignable =
+        [Admin, CatalogManager, ShipmentManager, SupportAgent, Courier];
 
     /// <summary>A role as people read it: "CatalogManager" → "Catalog manager".</summary>
     public static string DisplayName(string role) => role switch
@@ -43,6 +47,7 @@ public static class Roles
         CatalogManager => "Reviews dish-name suggestions and edits the dish list.",
         ShipmentManager => "Receives parcels at the hub and moves them along their journey.",
         SupportAgent => "Looks up orders and users, and cancels orders for customers.",
+        Courier => "Delivers food orders and parcels, and takes a photo when handing them over.",
         _ => string.Empty
     };
 }

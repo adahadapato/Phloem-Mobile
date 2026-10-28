@@ -41,6 +41,8 @@ public static class DependencyInjection
         services.AddSingleton<ShipmentRouteService>(); // /api/admin/shipment-routes
         services.AddSingleton<PricingService>();
         services.AddSingleton<ContactService>();
+        services.AddSingleton<DeliveryService>();
+        services.AddSingleton<ScreenAwakeService>();
         services.AddSingleton<TermsPromptService>(); // "We've updated our Terms" / Privacy notice     // /api/contact (Contact us)
         services.AddSingleton<SuggestionService>(); // /api/me/suggestions, /api/dishes/popular (Home)    // /api/admin/commissions, /api/admin/delivery-pricing
         services.AddSingleton<SellerService>();     // /api/shops/mine, /api/shops/mine/orders
@@ -86,6 +88,8 @@ public static class DependencyInjection
         services.AddTransient<AdminParcelRulesViewModel>();
         services.AddTransient<AdminPricingViewModel>();
         services.AddTransient<ContactViewModel>();
+        services.AddTransient<MyDeliveriesViewModel>();
+        services.AddTransient<DeliveryProofViewModel>();
         services.AddTransient<TermsUpdateViewModel>();
 
 
@@ -124,6 +128,8 @@ public static class DependencyInjection
         services.AddTransient<AdminDishCatalogPage>();
         services.AddTransient<AdminPricingPage>();
         services.AddTransient<ContactPage>();
+        services.AddTransient<MyDeliveriesPage>();
+        services.AddTransient<DeliveryProofPage>();
         services.AddTransient<TermsUpdatePage>();
     }
 }

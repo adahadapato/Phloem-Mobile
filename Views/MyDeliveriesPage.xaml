@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    MyDeliveriesPage (route "deliveries", side menu "My deliveries"): the courier's food orders and parcels.
+    Tabs: To deliver / Delivered (last 7 days). Each card: collect from, who it's for (tap to call), the address
+    (tap for the map) and "Delivered", which opens the camera for the proof photo. The screen stays on while open
+    (if "Keep screen on" is switched on in My account).
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Phloem.ViewModels"
+             xmlns:models="clr-namespace:Phloem.Models"
+             xmlns:controls="clr-namespace:Phloem.Views.Controls"
+             xmlns:helpers="clr-namespace:Phloem.Helpers"
+             xmlns:phloem="clr-namespace:Phloem"
+             x:DataType="vm:MyDeliveriesViewModel"
+             x:Class="Phloem.Views.MyDeliveriesPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource BrandCream}"
+             Title="My deliveries">
+
+    <ContentPage.Behaviors>
+        <helpers:KeepScreenAwakeBehavior />
+    </ContentPage.Behaviors>
+
+    <ContentPage.Resources>
+        <Style x:Key="WhiteCard" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="StrokeThickness" Value="0" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Shadow">
+                <Setter.Value>
+                    <Shadow Brush="Black" Opacity="0.06" Radius="10" Offset="0,3" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="TabButton" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="TextColor" Value="{StaticResource BrandDark}" />
+            <Setter Property="BorderColor" Value="{StaticResource BrandBorder}" />
+            <Setter Property="BorderWidth" Value="1" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="CornerRadius" Value="20" />
+            <Setter Property="HeightRequest" Value="40" />
+            <Setter Property="Padding" Value="16,0" />
+        </Style>
+        <Style x:Key="SmallMuted" TargetType="Label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextColor" Value="{StaticResource BrandTextMuted}" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- ============ GREEN HEADER (back arrow) ============ -->
+        <Grid Grid.Row="0" BackgroundColor="{StaticResource BrandDark}" HeightRequest="72">
+            <Ellipse Stroke="#1AFFFFFF" StrokeThickness="10" WidthRequest="320" HeightRequest="320"
+                     HorizontalOptions="Start" VerticalOptions="Start" Margin="-60,-30,0,0" InputTransparent="True" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14" Padding="14,0,16,0">
+                <Grid WidthRequest="40" HeightRequest="40" VerticalOptions="Center">
+                    <Path Data="M15,5 L8,12 L15,19" Stroke="White" StrokeThickness="2.6"
+                          StrokeLineCap="Round" StrokeLineJoin="Round" WidthRequest="24" HeightRequest="24"
+                          HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Grid.GestureRecognizers>
+                </Grid>
+                <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                    <HorizontalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{x:Static phloem:AppNav.GoHomeCommand}" />
+                    </HorizontalStackLayout.GestureRecognizers>
+                    <Image Source="header_logo.png" WidthRequest="34" HeightRequest="34" />
+                    <Label Text="Phloem" TextColor="White" FontSize="22" FontAttributes="Bold" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </Grid>
+        </Grid>
+
+        <RefreshView Grid.Row="1" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsLoading}"
+                     RefreshColor="{StaticResource BrandDark}">
+            <ScrollView>
+                <VerticalStackLayout Padding="16,18,16,28" Spacing="12" MaximumWidthRequest="560"
+                                     HorizontalOptions="Fill">
+
+                    <VerticalStackLayout Spacing="2" Margin="2,0,0,4">
+                        <Label Text="My deliveries" FontSize="26" FontAttributes="Bold"
+                               TextColor="{StaticResource BrandTextDark}" />
+                        <Label Text="Take a photo of where you leave each one: the customer sees it."
+                               Style="{StaticResource SubtleLabel}" FontSize="13" LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+
+                    <!-- Tabs -->
+                    <HorizontalStackLayout Spacing="8">
+                        <Button Text="To deliver" Command="{Binding ShowToDeliverCommand}" Style="{StaticResource TabButton}">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding IsToDoTab}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource BrandDark}" />
+                                    <Setter Property="TextColor" Value="White" />
+                                    <Setter Property="BorderColor" Value="{StaticResource BrandDark}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                        <Button Text="Delivered" Command="{Binding ShowDeliveredCommand}" Style="{StaticResource TabButton}">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding ShowDone}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource BrandDark}" />
+                                    <Setter Property="TextColor" Value="White" />
+                                    <Setter Property="BorderColor" Value="{StaticResource BrandDark}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                    </HorizontalStackLayout>
+
+                    <controls:StatusBanner Message="{Binding Message}" IsError="{Binding IsError}" />
+
+                    <Label Text="{Binding EmptyText}" Style="{StaticResource SubtleLabel}" FontSize="14"
+                           HorizontalTextAlignment="Center" Margin="0,24" LineBreakMode="WordWrap"
+                           IsVisible="{Binding ShowEmpty}" />
+
+                    <!-- Cards -->
+                    <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Cards}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:DeliveryCard">
+                                <Border Style="{StaticResource WhiteCard}">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Label Text="{Binding Title}" FontSize="15" FontAttributes="Bold"
+                                               TextColor="{StaticResource BrandTextDark}" />
+                                        <Label Text="{Binding WhenText}" Style="{StaticResource SmallMuted}"
+                                               LineBreakMode="WordWrap" />
+
+                                        <!-- Collect from (tap the phone to call the shop) -->
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                            <Label Text="{Binding CollectText}" FontSize="14"
+                                                   TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                                            <Label Grid.Column="1" Text="📞 Shop" FontSize="13" FontAttributes="Bold"
+                                                   TextColor="{StaticResource BrandDark}" VerticalOptions="Center"
+                                                   IsVisible="{Binding HasCollectPhone}">
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer
+                                                        Command="{Binding CallShopCommand, Source={RelativeSource AncestorType={x:Type vm:MyDeliveriesViewModel}}}"
+                                                        CommandParameter="{Binding .}" />
+                                                </Label.GestureRecognizers>
+                                            </Label>
+                                        </Grid>
+
+                                        <!-- Who and where -->
+                                        <Border BackgroundColor="{StaticResource BrandMintPale}" StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 12" Padding="12,10">
+                                            <VerticalStackLayout Spacing="4">
+                                                <Label Text="{Binding RecipientText}" FontSize="15" FontAttributes="Bold"
+                                                       TextColor="{StaticResource BrandTextDark}" />
+                                                <Label FontSize="14" TextColor="{StaticResource BrandDark}"
+                                                       IsVisible="{Binding HasRecipientPhone}">
+                                                    <Label.FormattedText>
+                                                        <FormattedString>
+                                                            <Span Text="📞  " />
+                                                            <Span Text="{Binding RecipientPhoneText}" TextDecorations="Underline" />
+                                                        </FormattedString>
+                                                    </Label.FormattedText>
+                                                    <Label.GestureRecognizers>
+                                                        <TapGestureRecognizer
+                                                            Command="{Binding CallRecipientCommand, Source={RelativeSource AncestorType={x:Type vm:MyDeliveriesViewModel}}}"
+                                                            CommandParameter="{Binding .}" />
+                                                    </Label.GestureRecognizers>
+                                                </Label>
+                                                <Label FontSize="14" TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap">
+                                                    <Label.FormattedText>
+                                                        <FormattedString>
+                                                            <Span Text="📍  " />
+                                                            <Span Text="{Binding AddressText}" TextDecorations="Underline" />
+                                                        </FormattedString>
+                                                    </Label.FormattedText>
+                                                    <Label.GestureRecognizers>
+                                                        <TapGestureRecognizer
+                                                            Command="{Binding OpenMapCommand, Source={RelativeSource AncestorType={x:Type vm:MyDeliveriesViewModel}}}"
+                                                            CommandParameter="{Binding .}" />
+                                                    </Label.GestureRecognizers>
+                                                </Label>
+                                            </VerticalStackLayout>
+                                        </Border>
+
+                                        <Label Text="{Binding ItemsText}" Style="{StaticResource SmallMuted}"
+                                               LineBreakMode="WordWrap" />
+
+                                        <Button Text="📷  Delivered · take a photo" Style="{StaticResource CtaButton}"
+                                                IsVisible="{Binding IsToDo}"
+                                                Command="{Binding DeliveredCommand, Source={RelativeSource AncestorType={x:Type vm:MyDeliveriesViewModel}}}"
+                                                CommandParameter="{Binding .}" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

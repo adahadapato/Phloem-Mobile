@@ -54,11 +54,20 @@ kept on the phone let the app open offline.
 
 **Sellers** — Become a Seller (with "I agree to the Seller terms"), Seller Dashboard (incoming orders, daily sales),
 add and edit dishes with photos and allowed price ranges, shop settings (logo, cover, delivery fee, order cut-off,
-documents).
+documents). **Send out** asks who's delivering it: a courier in their country, or "I'll deliver it myself".
+
+**Couriers** — **My Deliveries** (side menu): food orders and parcels to deliver, with where to collect, who to call
+and the address (opens the maps app). **Delivered** opens the camera: a photo is always required, plus how it was
+handed over (in person, front door, neighbour, safe place, reception) and an optional note. The customer sees the
+photo on their order page (**Proof of delivery**).
+
+**Keep screen on** — while the Seller Dashboard, an order, My Deliveries, tracking or Checkout is open, the phone
+doesn't dim or lock (`ScreenAwakeService` + `KeepScreenAwakeBehavior`). Switch it off in Account → Settings.
 
 **Admins / staff** — Admin Dashboard (Sellers, Users, Shipments tabs): approve shops and review documents, users and
 roles, suspend / reinstate, dish names and price ranges, **Pricing** (commission, delivery fees, delivery times),
-shipping routes and rates, what can be sent, all shipments (receive and weigh at the hub, next step).
+shipping routes and rates, what can be sent, all shipments (receive and weigh at the hub, next step, out for delivery
+with a courier). Give someone the **Courier** role on Admin → Users.
 Terms editing and the Contact messages inbox are on the website.
 
 ---
@@ -221,6 +230,7 @@ AfroPhloem/
 | Account | `LoginPage`, `RegisterPage`, `EditProfilePage`, `ChangePasswordPage`, `NotificationSettingsPage` |
 | Texts & help | `AboutPage`, `LegalPage` (Terms / Privacy / Help), `ContactPage`, `TermsUpdatePage` |
 | Selling | `SellerSetupPage`, `SellerDashboardPage`, `DishEditorPage`, `ShopOrderDetailsPage`, `ShopSettingsPage` |
+| Delivering | `MyDeliveriesPage`, `DeliveryProofPage` (camera + handover); `Controls/DeliveryProofCard` on order and parcel pages |
 | Admin | `AdminPage`, `AdminShopDetailsPage`, `AdminDishCatalogPage`, `AdminPricingPage`, `AdminShipmentRoutesPage`, `AdminParcelRulesPage`, `AdminShipmentsPage` |
 
 ---
@@ -229,7 +239,7 @@ AfroPhloem/
 
 - **Bottom tabs** (always visible): **Home · Explore · Orders · Account**.
 - **Side menu (☰)**: About · Help & support · Contact us | Admin Dashboard · Send Food to UK · Sellers & Vendors ·
-  Become a Seller / Seller Dashboard · My Shipments · Sign Up. Items are shown or hidden by who is signed in
+  Become a Seller / Seller Dashboard · My Shipments · My Deliveries (couriers and sellers) · Sign Up. Items are shown or hidden by who is signed in
   (`AppShell.UpdateMenu`, refreshed whenever the session changes).
 - Every other page opens **on top of a tab** (the bottom bar stays): routes are registered in `AppShell.xaml.cs`
   (`about`, `legal`, `contact`, `termsupdate`, `login`, `register`, `admin`, `adminpricing`, `international`,

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    "Proof of delivery" card: the courier's photo, how it was handed over, their note, and who delivered it when.
+    Used on the customer's order page, the seller's order page and the parcel page. Hidden while Proof is null.
+    Tap the photo to open it full size.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Phloem.Views.Controls"
+             x:Class="Phloem.Views.Controls.DeliveryProofCard"
+             x:DataType="controls:DeliveryProofCard"
+             x:Name="Root"
+             IsVisible="False">
+
+    <Border BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 16" Padding="14">
+        <Border.Shadow>
+            <Shadow Brush="Black" Opacity="0.06" Radius="10" Offset="0,3" />
+        </Border.Shadow>
+        <VerticalStackLayout Spacing="10">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                <Border StrokeThickness="0" StrokeShape="Ellipse" WidthRequest="26" HeightRequest="26"
+                        BackgroundColor="{StaticResource BrandDark}" VerticalOptions="Center">
+                    <Label Text="✓" FontSize="13" FontAttributes="Bold" TextColor="White"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Label Grid.Column="1" Text="Proof of delivery" FontSize="16" FontAttributes="Bold"
+                       TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+            </Grid>
+
+            <Border StrokeThickness="0" StrokeShape="RoundRectangle 12" HeightRequest="220"
+                    BackgroundColor="{StaticResource BrandMintPale}">
+                <Image Source="{Binding Proof.PhotoUrl, Source={x:Reference Root}}" Aspect="AspectFill"
+                       SemanticProperties.Description="Photo the courier took when delivering" />
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnPhotoTapped" />
+                </Border.GestureRecognizers>
+            </Border>
+
+            <Label Text="{Binding Proof.Summary, Source={x:Reference Root}}" FontSize="15" FontAttributes="Bold"
+                   TextColor="{StaticResource BrandDark}" LineBreakMode="WordWrap" />
+            <Label Text="{Binding Proof.Note, Source={x:Reference Root}, StringFormat='“{0}”'}" FontSize="14"
+                   TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap"
+                   IsVisible="{Binding Proof.HasNote, Source={x:Reference Root}}" />
+            <Label Text="{Binding Proof.MetaText, Source={x:Reference Root}}" FontSize="12"
+                   TextColor="{StaticResource BrandTextMuted}" />
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

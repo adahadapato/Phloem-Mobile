@@ -373,6 +373,22 @@
                                 </VerticalStackLayout>
                                 <Path Grid.Column="2" Style="{StaticResource Chevron}" />
                             </Grid>
+                            <BoxView HeightRequest="1" Color="{StaticResource BrandBorder}" Margin="64,0,10,0" />
+
+                            <!-- Keep screen on (saved on this phone) -->
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14" Padding="10,12">
+                                <Border Style="{StaticResource RowIcon}">
+                                    <Path Style="{StaticResource IconPath}"
+                                          Data="M7,3 L17,3 A2,2 0 0 1 19,5 L19,19 A2,2 0 0 1 17,21 L7,21 A2,2 0 0 1 5,19 L5,5 A2,2 0 0 1 7,3 M12,8 L12,8.1 M9,12 A3,3 0 0 0 15,12" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="Keep screen on" Style="{StaticResource RowTitle}" />
+                                    <Label Text="While orders, deliveries, tracking or checkout are open"
+                                           Style="{StaticResource RowSub}" LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                                <Switch Grid.Column="2" IsToggled="{Binding KeepScreenOn}" VerticalOptions="Center"
+                                        OnColor="{StaticResource BrandGreen}" />
+                            </Grid>
                         </VerticalStackLayout>
                     </Border>
                 </VerticalStackLayout>

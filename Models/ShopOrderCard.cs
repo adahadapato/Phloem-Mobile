@@ -13,10 +13,19 @@ public sealed class ShopOrderCard
     public string ItemsSummary => Order.ItemsSummary;
     public string TotalText => $"{OrderService.SymbolOf(Order.Currency)}{Order.Total:N2}";
 
-    /// <summary>"Paid 14:05 · As soon as possible".</summary>
-    public string WhenText => Order.PaidAt is { } paid
-        ? $"Paid {paid.ToLocalTime():HH:mm} · {DeliveryTimeOption.TextOf(Order.DeliveryWindow)}"
-        : DeliveryTimeOption.TextOf(Order.DeliveryWindow);
+    /// <summary>"Paid 14:05 · As soon as possible", and who's delivering it once it's sent out.</summary>
+    public string WhenText
+    {
+        get
+        {
+            var when = Order.PaidAt is { } paid
+                ? $"Paid {paid.ToLocalTime():HH:mm} · {DeliveryTimeOption.TextOf(Order.DeliveryWindow)}"
+                : DeliveryTimeOption.TextOf(Order.DeliveryWindow);
+            return Order.CourierName is null ? when
+                 : Order.DeliveringMyself ? $"{when} · 🛵 you"
+                 : $"{when} · 🛵 {Order.CourierName}";
+        }
+    }
 
     /// <summary>"Home · 31 Camden High St, London", with "For Grace Mensah" first when it's for someone else.</summary>
     public string AddressText

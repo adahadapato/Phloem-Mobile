@@ -45,6 +45,9 @@ public class SessionService
     /// <summary>True once an admin has approved the user's shop.</summary>
     public bool IsSeller => IsInRole(Roles.Seller);
 
+    /// <summary>True for couriers (they see "My deliveries").</summary>
+    public bool IsCourier => IsInRole(Roles.Courier);
+
     /// <summary>True when the user has opened a shop (approved or not).</summary>
     public bool HasShop => Profile?.HasShop ?? false;
 

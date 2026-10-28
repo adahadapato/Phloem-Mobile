@@ -65,7 +65,26 @@ public sealed class ApiClient(IHttpClientFactory httpClientFactory, ILogger<ApiC
     public Task<ApiResult<T>> UploadAsync<T>(HttpMethod method, string path, string fieldName, Stream content,
                                              string fileName, string contentType,
                                              IReadOnlyDictionary<string, string>? fields = null,
-                                             CancellationToken ct = default)
+                                             CancellationToken ct = default) =>
+        SendAsync<T>(new HttpRequestMessage(method, path)
+        {
+            Content = Form(fieldName, content, fileName, contentType, fields)
+        }, ct);
+
+    /// <summary>Uploads one file as a form, for endpoints that answer with no body (204), e.g. "Delivered".</summary>
+    /// <inheritdoc cref="UploadAsync{T}"/>
+    public Task<ApiResult> UploadAsync(HttpMethod method, string path, string fieldName, Stream content,
+                                       string fileName, string contentType,
+                                       IReadOnlyDictionary<string, string>? fields = null,
+                                       CancellationToken ct = default) =>
+        SendAsync(new HttpRequestMessage(method, path)
+        {
+            Content = Form(fieldName, content, fileName, contentType, fields)
+        }, ct);
+
+    /// <summary>The multipart form: the file, then the other fields.</summary>
+    private static MultipartFormDataContent Form(string fieldName, Stream content, string fileName, string contentType,
+                                                 IReadOnlyDictionary<string, string>? fields)
     {
         var form = new MultipartFormDataContent();
         var file = new StreamContent(content);
@@ -75,7 +94,7 @@ public sealed class ApiClient(IHttpClientFactory httpClientFactory, ILogger<ApiC
         foreach (var (name, value) in fields ?? new Dictionary<string, string>())
             form.Add(new StringContent(value), name);
 
-        return SendAsync<T>(new HttpRequestMessage(method, path) { Content = form }, ct);
+        return form;
     }
 
     // ───────────────────────────── 3. Sending ─────────────────────────────

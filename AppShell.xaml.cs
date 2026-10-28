@@ -38,6 +38,8 @@ public partial class AppShell : Shell
         Routing.RegisterRoute("admindishes", typeof(AdminDishCatalogPage));      // Admin → dish names & price ranges
         Routing.RegisterRoute("adminparcelrules", typeof(AdminParcelRulesPage)); // Admin → What can be sent
         Routing.RegisterRoute("adminpricing", typeof(AdminPricingPage));         // Admin → Pricing
+        Routing.RegisterRoute("deliveries", typeof(MyDeliveriesPage));           // couriers (and sellers): My deliveries
+        Routing.RegisterRoute("deliveryproof", typeof(DeliveryProofPage));       // "Delivered": photo + handover
 
         // Checkout (was already reached with GoToAsync(nameof(CheckoutPage))).
         Routing.RegisterRoute(nameof(CheckoutPage), typeof(CheckoutPage));
@@ -55,6 +57,7 @@ public partial class AppShell : Shell
     //   Admin Dashboard   only for admins
     //   Become a Seller   hidden once the user has a shop
     //   Seller Dashboard  only when the user has a shop
+    //   My Deliveries     couriers, and sellers (who can deliver their own orders)
     // ------------------------------------------------------------------
     private readonly SessionService? _session;
 
@@ -70,6 +73,7 @@ public partial class AppShell : Shell
         SetFlyoutItemIsVisible(AdminMenuItem, _session?.IsAdmin ?? false);
         SetFlyoutItemIsVisible(BecomeSellerMenuItem, !hasShop);
         SetFlyoutItemIsVisible(SellerDashMenuItem, hasShop);
+        SetFlyoutItemIsVisible(MyDeliveriesMenuItem, (_session?.IsCourier ?? false) || hasShop);
     }
 
     /// <summary>Stops listening to the session when this shell is closed.</summary>

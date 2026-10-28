@@ -16,4 +16,5 @@ public sealed record StaffShipmentSummaryDto(
     decimal? WeighedWeightKg,
     decimal Price,
     Currency Currency,
-    DateTime BookedAt);
+    DateTime BookedAt,
+    string? CourierName = null);

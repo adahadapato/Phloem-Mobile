@@ -92,13 +92,20 @@ public sealed class SellerService(ApiClient api)
     public Task<ApiResult> DeclineAsync(string orderNumber, string reason, CancellationToken ct = default) =>
         api.PostAsync($"{OrderPath(orderNumber)}/decline", new DeclineRequest(reason), ct);
 
-    /// <summary>The order has left the kitchen.</summary>
-    public Task<ApiResult> SendOutAsync(string orderNumber, CancellationToken ct = default) =>
-        api.PostAsync($"{OrderPath(orderNumber)}/send-out", null, ct);
+    /// <summary>
+    /// The order has left the kitchen with a courier (null = I'll deliver it myself). The courier marks it delivered
+    /// with a photo (<see cref="DeliveryService"/>), and then the earnings go to my balance.
+    /// </summary>
+    public Task<ApiResult> SendOutAsync(string orderNumber, Guid? courierId, CancellationToken ct = default) =>
+        api.PostAsync($"{OrderPath(orderNumber)}/send-out", new CourierRequest(courierId), ct);
 
-    /// <summary>The order was delivered (the earnings go to my balance).</summary>
-    public Task<ApiResult> MarkDeliveredAsync(string orderNumber, CancellationToken ct = default) =>
-        api.PostAsync($"{OrderPath(orderNumber)}/delivered", null, ct);
+    /// <summary>Gives an order that's out for delivery to another courier (null = I'll deliver it myself).</summary>
+    public Task<ApiResult> ChangeCourierAsync(string orderNumber, Guid? courierId, CancellationToken ct = default) =>
+        api.PutAsync($"{OrderPath(orderNumber)}/courier", new CourierRequest(courierId), ct);
+
+    /// <summary>Who can deliver my orders: me first ("I'll deliver it myself"), then couriers in my country.</summary>
+    public Task<ApiResult<IReadOnlyList<CourierOptionDto>>> GetCouriersAsync(CancellationToken ct = default) =>
+        api.GetAsync<IReadOnlyList<CourierOptionDto>>($"{Mine}/couriers", ct);
 
     // ───────────────────────────── 3. My dishes ─────────────────────────────
 

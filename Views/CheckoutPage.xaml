@@ -7,6 +7,7 @@
 -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:Phloem.Helpers"
              xmlns:phloem="clr-namespace:Phloem"
              xmlns:vm="clr-namespace:Phloem.ViewModels"
              xmlns:models="clr-namespace:Phloem.Models"
@@ -15,6 +16,11 @@
              x:Name="RootPage"
              Shell.NavBarIsVisible="False"
              Title="Checkout">
+
+    <!-- Keeps the screen on while this page is open (My account → Keep screen on) -->
+    <ContentPage.Behaviors>
+        <helpers:KeepScreenAwakeBehavior />
+    </ContentPage.Behaviors>
 
     <ContentPage.Resources>
         <Style x:Key="WhiteCard" TargetType="Border">

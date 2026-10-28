@@ -27,8 +27,10 @@ public sealed class ShopOrderLine
 /// <list type="bullet">
 ///   <item><description><b>Waiting</b> (Paid): Accept, or Decline with a reason (cancelled and refunded; the customer
 ///   is emailed the reason).</description></item>
-///   <item><description><b>Being prepared</b>: Send out.</description></item>
-///   <item><description><b>Out for delivery</b>: Mark delivered.</description></item>
+///   <item><description><b>Being prepared</b>: Send out, choosing a courier (or "I'll deliver it myself").</description></item>
+///   <item><description><b>Out for delivery</b>: Change courier; when the seller is delivering it themselves,
+///   "Delivered · take a photo" (the courier's photo screen).</description></item>
+///   <item><description><b>Delivered</b>: the proof-of-delivery photo.</description></item>
 /// </list>
 /// </summary>
 public partial class ShopOrderDetailsViewModel : ObservableObject, IQueryAttributable
@@ -62,7 +64,8 @@ public partial class ShopOrderDetailsViewModel : ObservableObject, IQueryAttribu
                               nameof(IsPreparing), nameof(IsOutForDelivery), nameof(IsCancelled), nameof(WhenText),
                               nameof(AddressText), nameof(RecipientText), nameof(PhoneText), nameof(HasPhone),
                               nameof(SubtotalText), nameof(DeliveryFeeText), nameof(TotalText),
-                              nameof(ItemCountText), nameof(CancelledText))]
+                              nameof(ItemCountText), nameof(CancelledText), nameof(CourierText), nameof(HasCourier),
+                              nameof(CanMarkDelivered), nameof(Proof))]
     public partial OrderDetailsDto? Order { get; set; }
 
     [ObservableProperty]
@@ -132,6 +135,23 @@ public partial class ShopOrderDetailsViewModel : ObservableObject, IQueryAttribu
     public string DeliveryFeeText => Order is null ? string.Empty : $"{Symbol}{Order.DeliveryFee:N2}";
     public string TotalText => Order is null ? string.Empty : $"{Symbol}{Order.Total:N2}";
 
+    /// <summary>"Kwame Asante is delivering it" / "You're delivering it" / "Delivered by …".</summary>
+    public string CourierText => Order switch
+    {
+        { CourierName: null } => string.Empty,
+        { CanMarkDelivered: true } => "🛵  You're delivering it yourself",
+        { Status: OrderStatus.Delivered } => $"🛵  Delivered by {Order.CourierName}",
+        _ => $"🛵  {Order.CourierName} is delivering it"
+    };
+
+    public bool HasCourier => CourierText.Length > 0;
+
+    /// <summary>The seller is this order's courier and it's out for delivery: show "Delivered · take a photo".</summary>
+    public bool CanMarkDelivered => Order?.CanMarkDelivered == true;
+
+    /// <summary>The courier's photo once delivered; null before.</summary>
+    public DeliveryProofView? Proof => DeliveryProofView.From(Order?.DeliveryProof, _api);
+
     public string CancelledText => Order is not { Status: OrderStatus.Cancelled }
         ? string.Empty
         : Order.DeclinedByShop
@@ -179,20 +199,60 @@ public partial class ShopOrderDetailsViewModel : ObservableObject, IQueryAttribu
     private async Task Accept() =>
         await RunAsync(o => _seller.AcceptAsync(o), "Accepted. It's in \"Being prepared\".");
 
+    /// <summary>Send out: who's taking it? (me, or a courier in my country). The courier is emailed.</summary>
     [RelayCommand]
     private async Task SendOut()
     {
-        var ok = await Shell.Current.DisplayAlertAsync("Send it out?",
-            "Has the order left your kitchen for delivery?", "Yes, it's on its way", "Not yet");
-        if (ok) await RunAsync(o => _seller.SendOutAsync(o), "Marked as out for delivery.");
+        var courier = await ChooseCourierAsync("Who's delivering it?");
+        if (courier is null) return;
+
+        await RunAsync(o => _seller.SendOutAsync(o, courier.IsMe ? null : courier.Id),
+                       courier.IsMe
+                           ? "On its way. When you hand it over, tap \"Delivered\" and take a photo."
+                           : $"On its way with {courier.Name}. They'll take a photo when they deliver it.");
     }
 
+    /// <summary>Give it to another courier (or take it back myself), e.g. the first one can't make it.</summary>
+    [RelayCommand]
+    private async Task ChangeCourier()
+    {
+        var courier = await ChooseCourierAsync("Who's delivering it now?");
+        if (courier is null) return;
+
+        await RunAsync(o => _seller.ChangeCourierAsync(o, courier.IsMe ? null : courier.Id),
+                       courier.IsMe ? "You're delivering it now." : $"{courier.Name} is delivering it now.");
+    }
+
+    /// <summary>I'm delivering it: the photo screen (a photo is needed to confirm delivery).</summary>
     [RelayCommand]
     private async Task MarkDelivered()
     {
-        var ok = await Shell.Current.DisplayAlertAsync("Delivered?",
-            "Has the customer received the order?", "Yes, delivered", "Not yet");
-        if (ok) await RunAsync(o => _seller.MarkDeliveredAsync(o), "Delivered. The earnings are in your balance.");
+        if (Order is null || !CanMarkDelivered) return;
+        await Shell.Current.GoToAsync("deliveryproof", new Dictionary<string, object>
+        {
+            ["Kind"] = DeliveryKind.Order,
+            ["Reference"] = Order.OrderNumber,
+            ["Recipient"] = RecipientText
+        });
+    }
+
+    /// <summary>The choices from the API ("I'll deliver it myself" first); null when cancelled.</summary>
+    private async Task<CourierOptionDto?> ChooseCourierAsync(string title)
+    {
+        var result = await _seller.GetCouriersAsync();
+        if (result.IsFailure)
+        {
+            ShowError(result.Error!.DisplayMessage);
+            return null;
+        }
+
+        var options = result.Value!;
+        var labels = options.Select(c => c.IsMe ? "🙋  I'll deliver it myself" : $"🛵  {c.Name}").ToArray();
+        var picked = await Shell.Current.DisplayActionSheetAsync(
+            options.Count == 1 ? $"{title}\n(No couriers in your country yet.)" : title, "Cancel", null, labels);
+
+        var index = Array.IndexOf(labels, picked);
+        return index < 0 ? null : options[index];
     }
 
     /// <summary>Decline: pick a reason (or type one); the customer is refunded and emailed it.</summary>

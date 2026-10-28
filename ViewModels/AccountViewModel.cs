@@ -17,15 +17,32 @@ public partial class AccountViewModel : ObservableObject
     private readonly OrderService _orders;
     private readonly ShipmentService _shipments;
     private readonly DeliveryAddressService _delivery;
+    private readonly ScreenAwakeService _awake;
 
     public AccountViewModel(SessionService session, AuthService auth, OrderService orders, ShipmentService shipments,
-                            DeliveryAddressService delivery)
+                            DeliveryAddressService delivery, ScreenAwakeService awake)
     {
         _session = session;
         _auth = auth;
         _orders = orders;
         _shipments = shipments;
         _delivery = delivery;
+        _awake = awake;
+    }
+
+    /// <summary>
+    /// "Keep screen on": the phone won't dim or lock while an order, delivery, tracking or checkout screen is open.
+    /// Saved on this phone.
+    /// </summary>
+    public bool KeepScreenOn
+    {
+        get => _awake.IsEnabled;
+        set
+        {
+            if (_awake.IsEnabled == value) return;
+            _awake.IsEnabled = value;
+            OnPropertyChanged();
+        }
     }
 
     // ---------- Who is signed in ----------
@@ -188,7 +205,7 @@ public partial class AccountViewModel : ObservableObject
         if (_session.CurrentUser is null) return;
 
         await Shell.Current.DisplayAlertAsync("Delete your account",
-            "Deleting your account from the app is coming soon. To delete it now, email support@phloem.app " +
+            "Deleting your account from the app is coming soon. To delete it now, email support@phloemmarket.com " +
             "from your account's email address and we'll do it for you.", "OK");
     }
 }

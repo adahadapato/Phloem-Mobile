@@ -17,4 +17,6 @@ public sealed record ShopOrderSummaryDto(
     string DeliveryLabel,
     string DeliveryAddress,
     string? DeliveryRecipientName = null,
-    string? DeliveryPhone = null);
+    string? DeliveryPhone = null,
+    string? CourierName = null,
+    bool DeliveringMyself = false);
