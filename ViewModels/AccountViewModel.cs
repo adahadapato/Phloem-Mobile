@@ -79,10 +79,19 @@ public partial class AccountViewModel : ObservableObject
 
     public bool IsAdmin => _session.IsAdmin;
 
+    /// <summary>Owners and anyone the backend gave staff permissions: shows the admin / staff entry.</summary>
+    public bool IsStaff => _session.IsStaff;
+
+    /// <summary>"Admin dashboard" for owners, "Staff area" for other staff.</summary>
+    public string AdminLinkText => IsAdmin ? "Admin dashboard" : "Staff area";
+
+    /// <summary>The line under <see cref="AdminLinkText"/>.</summary>
+    public string AdminLinkSubtitle => IsAdmin ? "Approve sellers, users and shipments" : "The parts of Phloem your job role looks after";
+
     /// <summary>True when this user has opened a shop.</summary>
     public bool IsSeller => _session.HasShop;
 
-    public string RoleText => IsAdmin ? "Admin" : IsSeller ? "Seller" : "Customer";
+    public string RoleText => IsAdmin ? "Admin" : IsStaff ? "Staff" : IsSeller ? "Seller" : "Customer";
     public string SellerLinkText => IsSeller ? "Seller dashboard" : "Become a seller";
     public string SellerLinkSubtitle => IsSeller ? "Your shop, orders and dishes" : "Start selling your food on Phloem";
 
@@ -133,6 +142,7 @@ public partial class AccountViewModel : ObservableObject
         {
             nameof(IsLoggedIn), nameof(IsGuest), nameof(FullName), nameof(Email), nameof(PhoneNumber),
             nameof(Country), nameof(MemberSince), nameof(Initials), nameof(IsAdmin), nameof(IsSeller),
+            nameof(IsStaff), nameof(AdminLinkText), nameof(AdminLinkSubtitle),
             nameof(RoleText), nameof(SellerLinkText), nameof(SellerLinkSubtitle),
             nameof(AddressSummary), nameof(OrdersSummary),
             nameof(PhotoPath), nameof(HasPhoto), nameof(HasNoPhoto), nameof(NotificationsSummary),

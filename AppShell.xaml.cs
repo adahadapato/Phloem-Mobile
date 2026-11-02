@@ -38,6 +38,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute("admindishes", typeof(AdminDishCatalogPage));      // Admin → dish names & price ranges
         Routing.RegisterRoute("adminparcelrules", typeof(AdminParcelRulesPage)); // Admin → What can be sent
         Routing.RegisterRoute("adminpricing", typeof(AdminPricingPage));         // Admin → Pricing
+        Routing.RegisterRoute("adminstaff", typeof(AdminStaffPage));             // Admin → Staff (read-only)
         Routing.RegisterRoute("deliveries", typeof(MyDeliveriesPage));           // couriers (and sellers): My deliveries
         Routing.RegisterRoute("deliveryproof", typeof(DeliveryProofPage));       // "Delivered": photo + handover
 
@@ -54,7 +55,7 @@ public partial class AppShell : Shell
     // Side menu by who is signed in:
     //   Sign Up           only when signed out
     //   My Shipments      only when signed in
-    //   Admin Dashboard   only for admins
+    //   Admin Dashboard   owners (Admin); "Staff area" for anyone the backend gave staff permissions
     //   Become a Seller   hidden once the user has a shop
     //   Seller Dashboard  only when the user has a shop
     //   My Deliveries     couriers, and sellers (who can deliver their own orders)
@@ -70,7 +71,8 @@ public partial class AppShell : Shell
 
         SetFlyoutItemIsVisible(SignUpMenuItem, !signedIn);
         SetFlyoutItemIsVisible(MyShipmentsMenuItem, signedIn);
-        SetFlyoutItemIsVisible(AdminMenuItem, _session?.IsAdmin ?? false);
+        SetFlyoutItemIsVisible(AdminMenuItem, _session?.IsStaff ?? false);
+        AdminMenuItem.Text = (_session?.IsAdmin ?? false) ? "Admin Dashboard" : "Staff area";
         SetFlyoutItemIsVisible(BecomeSellerMenuItem, !hasShop);
         SetFlyoutItemIsVisible(SellerDashMenuItem, hasShop);
         SetFlyoutItemIsVisible(MyDeliveriesMenuItem, (_session?.IsCourier ?? false) || hasShop);

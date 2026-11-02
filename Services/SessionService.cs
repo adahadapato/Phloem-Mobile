@@ -15,11 +15,13 @@ namespace Phloem.Services;
 /// </remarks>
 public class SessionService
 {
+    private readonly TokenStore _tokens;
     private IReadOnlyCollection<string> _roles = [];
 
     /// <summary>Listens for "the sign-in ran out" so the app shows the user as signed out.</summary>
     public SessionService(TokenStore tokens)
     {
+        _tokens = tokens;
         tokens.SessionExpired += (_, _) => MainThread.BeginInvokeOnMainThread(SignOut);
     }
 
@@ -53,6 +55,27 @@ public class SessionService
 
     /// <summary>Checks a role from the sign-in token.</summary>
     public bool IsInRole(string role) => IsLoggedIn && _roles.Contains(role, StringComparer.OrdinalIgnoreCase);
+
+    // ───────────────────────────── Staff access ─────────────────────────────
+    // The backend decides who may do what and sends it with every sign-in and renewal (kept in TokenStore, so a
+    // renewal is picked up straight away). These only decide what the app SHOWS; the API checks every call.
+
+    /// <summary>True when the person holds this permission (always true for owners).</summary>
+    /// <param name="permission">A value from <see cref="StaffPermissions"/>.</param>
+    public bool HasPermission(string permission) =>
+        IsLoggedIn && (IsAdmin
+                       || _tokens.Permissions.Contains(StaffPermissions.Everything)
+                       || _tokens.Permissions.Contains(permission));
+
+    /// <summary>True when the person holds ANY of these permissions.</summary>
+    /// <param name="permissions">Values from <see cref="StaffPermissions"/>.</param>
+    public bool HasAnyPermission(params string[] permissions) => permissions.Any(HasPermission);
+
+    /// <summary>True for owners and anyone the backend gave at least one staff permission.</summary>
+    public bool IsStaff => IsLoggedIn && (IsAdmin || _tokens.Permissions.Count > 0);
+
+    /// <summary>True for owners and staff given every country.</summary>
+    public bool CoversAllCountries => IsLoggedIn && (IsAdmin || _tokens.Countries.Contains("*"));
 
     /// <summary>Sets the signed-in user (called by <c>AuthService</c>).</summary>
     /// <param name="profile">The profile from <c>GET /api/me</c>.</param>

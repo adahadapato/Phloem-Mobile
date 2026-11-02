@@ -26,13 +26,15 @@ public partial class AdminViewModel : ObservableObject
 {
     private readonly AdminService _admin;
     private readonly ShipmentService _shipments;
+    private readonly SessionService _session;
     private readonly ApiSettings _api;
 
-    public AdminViewModel(AdminService admin, ShipmentService shipments, IOptions<ApiSettings> api,
-                          PagingFactory paging)
+    public AdminViewModel(AdminService admin, ShipmentService shipments, SessionService session,
+                          IOptions<ApiSettings> api, PagingFactory paging)
     {
         _admin = admin;
         _shipments = shipments;
+        _session = session;
         _api = api.Value;
         ShopsPager = paging.Create(PagedLists.AdminShops, () => RunAsync(LoadAllShopsAsync));
         UsersPager = paging.Create(PagedLists.AdminUsers, () => RunAsync(LoadUsersAsync));
@@ -119,19 +121,91 @@ public partial class AdminViewModel : ObservableObject
 
     private async Task LoadAllAsync()
     {
+        RefreshAccess();
         IsLoading = true;
         try
         {
-            await LoadStatsAsync();
-            await LoadShopsAsync();
-            await LoadDishSuggestionsAsync();
-            await LoadUsersAsync();
-            await LoadShipmentCountAsync();
+            // Only what this person's permissions cover (the API would refuse the rest anyway)
+            if (CanShops)
+            {
+                await LoadStatsAsync();
+                await LoadShopsAsync();
+            }
+            if (CanCatalog) await LoadDishSuggestionsAsync();
+            if (CanUsers) await LoadUsersAsync();
+            if (CanParcels) await LoadShipmentCountAsync();
         }
         finally
         {
             IsLoading = false;
         }
+    }
+
+    // ═════════════════════════════ What this person may see ═════════════════════════════
+    // The backend decides who may do what and sends it with the sign-in (owners: everything). These only decide what
+    // the page SHOWS; the API checks every call itself.
+
+    /// <summary>Shops: waiting for approval, all shops, verify / block.</summary>
+    public bool CanShops => _session.HasPermission(StaffPermissions.ShopsManage);
+
+    /// <summary>Dish names, suggestions and price ranges.</summary>
+    public bool CanCatalog => _session.HasPermission(StaffPermissions.CatalogManage);
+
+    /// <summary>Pricing: delivery fees and times, or commission.</summary>
+    public bool CanPricing => _session.HasAnyPermission(StaffPermissions.PricingManage, StaffPermissions.Commission);
+
+    /// <summary>Users: list, suspend, reinstate.</summary>
+    public bool CanUsers => _session.HasPermission(StaffPermissions.UsersManage);
+
+    /// <summary>Give or take job roles (Admin only for owners).</summary>
+    public bool CanChangeRoles => _session.HasPermission(StaffPermissions.StaffManage);
+
+    /// <summary>Staff list.</summary>
+    public bool CanStaff => _session.HasPermission(StaffPermissions.StaffManage);
+
+    /// <summary>All parcels: receive, weigh, move along.</summary>
+    public bool CanParcels => _session.HasPermission(StaffPermissions.ParcelsManage);
+
+    /// <summary>Shipping routes and what can be sent.</summary>
+    public bool CanParcelSettings => _session.HasPermission(StaffPermissions.ParcelsSettings);
+
+    /// <summary>The Sellers tab: shops, dish names or pricing.</summary>
+    public bool ShowSellersTab => CanShops || CanCatalog || CanPricing;
+
+    /// <summary>The Users tab.</summary>
+    public bool ShowUsersTab => CanUsers;
+
+    /// <summary>The Shipments tab: parcels or their settings.</summary>
+    public bool ShowShipmentsTab => CanParcels || CanParcelSettings;
+
+    /// <summary>The number tiles at the top.</summary>
+    public bool ShowStats => CanShops || CanUsers || CanParcels;
+
+    /// <summary>Nothing in the app for this job role yet (e.g. Finance or Content: their pages are on the website).</summary>
+    public bool HasNothingHere => !ShowSellersTab && !ShowUsersTab && !ShowShipmentsTab && !CanStaff;
+
+    /// <summary>"Admin dashboard" for owners, "Staff area" for everyone else.</summary>
+    public string DashboardTitle => _session.IsAdmin ? "Admin dashboard" : "Staff area";
+
+    /// <summary>The line under the title.</summary>
+    public string DashboardSubtitle => _session.IsAdmin
+        ? "Manage the Phloem marketplace"
+        : "The parts of Phloem your job role looks after";
+
+    /// <summary>Re-reads the permissions (they can change at a sign-in or renewal) and opens a tab the person may use.</summary>
+    private void RefreshAccess()
+    {
+        OnPropertyChanged(string.Empty);   // every Can… / Show… property above
+
+        var allowed = ActiveTab switch
+        {
+            "Sellers" => ShowSellersTab,
+            "Users" => ShowUsersTab,
+            "Shipments" => ShowShipmentsTab,
+            _ => false
+        };
+        if (!allowed)
+            ActiveTab = ShowSellersTab ? "Sellers" : ShowUsersTab ? "Users" : ShowShipmentsTab ? "Shipments" : string.Empty;
     }
 
     private async Task LoadStatsAsync()
@@ -367,7 +441,18 @@ public partial class AdminViewModel : ObservableObject
     private async Task ManageRoles(AdminUserCard card)
     {
         var name = card.User.FullName;
-        var options = Roles.Assignable.ToDictionary(
+        var isOwner = _session.IsAdmin;
+
+        // Staff with the Staff permission (not owners) can't change their own roles
+        if (!isOwner && card.IsYou)
+        {
+            await Shell.Current.DisplayAlertAsync("These are your roles",
+                "You can't change your own roles. Ask an owner to do it.", "OK");
+            return;
+        }
+
+        // Only owners give or take Admin
+        var options = Roles.Assignable.Where(r => isOwner || r != Roles.Admin).ToDictionary(
             role => (card.Has(role) ? "✓ " : "") + Roles.DisplayName(role) + (card.IsYou && role == Roles.Admin ? " (you)" : ""),
             role => role);
         var picked = await Shell.Current.DisplayActionSheetAsync(
@@ -417,6 +502,10 @@ public partial class AdminViewModel : ObservableObject
     /// <summary>Shipments tab → What can be sent (the list customers see before booking).</summary>
     [RelayCommand]
     private async Task OpenParcelRules() => await Shell.Current.GoToAsync("adminparcelrules");
+
+    /// <summary>Staff: the owners and everyone with a job role (read-only in the app).</summary>
+    [RelayCommand]
+    private async Task OpenStaff() => await Shell.Current.GoToAsync("adminstaff");
 
     /// <summary>Shipments tab → All shipments (receive at hub, next step).</summary>
     [RelayCommand]

@@ -115,26 +115,27 @@
 
                 <!-- ============ TITLE ============ -->
                 <VerticalStackLayout Spacing="2" Margin="2,0,0,2">
-                    <Label Text="Admin dashboard" FontSize="26" FontAttributes="Bold"
+                    <Label Text="{Binding DashboardTitle}" FontSize="26" FontAttributes="Bold"
                            TextColor="{StaticResource BrandTextDark}" />
-                    <Label Text="Manage the Phloem marketplace" Style="{StaticResource SubtleLabel}" FontSize="13" />
+                    <Label Text="{Binding DashboardSubtitle}" Style="{StaticResource SubtleLabel}" FontSize="13" />
                 </VerticalStackLayout>
 
                 <!-- ============ STATS (2 × 2) ============ -->
-                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
-                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource WhiteCard}">
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12"
+                      IsVisible="{Binding ShowStats}">
+                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource WhiteCard}" IsVisible="{Binding CanShops}">
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{Binding TotalVendors, StringFormat='{0:N0}'}" Style="{StaticResource TileNumber}" />
                             <Label Text="Total sellers" Style="{StaticResource TileCaption}" />
                         </VerticalStackLayout>
                     </Border>
-                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource WhiteCard}">
+                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource WhiteCard}" IsVisible="{Binding CanUsers}">
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{Binding TotalUsers, StringFormat='{0:N0}'}" Style="{StaticResource TileNumber}" />
                             <Label Text="Total users" Style="{StaticResource TileCaption}" />
                         </VerticalStackLayout>
                     </Border>
-                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource WhiteCard}"
+                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource WhiteCard}" IsVisible="{Binding CanShops}"
                             BackgroundColor="{StaticResource BrandMintPale}">
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{Binding PendingApprovalCount}" Style="{StaticResource TileNumber}"
@@ -142,7 +143,7 @@
                             <Label Text="Pending reviews" Style="{StaticResource TileCaption}" />
                         </VerticalStackLayout>
                     </Border>
-                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource WhiteCard}">
+                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource WhiteCard}" IsVisible="{Binding CanParcels}">
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{Binding TotalShipments}" Style="{StaticResource TileNumber}" />
                             <Label Text="Shipments" Style="{StaticResource TileCaption}" />
@@ -150,9 +151,34 @@
                     </Border>
                 </Grid>
 
-                <!-- ============ TAB PILLS ============ -->
+                <!-- ============ STAFF (people with the Staff permission) ============ -->
+                <Border Style="{StaticResource WhiteCard}" IsVisible="{Binding CanStaff}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenStaffCommand}" />
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                        <Border WidthRequest="44" HeightRequest="44" StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                                BackgroundColor="{StaticResource BrandMintPale}" VerticalOptions="Center">
+                            <Label Text="🪪" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="Staff" FontSize="16" FontAttributes="Bold"
+                                   TextColor="{StaticResource BrandTextDark}" />
+                            <Label Text="The owners and everyone with a job role: roles, countries, two-step sign-in"
+                                   Style="{StaticResource SmallSubtle}" LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+                        <Label Grid.Column="2" Text="›" FontSize="26" TextColor="{StaticResource BrandTextMuted}"
+                               VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+
+                <Label Text="Your job role doesn't have pages in the app yet. Its pages are on the Phloem website (Account → Staff area)."
+                       Style="{StaticResource SubtleLabel}" LineBreakMode="WordWrap" IsVisible="{Binding HasNothingHere}" />
+
+                <!-- ============ TAB PILLS (only the tabs this person's permissions open) ============ -->
                 <HorizontalStackLayout Spacing="8" Margin="0,6,0,0">
-                    <Button Text="Sellers" Style="{StaticResource TabPill}" Command="{Binding ShowSellersCommand}">
+                    <Button Text="Sellers" Style="{StaticResource TabPill}" Command="{Binding ShowSellersCommand}"
+                            IsVisible="{Binding ShowSellersTab}">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding ActiveTab}" Value="Sellers">
                                 <Setter Property="BackgroundColor" Value="{StaticResource BrandDark}" />
@@ -162,7 +188,8 @@
                             </DataTrigger>
                         </Button.Triggers>
                     </Button>
-                    <Button Text="Users" Style="{StaticResource TabPill}" Command="{Binding ShowUsersCommand}">
+                    <Button Text="Users" Style="{StaticResource TabPill}" Command="{Binding ShowUsersCommand}"
+                            IsVisible="{Binding ShowUsersTab}">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding ActiveTab}" Value="Users">
                                 <Setter Property="BackgroundColor" Value="{StaticResource BrandDark}" />
@@ -172,7 +199,8 @@
                             </DataTrigger>
                         </Button.Triggers>
                     </Button>
-                    <Button Text="Shipments" Style="{StaticResource TabPill}" Command="{Binding ShowShipmentsCommand}">
+                    <Button Text="Shipments" Style="{StaticResource TabPill}" Command="{Binding ShowShipmentsCommand}"
+                            IsVisible="{Binding ShowShipmentsTab}">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding ActiveTab}" Value="Shipments">
                                 <Setter Property="BackgroundColor" Value="{StaticResource BrandDark}" />
@@ -198,7 +226,8 @@
                         </DataTrigger>
                     </VerticalStackLayout.Triggers>
 
-                    <!-- ============ WAITING FOR APPROVAL ============ -->
+                    <!-- ============ WAITING FOR APPROVAL (Shops permission) ============ -->
+                    <VerticalStackLayout Spacing="12" IsVisible="{Binding CanShops}">
                     <Label Text="Waiting for approval" Style="{StaticResource SectionTitle}" Margin="2,4,0,0" />
                     <Label Text="No shops waiting for approval." Style="{StaticResource SubtleLabel}"
                            IsVisible="{Binding HasPendingApprovals, Converter={StaticResource InvertedBoolConverter}}" />
@@ -250,8 +279,10 @@
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
 
-                    <!-- ============ DISH NAMES & PRICES ============ -->
-                    <Border Style="{StaticResource WhiteCard}" Margin="0,10,0,0">
+                    </VerticalStackLayout>
+
+                    <!-- ============ DISH NAMES & PRICES (Dish list permission) ============ -->
+                    <Border Style="{StaticResource WhiteCard}" Margin="0,10,0,0" IsVisible="{Binding CanCatalog}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding OpenDishNamesCommand}" />
                         </Border.GestureRecognizers>
@@ -271,8 +302,8 @@
                         </Grid>
                     </Border>
 
-                    <!-- ============ PRICING ============ -->
-                    <Border Style="{StaticResource WhiteCard}">
+                    <!-- ============ PRICING (delivery pricing or commission permission) ============ -->
+                    <Border Style="{StaticResource WhiteCard}" IsVisible="{Binding CanPricing}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding OpenPricingCommand}" />
                         </Border.GestureRecognizers>
@@ -330,7 +361,8 @@
                         </VerticalStackLayout>
                     </VerticalStackLayout>
 
-                    <!-- ============ ALL SHOPS ============ -->
+                    <!-- ============ ALL SHOPS (Shops permission) ============ -->
+                    <VerticalStackLayout Spacing="12" IsVisible="{Binding CanShops}">
                     <Grid ColumnDefinitions="*,Auto" Margin="2,14,0,0">
                         <Label x:Name="AllShopsTitle" Text="All shops" Style="{StaticResource SectionTitle}" />
                         <Label Grid.Column="1" Text="{Binding BlockedCount, StringFormat='{0} blocked'}"
@@ -419,6 +451,7 @@
 
                     <!-- ◀ Page x of y ▶ · Show n -->
                     <controls:PagerView Paging="{Binding ShopsPager}" ScrollTarget="{x:Reference AllShopsTitle}" />
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
 
                 <!-- =================================================== -->
@@ -503,6 +536,7 @@
                                                 <!-- Roles: give or take Admin and the staff roles (not your own Admin) -->
                                                 <Button Text="Roles" Style="{StaticResource ChipButton}"
                                                         BackgroundColor="{StaticResource BrandMintPale}" TextColor="{StaticResource BrandDark}"
+                                                        IsVisible="{Binding CanChangeRoles, Source={RelativeSource AncestorType={x:Type vm:AdminViewModel}}}"
                                                         Command="{Binding ManageRolesCommand, Source={RelativeSource AncestorType={x:Type vm:AdminViewModel}}}"
                                                         CommandParameter="{Binding .}" />
                                                 <Button Text="Suspend" Style="{StaticResource ChipButton}"
@@ -541,8 +575,8 @@
                     <Label Text="Parcels customers send between countries (Send Food to UK)."
                            Style="{StaticResource SubtleLabel}" />
 
-                    <!-- Shipping routes -->
-                    <Border Style="{StaticResource WhiteCard}">
+                    <!-- Shipping routes (Routes & rules permission) -->
+                    <Border Style="{StaticResource WhiteCard}" IsVisible="{Binding CanParcelSettings}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding OpenShippingRoutesCommand}" />
                         </Border.GestureRecognizers>
@@ -562,8 +596,8 @@
                         </Grid>
                     </Border>
 
-                    <!-- What can be sent (NEW): the list customers see before booking -->
-                    <Border Style="{StaticResource WhiteCard}">
+                    <!-- What can be sent: the list customers see before booking (Routes & rules permission) -->
+                    <Border Style="{StaticResource WhiteCard}" IsVisible="{Binding CanParcelSettings}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding OpenParcelRulesCommand}" />
                         </Border.GestureRecognizers>
@@ -583,8 +617,8 @@
                         </Grid>
                     </Border>
 
-                    <!-- All shipments -->
-                    <Border Style="{StaticResource WhiteCard}">
+                    <!-- All shipments (Parcels permission) -->
+                    <Border Style="{StaticResource WhiteCard}" IsVisible="{Binding CanParcels}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding OpenAllShipmentsCommand}" />
                         </Border.GestureRecognizers>

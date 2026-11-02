@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddSingleton<SuggestionService>(); // /api/me/suggestions, /api/dishes/popular (Home)    // /api/admin/commissions, /api/admin/delivery-pricing
         services.AddSingleton<SellerService>();     // /api/shops/mine, /api/shops/mine/orders
         services.AddSingleton<AdminService>();      // /api/admin/shops, /api/admin/users, /api/admin/dish-catalog
+        services.AddSingleton<StaffService>();      // /api/admin/staff (read-only in the app)
 
         // ---- Services (singletons so mock "database" is shared across pages) ----
         services.AddSingleton<MockDataService>();
@@ -86,6 +87,7 @@ public static class DependencyInjection
         services.AddTransient<AdminDishCatalogViewModel>();
         services.AddTransient<LegalViewModel>();
         services.AddTransient<AdminParcelRulesViewModel>();
+        services.AddTransient<AdminStaffViewModel>();
         services.AddTransient<AdminPricingViewModel>();
         services.AddTransient<ContactViewModel>();
         services.AddTransient<MyDeliveriesViewModel>();
@@ -100,6 +102,7 @@ public static class DependencyInjection
         services.AddTransient<AboutPage>();
         services.AddTransient<LegalPage>();
         services.AddTransient<AdminParcelRulesPage>();
+        services.AddTransient<AdminStaffPage>();
         services.AddTransient<HomePage>();
         services.AddTransient<RegisterPage>();
         services.AddTransient<SellerSetupPage>();

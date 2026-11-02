@@ -280,8 +280,8 @@
                                 <Path Grid.Column="2" Style="{StaticResource Chevron}" />
                             </Grid>
 
-                            <!-- Admin (admins only) -->
-                            <VerticalStackLayout IsVisible="{Binding IsAdmin}">
+                            <!-- Admin dashboard (owners) / Staff area (anyone with staff permissions) -->
+                            <VerticalStackLayout IsVisible="{Binding IsStaff}">
                                 <BoxView HeightRequest="1" Color="{StaticResource BrandBorder}" Margin="64,0,10,0" />
                                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14" Padding="10,12">
                                     <Grid.GestureRecognizers>
@@ -292,8 +292,8 @@
                                               Data="M12,3 L20,6 L20,12 C20,16.5 16.5,20 12,21 C7.5,20 4,16.5 4,12 L4,6 Z M9,12 L11,14 L15,10" />
                                     </Border>
                                     <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                        <Label Text="Admin dashboard" Style="{StaticResource RowTitle}" />
-                                        <Label Text="Approve sellers, users and shipments" Style="{StaticResource RowSub}" />
+                                        <Label Text="{Binding AdminLinkText}" Style="{StaticResource RowTitle}" />
+                                        <Label Text="{Binding AdminLinkSubtitle}" Style="{StaticResource RowSub}" />
                                     </VerticalStackLayout>
                                     <Path Grid.Column="2" Style="{StaticResource Chevron}" />
                                 </Grid>
