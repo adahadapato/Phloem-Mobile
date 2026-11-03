@@ -20,4 +20,6 @@ public sealed record MyDishDto(
     bool IsAvailable,
     decimal Rating,
     int RatingCount,
-    IReadOnlyList<DishPhotoDto> Photos);
+    IReadOnlyList<DishPhotoDto> Photos,
+    ContentReviewStatus ReviewStatus = ContentReviewStatus.Approved,
+    string? ReviewNote = null);

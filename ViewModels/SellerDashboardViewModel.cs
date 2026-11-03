@@ -172,7 +172,14 @@ public partial class SellerDashboardViewModel : ObservableObject
         VendorName = Shop?.Name ?? string.Empty,
         VendorId = Shop?.Id.ToString() ?? string.Empty,
         Description = d.Description ?? string.Empty,
-        IsAvailable = d.IsAvailable
+        IsAvailable = d.IsAvailable,
+        ReviewText = d.ReviewStatus switch
+        {
+            ContentReviewStatus.Checking => "Being checked",
+            ContentReviewStatus.WithStaff => "Being checked by our team",
+            ContentReviewStatus.Rejected => $"Not allowed: {d.ReviewNote ?? "edit the wording"}",
+            _ => null
+        }
     };
 
     /// <summary>Called by the page each time it appears: the shop, its orders and its dishes from the API.</summary>

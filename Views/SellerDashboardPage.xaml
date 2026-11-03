@@ -336,6 +336,10 @@
                                                    TextColor="{StaticResource BrandDanger}"
                                                    IsVisible="{Binding IsAvailable, Converter={StaticResource InvertedBoolConverter}}" />
                                         </HorizontalStackLayout>
+                                        <!-- Wording being checked, or not allowed (buyers don't see it yet) -->
+                                        <Label Text="{Binding ReviewText}" FontSize="11" FontAttributes="Bold"
+                                               TextColor="{StaticResource BrandOrange}" LineBreakMode="TailTruncation"
+                                               IsVisible="{Binding HasReviewText}" />
                                     </VerticalStackLayout>
 
                                     <Label Grid.Column="2" Text="{Binding PriceText}"

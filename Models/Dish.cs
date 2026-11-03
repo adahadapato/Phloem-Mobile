@@ -21,6 +21,12 @@ public partial class Dish : ObservableObject
     public string Description { get; set; } = string.Empty;
     public bool IsAvailable { get; set; } = true;
 
+    /// <summary>Seller's dishes: why buyers can't see it yet ("Being checked", "Not allowed: …"); null when fine.</summary>
+    public string? ReviewText { get; set; }
+
+    /// <summary>True when <see cref="ReviewText"/> should show.</summary>
+    public bool HasReviewText => !string.IsNullOrEmpty(ReviewText);
+
     private string? _currencySymbol;
 
     /// <summary>
