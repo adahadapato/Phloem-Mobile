@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <!--
     AdminShipmentRoutesPage (route "adminroutes"): Admin → Shipping routes, on the API.
     New route (e.g. Ghana → UK) with its drop-off hub → a rate per speed → Switch on.
@@ -208,6 +208,63 @@
                         </VerticalStackLayout>
                     </Border>
 
+                    <!-- ============ PARCEL OPTIONS FORM ============ -->
+                    <Border Style="{StaticResource WhiteCard}" IsVisible="{Binding IsEditingOptions}">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="{Binding OptionsFormTitle}" FontSize="17" FontAttributes="Bold"
+                                   TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <VerticalStackLayout>
+                                    <Label Text="Size divisor" Style="{StaticResource FieldLabel}" />
+                                    <Border Style="{StaticResource FieldBox}">
+                                        <Entry Text="{Binding VolumeDivisor}" Placeholder="5000" Keyboard="Numeric"
+                                           TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                                    </Border>
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="1">
+                                    <Label Text="Fragile charge" Style="{StaticResource FieldLabel}" />
+                                    <Border Style="{StaticResource FieldBox}">
+                                        <Entry Text="{Binding FragileCharge}" Placeholder="0 = free" Keyboard="Numeric"
+                                           TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                                    </Border>
+                                </VerticalStackLayout>
+                            </Grid>
+                            <Label Text="Size weight (kg) = length × width × height in cm ÷ the divisor. Each box is charged as the higher of its weight and its size weight."
+                                   Style="{StaticResource SmallMuted}" LineBreakMode="WordWrap" />
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                                <CheckBox IsChecked="{Binding OffersPickup}" Color="{StaticResource BrandDark}" />
+                                <Label Grid.Column="1" Text="Offer home pickup" FontSize="14" VerticalOptions="Center"
+                                       TextColor="{StaticResource BrandTextDark}" />
+                            </Grid>
+                            <VerticalStackLayout IsVisible="{Binding OffersPickup}">
+                                <Label Text="Home pickup charge" Style="{StaticResource FieldLabel}" />
+                                <Border Style="{StaticResource FieldBox}">
+                                    <Entry Text="{Binding PickupCharge}" Placeholder="e.g. 25" Keyboard="Numeric"
+                                       TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout>
+                                <Label Text="Collection hub address (empty = recipients can't collect)" Style="{StaticResource FieldLabel}" />
+                                <Border Style="{StaticResource FieldBox}">
+                                    <Entry Text="{Binding CollectionHubAddress}" Placeholder="e.g. 12 Allen Avenue, Ikeja, Lagos"
+                                       TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout>
+                                <Label Text="Collection hub opening hours" Style="{StaticResource FieldLabel}" />
+                                <Border Style="{StaticResource FieldBox}">
+                                    <Entry Text="{Binding CollectionHubHours}" Placeholder="e.g. Mon–Sat, 9am–5pm"
+                                       TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <Button Text="Cancel" Command="{Binding CancelOptionsCommand}" Style="{StaticResource OutlineButton}" />
+                                <Button Grid.Column="1" Text="Save options" Command="{Binding SaveOptionsCommand}"
+                                        Style="{StaticResource CtaButton}" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
                     <!-- ============ ROUTES ============ -->
                     <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Routes}">
                         <BindableLayout.ItemTemplate>
@@ -290,6 +347,46 @@
                                                     CommandParameter="{Binding .}" />
                                             </Label.GestureRecognizers>
                                         </Label>
+
+                                        <BoxView HeightRequest="1" Color="{StaticResource BrandBorder}" />
+
+                                        <!-- Parcel options -->
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                            <VerticalStackLayout Spacing="2">
+                                                <Label Text="Parcel options" Style="{StaticResource CardTitle}" />
+                                                <Label Text="{Binding OptionsText}" FontSize="13"
+                                                       TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+                                            </VerticalStackLayout>
+                                            <Label Grid.Column="1" Text="Change" Style="{StaticResource LinkLabel}"
+                                                   TextColor="{StaticResource BrandDark}" VerticalOptions="Start">
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer
+                                                        Command="{Binding EditOptionsCommand, Source={RelativeSource AncestorType={x:Type vm:AdminShipmentRoutesViewModel}}}"
+                                                        CommandParameter="{Binding .}" />
+                                                </Label.GestureRecognizers>
+                                            </Label>
+                                        </Grid>
+
+                                        <!-- Door delivery by zone -->
+                                        <Label Text="Door delivery by zone (tap to change)" Style="{StaticResource CardTitle}" />
+                                        <Label Text="The destination has no delivery zones, so door delivery costs nothing extra. Zones are set on the website: Admin → Shipping → Zones &amp; towns."
+                                               Style="{StaticResource SmallMuted}" LineBreakMode="WordWrap" IsVisible="{Binding HasNoZones}" />
+                                        <VerticalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding Zones}">
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:ZoneChargeRow">
+                                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Padding="0,4">
+                                                        <Grid.GestureRecognizers>
+                                                            <TapGestureRecognizer
+                                                                Command="{Binding EditZoneChargeCommand, Source={RelativeSource AncestorType={x:Type vm:AdminShipmentRoutesViewModel}}}"
+                                                                CommandParameter="{Binding .}" />
+                                                        </Grid.GestureRecognizers>
+                                                        <Label Text="{Binding Title}" FontSize="14" TextColor="{StaticResource BrandTextDark}" />
+                                                        <Label Grid.Column="1" Text="{Binding AmountText}" FontSize="14" FontAttributes="Bold"
+                                                               TextColor="{StaticResource BrandDark}" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </VerticalStackLayout>
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>

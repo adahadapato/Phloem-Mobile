@@ -1,8 +1,10 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <!--
     ShipmentDetailsPage (route "shipmentdetails?tracking=…[&staff=true]"): one parcel from the API.
-    Status, where to drop it off (until it's dropped off), timeline, recipient, items, weight and price.
-    Sender: Pay (test payment, once weighed) and Cancel.  Staff: Received at hub (weight) and the next step.
+    Status, where to drop it off / pickup address (until it's received), ready to collect, timeline, recipient (with
+    LGA), boxes, fragile / pickup / hub collection, items, weight and the price part by part.
+    Sender: Pay (test payment, once weighed) and Cancel.  Staff: Received at hub (weigh and measure each box) and
+    the next step.
 -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -36,6 +38,14 @@
         <Style x:Key="SmallMuted" TargetType="Label">
             <Setter Property="FontSize" Value="12" />
             <Setter Property="TextColor" Value="{StaticResource BrandTextMuted}" />
+        </Style>
+        <Style x:Key="HubField" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="{StaticResource BrandBorder}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 8" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="HeightRequest" Value="42" />
         </Style>
         <Style x:Key="CardTitle" TargetType="Label">
             <Setter Property="FontSize" Value="13" />
@@ -113,16 +123,100 @@
                                    TextColor="{StaticResource BrandTextDark}" />
                             <Label Text="{Binding DropOffText}" FontSize="14" TextColor="{StaticResource BrandTextDark}"
                                    LineBreakMode="WordWrap" />
-                            <Label Text="Write the tracking number on it. We'll weigh it, then you can pay here."
+                            <Label Text="Write the tracking number on every box. We'll weigh and measure them, then you can pay here."
                                    Style="{StaticResource SmallMuted}" LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Home pickup (only while Booked) -->
+                    <Border BackgroundColor="#FFF1E0" StrokeThickness="0" StrokeShape="RoundRectangle 14" Padding="14"
+                            IsVisible="{Binding ShowPickup}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="We'll collect it from" FontSize="14" FontAttributes="Bold"
+                                   TextColor="{StaticResource BrandTextDark}" />
+                            <Label Text="{Binding PickupText}" FontSize="14" TextColor="{StaticResource BrandTextDark}"
+                                   LineBreakMode="WordWrap" />
+                            <Label Text="We'll call to arrange a time. Write the tracking number on every box."
+                                   Style="{StaticResource SmallMuted}" LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Ready to collect at our hub -->
+                    <Border BackgroundColor="{StaticResource BrandMintPale}" StrokeThickness="0" StrokeShape="RoundRectangle 14"
+                            Padding="14" IsVisible="{Binding ShowReadyToCollect}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="📦 Ready to collect" FontSize="14" FontAttributes="Bold"
+                                   TextColor="{StaticResource BrandDark}" />
+                            <Label Text="{Binding ReadyToCollectText}" FontSize="14" TextColor="{StaticResource BrandTextDark}"
+                                   LineBreakMode="WordWrap" />
                         </VerticalStackLayout>
                     </Border>
 
                     <!-- ============ ACTIONS ============ -->
                     <Button Text="{Binding PriceText, StringFormat='Pay {0} (test payment)'}" Command="{Binding PayCommand}"
                             Style="{StaticResource CtaButton}" IsVisible="{Binding CanPay}" />
-                    <Button Text="Received at hub · enter weight" Command="{Binding ReceiveCommand}"
+                    <Button Text="Received at hub · weigh and measure" Command="{Binding ReceiveCommand}"
                             Style="{StaticResource CtaButton}" IsVisible="{Binding CanReceive}" />
+
+                    <!-- Staff: weigh and measure every box -->
+                    <Border Style="{StaticResource WhiteCard}" IsVisible="{Binding IsMeasuring}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Weigh and measure every box" FontSize="15" FontAttributes="Bold"
+                                   TextColor="{StaticResource BrandTextDark}" />
+                            <Label Text="Outside size in cm. Same boxes: one line with a number." Style="{StaticResource SmallMuted}" />
+                            <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding HubBoxes}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="models:ParcelBoxDraft">
+                                        <Border BackgroundColor="{StaticResource BrandCream}" StrokeThickness="1"
+                                                Stroke="{StaticResource BrandBorder}" StrokeShape="RoundRectangle 12" Padding="10">
+                                            <VerticalStackLayout Spacing="6">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <Label Text="{Binding Title}" FontSize="13" FontAttributes="Bold"
+                                                           TextColor="{StaticResource BrandTextDark}" />
+                                                    <Label Grid.Column="1" Text="Remove" FontSize="13" TextColor="{StaticResource BrandDanger}"
+                                                           IsVisible="{Binding CanRemove}">
+                                                        <Label.GestureRecognizers>
+                                                            <TapGestureRecognizer
+                                                                Command="{Binding RemoveHubBoxCommand, Source={RelativeSource AncestorType={x:Type vm:ShipmentDetailsViewModel}}}"
+                                                                CommandParameter="{Binding .}" />
+                                                        </Label.GestureRecognizers>
+                                                    </Label>
+                                                </Grid>
+                                                <Grid ColumnDefinitions="*,*" ColumnSpacing="6">
+                                                    <Border Style="{StaticResource HubField}">
+                                                        <Entry Placeholder="kg each" Text="{Binding Weight}" Keyboard="Numeric" FontSize="14" />
+                                                    </Border>
+                                                    <Border Grid.Column="1" Style="{StaticResource HubField}">
+                                                        <Entry Placeholder="How many" Text="{Binding Quantity}" Keyboard="Numeric" FontSize="14" />
+                                                    </Border>
+                                                </Grid>
+                                                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6">
+                                                    <Border Style="{StaticResource HubField}">
+                                                        <Entry Placeholder="L cm" Text="{Binding Length}" Keyboard="Numeric" FontSize="14" />
+                                                    </Border>
+                                                    <Border Grid.Column="1" Style="{StaticResource HubField}">
+                                                        <Entry Placeholder="W cm" Text="{Binding Width}" Keyboard="Numeric" FontSize="14" />
+                                                    </Border>
+                                                    <Border Grid.Column="2" Style="{StaticResource HubField}">
+                                                        <Entry Placeholder="H cm" Text="{Binding Height}" Keyboard="Numeric" FontSize="14" />
+                                                    </Border>
+                                                </Grid>
+                                                <Label Text="{Binding CountsText}" Style="{StaticResource SmallMuted}" LineBreakMode="WordWrap" />
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                            <Label Text="+ Another box" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource BrandDark}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding AddHubBoxCommand}" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                            <Button Text="Save · set the final price" Command="{Binding SaveReceiveCommand}"
+                                    Style="{StaticResource CtaButton}" />
+                            <Button Text="Cancel" Command="{Binding CancelReceiveCommand}" Style="{StaticResource OutlineButton}" />
+                        </VerticalStackLayout>
+                    </Border>
                     <Button Text="{Binding NextStepText}" Command="{Binding MoveOnCommand}"
                             Style="{StaticResource CtaButton}" IsVisible="{Binding CanMoveOn}" />
                     <Label Text="{Binding CourierText}" FontSize="14" FontAttributes="Bold"
@@ -157,6 +251,30 @@
                                 <Label Text="Weight" Style="{StaticResource CardTitle}" />
                                 <Label Text="{Binding WeightText}" FontSize="14" TextColor="{StaticResource BrandTextDark}"
                                    LineBreakMode="WordWrap" />
+                                <Label Text="{Binding ChargedAsText}" Style="{StaticResource SmallMuted}" LineBreakMode="WordWrap"
+                                       IsVisible="{Binding ChargedAsText, Converter={StaticResource StringNotEmptyConverter}}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Boxes" Style="{StaticResource CardTitle}" />
+                                <Label Text="{Binding BoxesText}" FontSize="14" TextColor="{StaticResource BrandTextDark}"
+                                   LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Spacing="2" IsVisible="{Binding HasExtras}">
+                                <Label Text="Options" Style="{StaticResource CardTitle}" />
+                                <Label Text="{Binding ExtrasText}" FontSize="14" TextColor="{StaticResource BrandTextDark}"
+                                   LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Spacing="4" IsVisible="{Binding HasBreakdown}"
+                                                 BindableLayout.ItemsSource="{Binding Breakdown}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:PriceLine">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <Label Text="{Binding Label}" FontSize="13" TextColor="{StaticResource BrandTextMuted}" />
+                                            <Label Grid.Column="1" Text="{Binding Amount}" FontSize="13" FontAttributes="Bold"
+                                                   TextColor="{StaticResource BrandTextDark}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>
                             <Grid ColumnDefinitions="*,Auto">
                                 <Label Text="{Binding PriceCaption}" Style="{StaticResource CardTitle}" VerticalOptions="Center" />

@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddSingleton<ShopService>();       // /api/shops
         services.AddSingleton<OrderService>();      // /api/orders
         services.AddSingleton<ShipmentService>();   // /api/shipments, /api/staff/shipments
+        services.AddSingleton<LocationService>();   // /api/locations: states, LGAs, towns (kept while the app runs)
         services.AddSingleton<ShipmentRouteService>(); // /api/admin/shipment-routes
         services.AddSingleton<PricingService>();
         services.AddSingleton<ContactService>();

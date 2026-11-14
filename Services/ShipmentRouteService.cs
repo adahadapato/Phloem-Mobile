@@ -40,5 +40,19 @@ public sealed class ShipmentRouteService(ApiClient api)
                                            CancellationToken ct = default) =>
         api.DeleteAsync($"{Route(from, to)}/rates/{speed}", ct);
 
+    /// <summary>Size divisor, fragile charge, home pickup (null = off) and destination collection hub (blank = off).</summary>
+    public Task<ApiResult> SetParcelOptionsAsync(Country from, Country to, ParcelOptionsRequest body,
+                                                 CancellationToken ct = default) =>
+        api.PutAsync($"{Route(from, to)}/parcel-options", body, ct);
+
+    /// <summary>The door delivery charge for one zone of the destination country (the route's currency).</summary>
+    public Task<ApiResult> SetZoneChargeAsync(Country from, Country to, Guid zoneId, decimal doorDeliveryCharge,
+                                              CancellationToken ct = default) =>
+        api.PutAsync($"{Route(from, to)}/zones/{zoneId}", new ZoneChargeRequest(doorDeliveryCharge), ct);
+
+    /// <summary>Removes a zone's door delivery charge (door delivery there then costs nothing extra).</summary>
+    public Task<ApiResult> RemoveZoneChargeAsync(Country from, Country to, Guid zoneId, CancellationToken ct = default) =>
+        api.DeleteAsync($"{Route(from, to)}/zones/{zoneId}", ct);
+
     private static string Route(Country from, Country to) => $"{Base}/{from}/{to}";
 }

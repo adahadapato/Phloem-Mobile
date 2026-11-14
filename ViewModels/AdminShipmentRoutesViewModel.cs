@@ -21,6 +21,29 @@ public sealed class RouteRow
     public string DropOffText => $"{Route.DropOffAddress}\n{Route.DropOffHours}";
     public bool HasNoRates => Route.Rates.Count == 0;
     public IReadOnlyList<RateRow> Rates => Route.Rates.Select(r => new RateRow { Route = Route, Rate = r }).ToList();
+
+    /// <summary>"Size: L × W × H ÷ 5,000 · Fragile: £10.00 · Home pickup: off · Hub collection: off".</summary>
+    public string OptionsText =>
+        $"Size weight: L × W × H ÷ {Route.VolumeDivisor:N0}\n" +
+        $"Fragile handling: {(Route.FragileCharge > 0 ? ShipmentText.Money(Route.FragileCharge, Route.Currency) : "free")}\n" +
+        $"Home pickup: {(Route.HomePickupCharge is { } p ? ShipmentText.Money(p, Route.Currency) : "off")}\n" +
+        $"Recipient collects from our hub: {(Route.CollectionHubAddress is { } a ? $"{a} ({Route.CollectionHubHours})" : "off")}";
+
+    /// <summary>Door delivery charge per zone of the destination country.</summary>
+    public IReadOnlyList<ZoneChargeRow> Zones =>
+        (Route.ZoneCharges ?? []).Select(z => new ZoneChargeRow { Route = Route, Zone = z }).ToList();
+
+    public bool HasZones => Route.ZoneCharges is { Count: > 0 };
+    public bool HasNoZones => !HasZones;
+}
+
+/// <summary>One zone's door delivery charge on a route card ("South-West  £20.00").</summary>
+public sealed class ZoneChargeRow
+{
+    public required AdminShipmentRouteDto Route { get; init; }
+    public required AdminZoneChargeDto Zone { get; init; }
+    public string Title => Zone.ZoneName;
+    public string AmountText => Zone.DoorDeliveryCharge is { } c ? ShipmentText.Money(c, Route.Currency) : "not set (free)";
 }
 
 /// <summary>One speed's price on a route card.</summary>
@@ -48,7 +71,11 @@ public sealed class SpeedOption
 ///   switched OFF.</description></item>
 ///   <item><description><b>Rates:</b> per speed, a base charge + price per kg (in the sending country's currency)
 ///   and the transit days.</description></item>
-///   <item><description><b>Switch on</b> once it has a rate: customers can then book it on Send Food to UK.</description></item>
+///   <item><description><b>Parcel options:</b> the size divisor, fragile charge, home pickup (on/off + charge) and
+///   the destination hub where recipients can collect.</description></item>
+///   <item><description><b>Door delivery by zone:</b> a charge for each zone of the destination country (zones
+///   themselves are set on the website, Admin → Shipping → Zones &amp; towns).</description></item>
+///   <item><description><b>Switch on</b> once it has a rate: customers can then book it on Send a parcel.</description></item>
 /// </list>
 /// </summary>
 public partial class AdminShipmentRoutesViewModel : ObservableObject
@@ -127,6 +154,35 @@ public partial class AdminShipmentRoutesViewModel : ObservableObject
     [ObservableProperty]
     public partial string MaxDays { get; set; } = string.Empty;
 
+    // ---------- Parcel options form ----------
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEditingOptions), nameof(OptionsFormTitle))]
+    public partial AdminShipmentRouteDto? OptionsRoute { get; set; }
+
+    public bool IsEditingOptions => OptionsRoute is not null;
+    public string OptionsFormTitle => OptionsRoute is { } r
+        ? $"Parcel options for {ShipmentText.Route(r.FromCountry, r.ToCountry)} (in {r.Currency})"
+        : string.Empty;
+
+    [ObservableProperty]
+    public partial string VolumeDivisor { get; set; } = "5000";
+
+    [ObservableProperty]
+    public partial string FragileCharge { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool OffersPickup { get; set; }
+
+    [ObservableProperty]
+    public partial string PickupCharge { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string CollectionHubAddress { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string CollectionHubHours { get; set; } = string.Empty;
+
     // ═════════════════════════════ Loading ═════════════════════════════
 
     /// <summary>Called each time the page appears (and after every change).</summary>
@@ -165,6 +221,7 @@ public partial class AdminShipmentRoutesViewModel : ObservableObject
     private void NewRoute()
     {
         RateRoute = null;
+        OptionsRoute = null;
         EditingRoute = null;
         FromCountry = Countries.FirstOrDefault(c => c.ApiCountry == Country.Ghana) ?? Countries.FirstOrDefault();
         ToCountry = Countries.FirstOrDefault(c => c.ApiCountry == Country.UnitedKingdom) ?? Countries.LastOrDefault();
@@ -177,6 +234,7 @@ public partial class AdminShipmentRoutesViewModel : ObservableObject
     private void EditDropOff(RouteRow row)
     {
         RateRoute = null;
+        OptionsRoute = null;
         EditingRoute = row.Route;
         DropOffAddress = row.Route.DropOffAddress;
         DropOffHours = row.Route.DropOffHours;
@@ -257,6 +315,7 @@ public partial class AdminShipmentRoutesViewModel : ObservableObject
     private void AddRate(RouteRow row)
     {
         IsEditingRoute = false;
+        OptionsRoute = null;
         RateRoute = row.Route;
         RateSpeed = Speeds.FirstOrDefault(s => row.Route.Rates.All(r => r.Speed != s.Value)) ?? Speeds[0];
         BaseCharge = PricePerKg = MinDays = MaxDays = string.Empty;
@@ -268,6 +327,7 @@ public partial class AdminShipmentRoutesViewModel : ObservableObject
     private void EditRate(RateRow rate)
     {
         IsEditingRoute = false;
+        OptionsRoute = null;
         RateRoute = rate.Route;
         RateSpeed = Speeds.First(s => s.Value == rate.Rate.Speed);
         BaseCharge = rate.Rate.BaseCharge.ToString("0.##");
@@ -322,6 +382,110 @@ public partial class AdminShipmentRoutesViewModel : ObservableObject
 
         await LoadAsync();
         ShowInfo($"{rate.Title} removed.");
+    }
+
+    // ═════════════════════════════ Parcel options ═════════════════════════════
+
+    [RelayCommand]
+    private void EditOptions(RouteRow row)
+    {
+        IsEditingRoute = false;
+        RateRoute = null;
+        var r = row.Route;
+        OptionsRoute = r;
+        VolumeDivisor = r.VolumeDivisor.ToString();
+        FragileCharge = r.FragileCharge.ToString("0.##");
+        OffersPickup = r.HomePickupCharge is not null;
+        PickupCharge = r.HomePickupCharge?.ToString("0.##") ?? string.Empty;
+        CollectionHubAddress = r.CollectionHubAddress ?? string.Empty;
+        CollectionHubHours = r.CollectionHubHours ?? string.Empty;
+        Message = string.Empty;
+    }
+
+    [RelayCommand]
+    private void CancelOptions() => OptionsRoute = null;
+
+    [RelayCommand]
+    private async Task SaveOptions()
+    {
+        if (OptionsRoute is not { } route) return;
+
+        if (!int.TryParse(VolumeDivisor, out var divisor) || divisor is < 1000 or > 10000)
+        {
+            ShowError("The size divisor must be a whole number from 1000 to 10000 (usually 5000).");
+            return;
+        }
+        if (InternationalDeliveryViewModel.ParseDecimal(string.IsNullOrWhiteSpace(FragileCharge) ? "0" : FragileCharge) is not { } fragile)
+        {
+            ShowError("Enter the fragile charge (0 = free).");
+            return;
+        }
+        decimal? pickup = null;
+        if (OffersPickup)
+        {
+            if (InternationalDeliveryViewModel.ParseDecimal(PickupCharge) is not { } p)
+            {
+                ShowError("Enter the home pickup charge (0 or more).");
+                return;
+            }
+            pickup = p;
+        }
+        if (string.IsNullOrWhiteSpace(CollectionHubAddress) != string.IsNullOrWhiteSpace(CollectionHubHours))
+        {
+            ShowError("Give the collection hub's address AND opening hours, or leave both empty.");
+            return;
+        }
+
+        var result = await _routes.SetParcelOptionsAsync(route.FromCountry, route.ToCountry, new ParcelOptionsRequest(
+            divisor, fragile, pickup,
+            string.IsNullOrWhiteSpace(CollectionHubAddress) ? null : CollectionHubAddress.Trim(),
+            string.IsNullOrWhiteSpace(CollectionHubHours) ? null : CollectionHubHours.Trim()));
+        if (result.IsFailure)
+        {
+            ShowError(result.Error!.DisplayMessage);
+            return;
+        }
+
+        OptionsRoute = null;
+        await LoadAsync();
+        ShowInfo("Parcel options saved. New quotes use them at once.");
+    }
+
+    // ═════════════════════════════ Door delivery by zone ═════════════════════════════
+
+    /// <summary>Tap a zone: type its door delivery charge (blank = remove it, so door delivery there is free).</summary>
+    [RelayCommand]
+    private async Task EditZoneCharge(ZoneChargeRow row)
+    {
+        var text = await Shell.Current.DisplayPromptAsync($"Door delivery · {row.Title}",
+            $"Charge in {row.Route.Currency} for delivery to a door in {row.Title}. Leave empty for no charge.",
+            "Save", "Cancel", placeholder: "e.g. 20", keyboard: Keyboard.Numeric,
+            initialValue: row.Zone.DoorDeliveryCharge?.ToString("0.##") ?? string.Empty);
+        if (text is null) return;
+
+        ApiResult result;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            result = await _routes.RemoveZoneChargeAsync(row.Route.FromCountry, row.Route.ToCountry, row.Zone.ZoneId);
+        }
+        else if (InternationalDeliveryViewModel.ParseDecimal(text) is { } charge && charge >= 0)
+        {
+            result = await _routes.SetZoneChargeAsync(row.Route.FromCountry, row.Route.ToCountry, row.Zone.ZoneId, charge);
+        }
+        else
+        {
+            ShowError("Enter the charge as a number, e.g. 20.");
+            return;
+        }
+
+        if (result.IsFailure)
+        {
+            ShowError(result.Error!.DisplayMessage);
+            return;
+        }
+
+        await LoadAsync();
+        ShowInfo(string.IsNullOrWhiteSpace(text) ? $"Door delivery to {row.Title} is now free." : $"Door delivery to {row.Title} saved.");
     }
 
     private void ShowError(string message)

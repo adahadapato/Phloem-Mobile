@@ -12,4 +12,10 @@ public sealed record ShipmentRouteOptionDto(
     Currency Currency,
     string DropOffAddress,
     string DropOffHours,
-    IReadOnlyList<ShipmentSpeedOptionDto> Speeds);
+    IReadOnlyList<ShipmentSpeedOptionDto> Speeds,
+    int VolumeDivisor = 5000,
+    decimal FragileCharge = 0,
+    decimal? HomePickupCharge = null,
+    string? CollectionHubAddress = null,
+    string? CollectionHubHours = null,
+    bool HasLocationList = false);

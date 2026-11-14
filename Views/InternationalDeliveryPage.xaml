@@ -1,16 +1,22 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <!--
-    InternationalDeliveryPage (route "international"): Send Food to UK, booked on the API.
+    InternationalDeliveryPage (route "international"): Send a parcel, booked on the API.
     Its own booking (not part of the basket):
       1. route (only routes an admin switched on) and speed
-      2. sender phone, recipient, items, estimated weight → live price estimate
-      3. Book → tracking number + where to drop the parcel off (it's weighed there; pay from My shipments)
+      2. boxes (weight, outside size explained with a drawing, how many; "counts as" at once) and Fragile
+      3. items for customs
+      4. getting it to us (drop off / home pickup) - options a route doesn't offer are greyed out
+      5. recipient: town with suggestions → State + LGA (full-screen lists; AI suggests the LGA of a town we don't
+         know), and how it reaches them (to the door / collect from our hub)
+      6. your phone; live price part by part; Book → tracking number and what happens next
 -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:phloem="clr-namespace:Phloem"
              xmlns:vm="clr-namespace:Phloem.ViewModels"
              xmlns:controls="clr-namespace:Phloem.Views.Controls"
+             xmlns:models="clr-namespace:Phloem.Models"
+             xmlns:dtos="clr-namespace:Phloem.Services.Api.Contracts.Dtos"
              x:DataType="vm:InternationalDeliveryViewModel"
              x:Class="Phloem.Views.InternationalDeliveryPage"
              Shell.NavBarIsVisible="False"
@@ -48,6 +54,13 @@
                     <Shadow Brush="Black" Opacity="0.06" Radius="12" Offset="0,3" />
                 </Setter.Value>
             </Setter>
+        </Style>
+        <Style x:Key="ChoiceCard" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="{StaticResource BrandBorder}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+            <Setter Property="Padding" Value="14,10" />
         </Style>
     </ContentPage.Resources>
 
@@ -101,7 +114,7 @@
                 <VerticalStackLayout Spacing="2" Margin="2,0,0,0">
                     <Label Text="Send food to the UK" FontSize="26" FontAttributes="Bold"
                            TextColor="{StaticResource BrandTextDark}" />
-                    <Label Text="Book a parcel, drop it at our hub, we deliver it"
+                    <Label Text="Book a parcel, drop it at our hub or we collect it, we deliver it"
                            Style="{StaticResource SubtleLabel}" FontSize="13" />
                 </VerticalStackLayout>
 
@@ -121,7 +134,7 @@
                             <Label Text="How it works" FontSize="17" FontAttributes="Bold"
                                    TextColor="White" VerticalOptions="Center" />
                         </HorizontalStackLayout>
-                        <Label Text="1. Book here  ·  2. Drop the parcel at the hub  ·  3. We weigh it and you pay the final price  ·  4. We deliver it"
+                        <Label Text="1. Book here  ·  2. Drop it at the hub, or we collect it  ·  3. We weigh and measure it, you pay the final price  ·  4. We deliver it, or they collect it"
                                FontSize="12" TextColor="White" LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
                 </Border>
@@ -153,13 +166,23 @@
                         </Label>
                         <Label Text="{Binding BookedPriceText}" FontSize="14" TextColor="{StaticResource BrandTextDark}" />
                         <BoxView HeightRequest="1" Color="{StaticResource BrandMint}" />
-                        <Label Text="Drop it off at" FontSize="13" FontAttributes="Bold"
-                               TextColor="{StaticResource BrandTextDark}" />
-                        <Label Text="{Binding Booked.DropOffAddress}" FontSize="14" TextColor="{StaticResource BrandTextDark}"
-                               LineBreakMode="WordWrap" />
-                        <Label Text="{Binding Booked.DropOffHours}" FontSize="13" TextColor="{StaticResource BrandTextMuted}" />
-                        <Label Text="Write the tracking number on the parcel. We'll weigh it at the hub; then pay the final price from My shipments."
+                        <VerticalStackLayout Spacing="4" IsVisible="{Binding BookedIsDropOff}">
+                            <Label Text="Drop it off at" FontSize="13" FontAttributes="Bold"
+                                   TextColor="{StaticResource BrandTextDark}" />
+                            <Label Text="{Binding Booked.DropOffAddress}" FontSize="14" TextColor="{StaticResource BrandTextDark}"
+                                   LineBreakMode="WordWrap" />
+                            <Label Text="{Binding Booked.DropOffHours}" FontSize="13" TextColor="{StaticResource BrandTextMuted}" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Spacing="4" IsVisible="{Binding BookedIsPickup}">
+                            <Label Text="We'll collect it from you" FontSize="13" FontAttributes="Bold"
+                                   TextColor="{StaticResource BrandTextDark}" />
+                            <Label Text="Our team will call you to arrange a pickup time. Please have it packed, taped and labelled."
+                                   FontSize="13" TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+                        <Label Text="Write the tracking number on every box. We'll weigh and measure them at the hub; then pay the final price from My shipments."
                                FontSize="12" TextColor="{StaticResource BrandTextMuted}" LineBreakMode="WordWrap" />
+                        <Label Text="{Binding BookedCollectionText}" IsVisible="{Binding BookedHasCollection}"
+                               FontSize="12" TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
                         <Button Text="View my shipments" Command="{Binding GoToMyShipmentsCommand}"
                                 Style="{StaticResource CtaButton}" />
                         <Button Text="Send another parcel" Command="{Binding SendAnotherCommand}"
@@ -235,41 +258,132 @@
                             </VerticalStackLayout>
                         </Border>
 
-                        <!-- ===== 2. People ===== -->
+                        <!-- ===== 2. Your boxes ===== -->
                         <Border Style="{StaticResource FormCard}">
-                            <VerticalStackLayout Spacing="14">
-                                <VerticalStackLayout>
-                                    <Label Text="Your phone number" Style="{StaticResource FieldLabel}" />
-                                    <Border Style="{StaticResource FieldBox}">
-                                        <Entry Placeholder="+233 24 555 0192" Text="{Binding SenderPhone}" Keyboard="Telephone"
-                                               Style="{StaticResource FieldEntry}" />
-                                    </Border>
+                            <VerticalStackLayout Spacing="12">
+                                <Label Text="Your boxes" FontSize="16" FontAttributes="Bold"
+                                       TextColor="{StaticResource BrandTextDark}" />
+
+                                <!-- Why we ask for the size (tap to open) -->
+                                <Border BackgroundColor="{StaticResource BrandMintPale}" StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 12" Padding="14,12">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ToggleExplainerCommand}" />
+                                    </Border.GestureRecognizers>
+                                    <VerticalStackLayout Spacing="8">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <Label Text="📦 Why we ask for the size" FontSize="14" FontAttributes="Bold"
+                                                   TextColor="{StaticResource BrandDark}" />
+                                            <Label Grid.Column="1" Text="Show" FontSize="13" FontAttributes="Bold"
+                                                   TextColor="{StaticResource BrandGreen}">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding IsExplainerOpen}" Value="True">
+                                                        <Setter Property="Text" Value="Hide" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </Grid>
+                                        <VerticalStackLayout Spacing="8" IsVisible="{Binding IsExplainerOpen}">
+                                            <controls:BoxDiagram />
+                                            <Label Text="{Binding SizeExplainer}" FontSize="13" LineBreakMode="WordWrap"
+                                                   TextColor="{StaticResource BrandTextDark}" />
+                                            <Label FontSize="13" LineBreakMode="WordWrap" TextColor="{StaticResource BrandTextMuted}"
+                                                   Text="• Measure the OUTSIDE of the box with a tape measure, after packing and taping it.&#10;• Length is the longest side, width the side next to it, height from the bottom to the top.&#10;• Round up to the next whole cm.&#10;• Not sure yet? Leave the size empty: we measure every box at the hub and the final price uses our measurements." />
+                                        </VerticalStackLayout>
+                                    </VerticalStackLayout>
+                                </Border>
+
+                                <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Boxes}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="models:ParcelBoxDraft">
+                                            <Border StrokeThickness="1" Stroke="{StaticResource BrandBorder}"
+                                                    StrokeShape="RoundRectangle 12" Padding="12">
+                                                <VerticalStackLayout Spacing="8">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <Label Text="{Binding Title}" FontSize="14" FontAttributes="Bold"
+                                                               TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                                                        <Label Grid.Column="1" Text="Remove" Style="{StaticResource LinkLabel}"
+                                                               TextColor="{StaticResource BrandDanger}" IsVisible="{Binding CanRemove}">
+                                                            <Label.GestureRecognizers>
+                                                                <TapGestureRecognizer
+                                                                    Command="{Binding RemoveBoxCommand, Source={RelativeSource AncestorType={x:Type vm:InternationalDeliveryViewModel}}}"
+                                                                    CommandParameter="{Binding .}" />
+                                                            </Label.GestureRecognizers>
+                                                        </Label>
+                                                    </Grid>
+                                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                                        <VerticalStackLayout>
+                                                            <Label Text="Weight of one box (kg)" Style="{StaticResource FieldLabel}" />
+                                                            <Border Style="{StaticResource FieldBox}">
+                                                                <Entry Placeholder="e.g. 8.5" Text="{Binding Weight}" Keyboard="Numeric"
+                                                                       Style="{StaticResource FieldEntry}" />
+                                                            </Border>
+                                                        </VerticalStackLayout>
+                                                        <VerticalStackLayout Grid.Column="1">
+                                                            <Label Text="How many" Style="{StaticResource FieldLabel}" />
+                                                            <Border Style="{StaticResource FieldBox}">
+                                                                <Entry Placeholder="1" Text="{Binding Quantity}" Keyboard="Numeric"
+                                                                       Style="{StaticResource FieldEntry}" />
+                                                            </Border>
+                                                        </VerticalStackLayout>
+                                                    </Grid>
+                                                    <Label Text="Outside size in cm (optional)" Style="{StaticResource FieldLabel}" Margin="2,2,0,0" />
+                                                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                                        <Border Style="{StaticResource FieldBox}">
+                                                            <Entry Placeholder="Length" Text="{Binding Length}" Keyboard="Numeric"
+                                                                   Style="{StaticResource FieldEntry}" />
+                                                        </Border>
+                                                        <Border Grid.Column="1" Style="{StaticResource FieldBox}">
+                                                            <Entry Placeholder="Width" Text="{Binding Width}" Keyboard="Numeric"
+                                                                   Style="{StaticResource FieldEntry}" />
+                                                        </Border>
+                                                        <Border Grid.Column="2" Style="{StaticResource FieldBox}">
+                                                            <Entry Placeholder="Height" Text="{Binding Height}" Keyboard="Numeric"
+                                                                   Style="{StaticResource FieldEntry}" />
+                                                        </Border>
+                                                    </Grid>
+                                                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="10,8"
+                                                            BackgroundColor="{StaticResource BrandCream}">
+                                                        <Border.Triggers>
+                                                            <DataTrigger TargetType="Border" Binding="{Binding ChargedBySize}" Value="True">
+                                                                <Setter Property="BackgroundColor" Value="{StaticResource BrandPeach}" />
+                                                            </DataTrigger>
+                                                        </Border.Triggers>
+                                                        <Label Text="{Binding CountsText}" FontSize="13" LineBreakMode="WordWrap"
+                                                               TextColor="{StaticResource BrandTextDark}" />
+                                                    </Border>
+                                                </VerticalStackLayout>
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
                                 </VerticalStackLayout>
 
-                                <Label Text="Recipient" FontSize="16" FontAttributes="Bold"
-                                       TextColor="{StaticResource BrandTextDark}" Margin="2,4,0,0" />
-                                <Border Style="{StaticResource FieldBox}">
-                                    <Entry Placeholder="Full name" Text="{Binding RecipientName}"
-                                           Style="{StaticResource FieldEntry}" />
+                                <Label Text="+ Add a different box" Style="{StaticResource LinkLabel}"
+                                       TextColor="{StaticResource BrandDark}">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding AddBoxCommand}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
+
+                                <!-- Fragile -->
+                                <Border StrokeThickness="1" Stroke="{StaticResource BrandBorder}" StrokeDashArray="4,3"
+                                        StrokeShape="RoundRectangle 12" Padding="8,6">
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                                        <CheckBox IsChecked="{Binding IsFragile}" Color="{StaticResource BrandDark}" />
+                                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                            <Label FontSize="14" TextColor="{StaticResource BrandTextDark}">
+                                                <Label.FormattedText>
+                                                    <FormattedString>
+                                                        <Span Text="Fragile: handle with care  " FontAttributes="Bold" />
+                                                        <Span Text="{Binding FragileText}" TextColor="{StaticResource BrandTextMuted}" />
+                                                    </FormattedString>
+                                                </Label.FormattedText>
+                                            </Label>
+                                            <Label Text="Glass jars, bottles or electronics. We label the boxes and keep them on top."
+                                                   FontSize="12" TextColor="{StaticResource BrandTextMuted}" LineBreakMode="WordWrap" />
+                                        </VerticalStackLayout>
+                                    </Grid>
                                 </Border>
-                                <Border Style="{StaticResource FieldBox}">
-                                    <Entry Placeholder="Phone number" Text="{Binding RecipientPhone}" Keyboard="Telephone"
-                                           Style="{StaticResource FieldEntry}" />
-                                </Border>
-                                <Border Style="{StaticResource FieldBox}">
-                                    <Entry Placeholder="House number and street" Text="{Binding RecipientAddressLine}"
-                                           Style="{StaticResource FieldEntry}" />
-                                </Border>
-                                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                                    <Border Style="{StaticResource FieldBox}">
-                                        <Entry Placeholder="City or town" Text="{Binding RecipientCity}"
-                                               Style="{StaticResource FieldEntry}" />
-                                    </Border>
-                                    <Border Grid.Column="1" Style="{StaticResource FieldBox}">
-                                        <Entry Placeholder="Postcode" Text="{Binding RecipientRegionOrPostcode}"
-                                               Style="{StaticResource FieldEntry}" />
-                                    </Border>
-                                </Grid>
                             </VerticalStackLayout>
                         </Border>
 
@@ -278,6 +392,8 @@
                             <VerticalStackLayout Spacing="14">
                                 <Label Text="What's in the parcel" FontSize="16" FontAttributes="Bold"
                                        TextColor="{StaticResource BrandTextDark}" />
+                                <Label Text="For customs. Values are for ONE item." FontSize="12"
+                                       TextColor="{StaticResource BrandTextMuted}" Margin="0,-8,0,0" />
 
                                 <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Items}">
                                     <BindableLayout.ItemTemplate>
@@ -328,29 +444,284 @@
                                         <TapGestureRecognizer Command="{Binding AddItemCommand}" />
                                     </Label.GestureRecognizers>
                                 </Label>
+                            </VerticalStackLayout>
+                        </Border>
 
-                                <VerticalStackLayout>
-                                    <Label Text="Estimated weight (kg)" Style="{StaticResource FieldLabel}" />
+                        <!-- ===== 4. Getting it to us ===== -->
+                        <Border Style="{StaticResource FormCard}">
+                            <VerticalStackLayout Spacing="12">
+                                <Label Text="Getting it to us" FontSize="16" FontAttributes="Bold"
+                                       TextColor="{StaticResource BrandTextDark}" />
+                                <Border Style="{StaticResource ChoiceCard}">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsDropOff}" Value="True">
+                                            <Setter Property="Stroke" Value="{StaticResource BrandDark}" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource BrandMintPale}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ChooseHandOverCommand}" CommandParameter="HubDropOff" />
+                                    </Border.GestureRecognizers>
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="I'll drop it off" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                                        <Label Text="No extra charge" FontSize="12" TextColor="{StaticResource BrandTextMuted}" />
+                                        <Label Text="{Binding DropOffText}" FontSize="12" TextColor="{StaticResource BrandTextMuted}"
+                                               LineBreakMode="WordWrap" />
+                                    </VerticalStackLayout>
+                                </Border>
+                                <Border Style="{StaticResource ChoiceCard}">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsPickup}" Value="True">
+                                            <Setter Property="Stroke" Value="{StaticResource BrandDark}" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource BrandMintPale}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding PickupOffered}" Value="False">
+                                            <Setter Property="Opacity" Value="0.55" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ChooseHandOverCommand}" CommandParameter="HomePickup" />
+                                    </Border.GestureRecognizers>
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="Collect it from me" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                                        <Label Text="{Binding PickupPriceText}" FontSize="12" TextColor="{StaticResource BrandTextMuted}"
+                                               LineBreakMode="WordWrap" />
+                                    </VerticalStackLayout>
+                                </Border>
+
+                                <VerticalStackLayout Spacing="10" IsVisible="{Binding IsPickup}">
                                     <Border Style="{StaticResource FieldBox}">
-                                        <Entry Placeholder="e.g. 4.5" Text="{Binding EstimatedWeight}" Keyboard="Numeric"
+                                        <Entry Placeholder="House number and street" Text="{Binding PickupAddressLine}"
                                                Style="{StaticResource FieldEntry}" />
                                     </Border>
-                                    <Label Text="The final price is set when we weigh it at the hub."
-                                           FontSize="11" TextColor="{StaticResource BrandTextMuted}" Margin="2,6,0,0" />
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                        <Border Style="{StaticResource FieldBox}">
+                                            <Entry Placeholder="City or town" Text="{Binding PickupCity}" Style="{StaticResource FieldEntry}" />
+                                        </Border>
+                                        <Border Grid.Column="1" Style="{StaticResource FieldBox}">
+                                            <Entry Placeholder="{Binding PickupPostcodePlaceholder}" Text="{Binding PickupPostcode}"
+                                                   Style="{StaticResource FieldEntry}" />
+                                        </Border>
+                                    </Grid>
+                                    <Border Style="{StaticResource FieldBox}">
+                                        <Entry Placeholder="Notes for the driver (optional)" Text="{Binding PickupNotes}"
+                                               Style="{StaticResource FieldEntry}" />
+                                    </Border>
                                 </VerticalStackLayout>
                             </VerticalStackLayout>
                         </Border>
 
-                        <!-- Estimate -->
+                        <!-- ===== 5. Who it's for ===== -->
+                        <Border Style="{StaticResource FormCard}">
+                            <VerticalStackLayout Spacing="12">
+                                <Label Text="Who it's for" FontSize="16" FontAttributes="Bold"
+                                       TextColor="{StaticResource BrandTextDark}" />
+                                <Border Style="{StaticResource FieldBox}">
+                                    <Entry Placeholder="Full name" Text="{Binding RecipientName}"
+                                           Style="{StaticResource FieldEntry}" />
+                                </Border>
+                                <Border Style="{StaticResource FieldBox}">
+                                    <Entry Placeholder="{Binding RecipientPhonePlaceholder}" Text="{Binding RecipientPhone}"
+                                           Keyboard="Telephone" Style="{StaticResource FieldEntry}" />
+                                </Border>
+
+                                <!-- Countries with lists (Nigeria): town with suggestions → State + LGA -->
+                                <VerticalStackLayout Spacing="10" IsVisible="{Binding HasLocationList}">
+                                    <VerticalStackLayout>
+                                        <Label Text="Town or area" Style="{StaticResource FieldLabel}" />
+                                        <Border Style="{StaticResource FieldBox}">
+                                            <Entry Placeholder="e.g. Lekki, Wuse 2, Rumuokoro" Text="{Binding RecipientCity}"
+                                                   Style="{StaticResource FieldEntry}" Unfocused="OnTownUnfocused" />
+                                        </Border>
+                                        <Label Text="Start typing: we fill in the state and LGA." FontSize="11"
+                                               TextColor="{StaticResource BrandTextMuted}" Margin="2,4,0,0" />
+                                    </VerticalStackLayout>
+
+                                    <!-- Suggestions under the town box -->
+                                    <Border IsVisible="{Binding ShowTownSuggestions}" BackgroundColor="White"
+                                            Stroke="{StaticResource BrandBorder}" StrokeThickness="1"
+                                            StrokeShape="RoundRectangle 12" Padding="4">
+                                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding TownSuggestions}">
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate x:DataType="dtos:TownDto">
+                                                    <VerticalStackLayout Padding="10,8" Spacing="1">
+                                                        <VerticalStackLayout.GestureRecognizers>
+                                                            <TapGestureRecognizer
+                                                                Command="{Binding PickTownCommand, Source={RelativeSource AncestorType={x:Type vm:InternationalDeliveryViewModel}}}"
+                                                                CommandParameter="{Binding .}" />
+                                                        </VerticalStackLayout.GestureRecognizers>
+                                                        <Label Text="{Binding Name}" FontSize="15" FontAttributes="Bold"
+                                                               TextColor="{StaticResource BrandTextDark}" />
+                                                        <Label Text="{Binding Where}" FontSize="12" TextColor="{StaticResource BrandTextMuted}" />
+                                                    </VerticalStackLayout>
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </VerticalStackLayout>
+                                    </Border>
+
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                        <VerticalStackLayout>
+                                            <Label Text="{Binding RegionLabel}" Style="{StaticResource FieldLabel}" />
+                                            <Border Style="{StaticResource FieldBox}">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Command="{Binding ChooseRegionCommand}" />
+                                                </Border.GestureRecognizers>
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <Label Text="{Binding RegionText}" FontSize="14" VerticalOptions="Center"
+                                                           TextColor="{StaticResource BrandTextDark}" LineBreakMode="TailTruncation" />
+                                                    <Label Grid.Column="1" Text="▾" TextColor="{StaticResource BrandTextMuted}" VerticalOptions="Center" />
+                                                </Grid>
+                                            </Border>
+                                        </VerticalStackLayout>
+                                        <VerticalStackLayout Grid.Column="1">
+                                            <Label Text="{Binding DistrictLabel}" Style="{StaticResource FieldLabel}" />
+                                            <Border Style="{StaticResource FieldBox}">
+                                                <Border.Triggers>
+                                                    <DataTrigger TargetType="Border" Binding="{Binding CanChooseDistrict}" Value="False">
+                                                        <Setter Property="Opacity" Value="0.55" />
+                                                    </DataTrigger>
+                                                </Border.Triggers>
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Command="{Binding ChooseDistrictCommand}" />
+                                                </Border.GestureRecognizers>
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <Label Text="{Binding DistrictText}" FontSize="14" VerticalOptions="Center"
+                                                           TextColor="{StaticResource BrandTextDark}" LineBreakMode="TailTruncation" />
+                                                    <Label Grid.Column="1" Text="▾" TextColor="{StaticResource BrandTextMuted}" VerticalOptions="Center" />
+                                                </Grid>
+                                            </Border>
+                                        </VerticalStackLayout>
+                                    </Grid>
+
+                                    <Border IsVisible="{Binding HasLocationHint}" StrokeThickness="0" StrokeShape="RoundRectangle 10"
+                                            Padding="10,8" BackgroundColor="{StaticResource BrandMintPale}">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding LocationHintIsAi}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="{StaticResource BrandPeach}" />
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                                            <Border IsVisible="{Binding LocationHintIsAi}" BackgroundColor="{StaticResource BrandGold}"
+                                                    StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="6,1"
+                                                    VerticalOptions="Start">
+                                                <Label Text="AI" FontSize="10" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                                            </Border>
+                                            <Label Grid.Column="1" Text="{Binding LocationHint}" FontSize="12" LineBreakMode="WordWrap"
+                                                   TextColor="{StaticResource BrandTextDark}" />
+                                        </Grid>
+                                    </Border>
+                                </VerticalStackLayout>
+
+                                <!-- Countries without lists (UK): plain city + postcode -->
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="12" IsVisible="{Binding HasNoLocationList}">
+                                    <Border Style="{StaticResource FieldBox}">
+                                        <Entry Placeholder="City or town" Text="{Binding RecipientCity}"
+                                               Style="{StaticResource FieldEntry}" />
+                                    </Border>
+                                    <Border Grid.Column="1" Style="{StaticResource FieldBox}">
+                                        <Entry Placeholder="{Binding PostcodePlaceholder}" Text="{Binding RecipientRegionOrPostcode}"
+                                               Style="{StaticResource FieldEntry}" />
+                                    </Border>
+                                </Grid>
+
+                                <!-- How it reaches them -->
+                                <Label Text="How it reaches them" Style="{StaticResource FieldLabel}" Margin="2,6,0,0" />
+                                <Border Style="{StaticResource ChoiceCard}">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsToDoor}" Value="True">
+                                            <Setter Property="Stroke" Value="{StaticResource BrandDark}" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource BrandMintPale}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ChooseDeliveryCommand}" CommandParameter="ToDoor" />
+                                    </Border.GestureRecognizers>
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="Delivered to their door" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                                        <Label Text="{Binding DoorDeliveryText}" FontSize="12" TextColor="{StaticResource BrandTextMuted}" />
+                                    </VerticalStackLayout>
+                                </Border>
+                                <Border Style="{StaticResource ChoiceCard}">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsCollect}" Value="True">
+                                            <Setter Property="Stroke" Value="{StaticResource BrandDark}" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource BrandMintPale}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding CollectionOffered}" Value="False">
+                                            <Setter Property="Opacity" Value="0.55" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ChooseDeliveryCommand}" CommandParameter="CollectFromHub" />
+                                    </Border.GestureRecognizers>
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="They collect it from our hub" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                                        <Label Text="{Binding CollectionText}" FontSize="12" TextColor="{StaticResource BrandTextMuted}"
+                                               LineBreakMode="WordWrap" />
+                                    </VerticalStackLayout>
+                                </Border>
+
+                                <Border Style="{StaticResource FieldBox}" IsVisible="{Binding NeedsStreet}">
+                                    <Entry Placeholder="House number and street" Text="{Binding RecipientAddressLine}"
+                                           Style="{StaticResource FieldEntry}" />
+                                </Border>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- ===== 6. Your phone ===== -->
+                        <Border Style="{StaticResource FormCard}">
+                            <VerticalStackLayout>
+                                <Label Text="Your phone number" Style="{StaticResource FieldLabel}" />
+                                <Border Style="{StaticResource FieldBox}">
+                                    <Entry Placeholder="So the hub can reach you about this parcel" Text="{Binding SenderPhone}"
+                                           Keyboard="Telephone" Style="{StaticResource FieldEntry}" />
+                                </Border>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- Estimate, part by part -->
                         <Border BackgroundColor="{StaticResource BrandMintPale}" StrokeThickness="0"
                                 StrokeShape="RoundRectangle 12" Padding="14,12">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                <Label Text="Estimated price" FontSize="13"
-                                       TextColor="{StaticResource BrandTextMuted}" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="{Binding QuoteText}" FontSize="14" FontAttributes="Bold"
-                                       TextColor="{StaticResource BrandDark}" HorizontalTextAlignment="End"
-                                       VerticalOptions="Center" LineBreakMode="WordWrap" />
-                            </Grid>
+                            <VerticalStackLayout Spacing="6">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                    <Label Text="We get it" FontSize="12" TextColor="{StaticResource BrandTextMuted}" />
+                                    <Label Grid.Column="1" Text="{Binding HandOverSummary}" FontSize="12" FontAttributes="Bold"
+                                           TextColor="{StaticResource BrandTextDark}" HorizontalTextAlignment="End" />
+                                </Grid>
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                    <Label Text="They get it" FontSize="12" TextColor="{StaticResource BrandTextMuted}" />
+                                    <Label Grid.Column="1" Text="{Binding DeliverySummary}" FontSize="12" FontAttributes="Bold"
+                                           TextColor="{StaticResource BrandTextDark}" HorizontalTextAlignment="End" />
+                                </Grid>
+                                <Label Text="{Binding WeightSummary}" IsVisible="{Binding HasWeightSummary}" FontSize="12"
+                                       TextColor="{StaticResource BrandTextDark}" />
+                                <VerticalStackLayout Spacing="4" IsVisible="{Binding HasPriceLines}"
+                                                     BindableLayout.ItemsSource="{Binding PriceLines}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:PriceLine">
+                                            <VerticalStackLayout>
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <Label Text="{Binding Label}" FontSize="13" TextColor="{StaticResource BrandTextMuted}" />
+                                                    <Label Grid.Column="1" Text="{Binding Amount}" FontSize="13" FontAttributes="Bold"
+                                                           TextColor="{StaticResource BrandTextDark}" />
+                                                </Grid>
+                                                <Label Text="{Binding Note}" IsVisible="{Binding HasNote}" FontSize="11"
+                                                       TextColor="{StaticResource BrandTextMuted}" />
+                                            </VerticalStackLayout>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                                <BoxView HeightRequest="1" Color="{StaticResource BrandMint}" />
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                    <Label Text="Estimated price" FontSize="13"
+                                           TextColor="{StaticResource BrandTextMuted}" VerticalOptions="Center" />
+                                    <Label Grid.Column="1" Text="{Binding QuoteText}" FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource BrandDark}" HorizontalTextAlignment="End"
+                                           VerticalOptions="Center" LineBreakMode="WordWrap" />
+                                </Grid>
+                                <Label Text="The final price is set when we weigh and measure your boxes at the hub."
+                                       FontSize="11" TextColor="{StaticResource BrandTextMuted}" />
+                            </VerticalStackLayout>
                         </Border>
 
                         <!-- What we can't carry: from the API (Admin → What can be sent keeps it up to date) -->

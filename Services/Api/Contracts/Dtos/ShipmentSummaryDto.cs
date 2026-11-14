@@ -16,4 +16,7 @@ public sealed record ShipmentSummaryDto(
     Currency Currency,
     DateTime BookedAt,
     bool CanPay,
-    bool CanCancel);
+    bool CanCancel,
+    ParcelDelivery Delivery = ParcelDelivery.ToDoor,
+    bool IsReadyToCollect = false,
+    int BoxCount = 1);

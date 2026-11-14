@@ -67,11 +67,14 @@ public sealed class ShipmentService(ApiClient api)
     public Task<ApiResult<ShipmentDetailsDto>> GetAnyAsync(string trackingNumber, CancellationToken ct = default) =>
         api.GetAsync<ShipmentDetailsDto>($"api/staff/shipments/{Uri.EscapeDataString(trackingNumber)}", ct);
 
-    /// <summary>Dropped off and weighed at the hub: sets the final price (returned).</summary>
-    public Task<ApiResult<decimal>> ReceiveAtHubAsync(string trackingNumber, decimal weighedWeightKg,
+    /// <summary>
+    /// Received at the hub, every box weighed AND measured (weight of one box, L × W × H in cm, how many): sets the
+    /// final price (returned).
+    /// </summary>
+    public Task<ApiResult<decimal>> ReceiveAtHubAsync(string trackingNumber, IReadOnlyList<ParcelBoxInputDto> boxes,
                                                       CancellationToken ct = default) =>
         api.PostAsync<decimal>($"api/staff/shipments/{Uri.EscapeDataString(trackingNumber)}/receive",
-                               new ReceiveRequest(weighedWeightKg), ct);
+                               new ReceiveRequest(null, boxes), ct);
 
     /// <summary>Moves a paid parcel to its next step: in transit, then arrived. (Out for delivery needs a courier:
     /// <see cref="SendOutForDeliveryAsync"/>; the courier marks it delivered with a photo.)</summary>

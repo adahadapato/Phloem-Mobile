@@ -17,4 +17,10 @@ public sealed record StaffShipmentSummaryDto(
     decimal Price,
     Currency Currency,
     DateTime BookedAt,
-    string? CourierName = null);
+    string? CourierName = null,
+    ParcelHandOver HandOver = ParcelHandOver.HubDropOff,
+    string? PickupCity = null,
+    ParcelDelivery Delivery = ParcelDelivery.ToDoor,
+    bool IsFragile = false,
+    int BoxCount = 1,
+    string? RecipientDistrictName = null);

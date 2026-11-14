@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    BoxDiagram: a simple drawing of a box with Length, Width and Height labelled, so customers know which side is
+    which (same drawing as the website). Shapes only, no image file. 240 × 170.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Phloem.Views.Controls.BoxDiagram">
+    <AbsoluteLayout WidthRequest="240" HeightRequest="170" HorizontalOptions="Center">
+        <!-- Front, top and right faces -->
+        <Path Data="M40,70 L150,70 L150,140 L40,140 Z" Fill="#E9C99A" Stroke="#8A6A3D" StrokeThickness="1.5"
+              AbsoluteLayout.LayoutBounds="0,0,240,170" />
+        <Path Data="M40,70 L80,40 L190,40 L150,70 Z" Fill="#F3DCB6" Stroke="#8A6A3D" StrokeThickness="1.5"
+              AbsoluteLayout.LayoutBounds="0,0,240,170" />
+        <Path Data="M150,70 L190,40 L190,110 L150,140 Z" Fill="#D6B07C" Stroke="#8A6A3D" StrokeThickness="1.5"
+              AbsoluteLayout.LayoutBounds="0,0,240,170" />
+        <!-- Tape -->
+        <Path Data="M95,70 L135,40" Stroke="#C9A46C" StrokeThickness="6" Opacity="0.8"
+              AbsoluteLayout.LayoutBounds="0,0,240,170" />
+
+        <!-- Length: along the front bottom edge -->
+        <Path Data="M40,154 L150,154 M40,154 L46,150 M40,154 L46,158 M150,154 L144,150 M150,154 L144,158"
+              Stroke="{StaticResource BrandGreen}" StrokeThickness="1.8" AbsoluteLayout.LayoutBounds="0,0,240,170" />
+        <Label Text="Length" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource BrandTextMuted}"
+               HorizontalTextAlignment="Center" AbsoluteLayout.LayoutBounds="55,156,80,16" />
+
+        <!-- Width: going back along the right bottom edge -->
+        <Path Data="M160,148 L200,118 M160,148 L163,141 M160,148 L167,147 M200,118 L197,125 M200,118 L193,119"
+              Stroke="{StaticResource BrandGreen}" StrokeThickness="1.8" AbsoluteLayout.LayoutBounds="0,0,240,170" />
+        <Label Text="Width" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource BrandTextMuted}"
+               AbsoluteLayout.LayoutBounds="196,134,44,16" />
+
+        <!-- Height: up the front left edge -->
+        <Path Data="M26,140 L26,70 M26,70 L22,76 M26,70 L30,76 M26,140 L22,134 M26,140 L30,134"
+              Stroke="{StaticResource BrandGreen}" StrokeThickness="1.8" AbsoluteLayout.LayoutBounds="0,0,240,170" />
+        <Label Text="Height" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource BrandTextMuted}"
+               Rotation="-90" HorizontalTextAlignment="Center" AbsoluteLayout.LayoutBounds="-12,97,44,16" />
+    </AbsoluteLayout>
+</ContentView>

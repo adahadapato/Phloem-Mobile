@@ -10,4 +10,13 @@ public sealed record ShipmentQuoteDto(
     decimal EstimatedPrice,
     Currency Currency,
     int MinTransitDays,
-    int MaxTransitDays);
+    int MaxTransitDays,
+    IReadOnlyList<ParcelBoxChargeDto>? Boxes = null,
+    decimal FreightCharge = 0,
+    decimal FragileCharge = 0,
+    decimal HomePickupCharge = 0,
+    decimal DoorDeliveryCharge = 0,
+    string? DeliveryZoneName = null,
+    int VolumeDivisor = 5000,
+    decimal BaseCharge = 0,
+    decimal PricePerKg = 0);

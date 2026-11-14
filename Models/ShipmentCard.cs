@@ -97,7 +97,10 @@ public sealed class ShipmentCard
     public string PriceText { get; init; } = string.Empty;
     public DateTime BookedAt { get; init; }
 
-    public string StatusText => ShipmentText.Status(Status);
+    /// <summary>"Ready to collect" when it waits at our hub for the recipient; otherwise the status.</summary>
+    public bool IsReadyToCollect { get; init; }
+
+    public string StatusText => IsReadyToCollect ? "Ready to collect" : ShipmentText.Status(Status);
     public bool IsCancelled => ShipmentText.IsBad(Status);
 
     /// <summary>Highlighted when the sender must act (drop it off, or pay).</summary>
@@ -111,10 +114,11 @@ public sealed class ShipmentCard
         Status = s.Status,
         RouteText = ShipmentText.Route(s.FromCountry, s.ToCountry),
         PeopleText = $"To {s.RecipientName}",
-        DetailsText = $"{ShipmentText.Speed(s.Speed)} · {s.ItemCount} item(s)",
+        DetailsText = $"{ShipmentText.Speed(s.Speed)} · {s.BoxCount} box{(s.BoxCount == 1 ? "" : "es")} · {s.ItemCount} item(s)",
         PriceText = (s.IsPriceFinal ? string.Empty : "about ") + ShipmentText.Money(s.Price, s.Currency),
         BookedAt = s.BookedAt.ToLocalTime(),
-        NeedsAction = ShipmentText.NeedsSender(s.Status)
+        NeedsAction = ShipmentText.NeedsSender(s.Status),
+        IsReadyToCollect = s.IsReadyToCollect
     };
 
     /// <summary>A card from the staff / admin list.</summary>
@@ -124,8 +128,11 @@ public sealed class ShipmentCard
         Status = s.Status,
         RouteText = ShipmentText.Route(s.FromCountry, s.ToCountry),
         PeopleText = $"{s.SenderName} → {s.RecipientName}",
-        DetailsText = $"{ShipmentText.Speed(s.Speed)} · {s.ItemCount} item(s) · " +
-                      (s.WeighedWeightKg is { } w ? $"{w:0.##} kg weighed" : $"~{s.EstimatedWeightKg:0.##} kg"),
+        DetailsText = $"{ShipmentText.Speed(s.Speed)} · {s.BoxCount} box{(s.BoxCount == 1 ? "" : "es")} · " +
+                      (s.WeighedWeightKg is { } w ? $"{w:0.##} kg weighed" : $"~{s.EstimatedWeightKg:0.##} kg") +
+                      (s.IsFragile ? " · Fragile" : string.Empty) +
+                      (s.HandOver == ParcelHandOver.HomePickup ? $" · Pickup in {s.PickupCity}" : string.Empty) +
+                      (s.Delivery == ParcelDelivery.CollectFromHub ? " · Collects from hub" : string.Empty),
         PriceText = (s.WeighedWeightKg is null ? "about " : string.Empty) + ShipmentText.Money(s.Price, s.Currency),
         BookedAt = s.BookedAt.ToLocalTime(),
         NeedsAction = s.Status is ShipmentStatus.Booked or ShipmentStatus.Paid

@@ -10,4 +10,10 @@ public sealed record AdminShipmentRouteDto(
     string DropOffAddress,
     string DropOffHours,
     bool IsActive,
-    IReadOnlyList<ShipmentRateDto> Rates);
+    IReadOnlyList<ShipmentRateDto> Rates,
+    int VolumeDivisor = 5000,
+    decimal FragileCharge = 0,
+    decimal? HomePickupCharge = null,
+    string? CollectionHubAddress = null,
+    string? CollectionHubHours = null,
+    IReadOnlyList<AdminZoneChargeDto>? ZoneCharges = null);

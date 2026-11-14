@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Options;
+using Phloem.Helpers;
 using Phloem.Models;
 using Phloem.Services;
 using Phloem.Services.Api;
@@ -13,12 +14,14 @@ namespace Phloem.ViewModels;
 
 /// <summary>
 /// Shipment details (route "shipmentdetails?tracking=…[&amp;staff=true]"): one parcel with its status, timeline,
-/// recipient, items, weight and price.
+/// recipient (with LGA), boxes (declared and measured), fragile / pickup / hub collection, items, weight and the price
+/// part by part.
 /// <list type="bullet">
 ///   <item><description><b>Sender:</b> Pay (test payment, once weighed) and Cancel (before it leaves).</description></item>
-///   <item><description><b>Staff</b> (admin / ShipmentManager, opened from All shipments): Received at hub (enter the
-///   weight), the next journey step with an optional note, and "Out for delivery" with a courier (or change the
-///   courier). The courier marks it delivered with a photo, shown here to everyone.</description></item>
+///   <item><description><b>Staff</b> (admin / ShipmentManager, opened from All shipments): Received at hub (weigh AND
+///   measure every box), the next journey step with an optional note, and "Out for delivery" with a courier (or change
+///   the courier). For hub collection, "out for delivery" means "ready to collect" and the staff member handing it
+///   over records it like a courier. The courier marks it delivered with a photo, shown here to everyone.</description></item>
 /// </list>
 /// The same screen for both, so they always show a parcel the same way.
 /// </summary>
@@ -48,7 +51,10 @@ public partial class ShipmentDetailsViewModel : ObservableObject, IQueryAttribut
                               nameof(WeightText), nameof(PriceText), nameof(PriceCaption), nameof(DropOffText),
                               nameof(ShowDropOff), nameof(CanPay), nameof(CanCancel), nameof(CanReceive),
                               nameof(NextStepText), nameof(CanMoveOn), nameof(RefundText), nameof(NeedsRefund),
-                              nameof(CourierText), nameof(HasCourier), nameof(CanChangeCourier), nameof(Proof))]
+                              nameof(CourierText), nameof(HasCourier), nameof(CanChangeCourier), nameof(Proof),
+                              nameof(BoxesText), nameof(ChargedAsText), nameof(ExtrasText), nameof(HasExtras),
+                              nameof(ShowPickup), nameof(PickupText), nameof(ShowReadyToCollect),
+                              nameof(ReadyToCollectText), nameof(HasBreakdown))]
     public partial ShipmentDetailsDto? Shipment { get; set; }
 
     public ObservableCollection<ShipmentStep> Timeline { get; } = new();
@@ -70,7 +76,11 @@ public partial class ShipmentDetailsViewModel : ObservableObject, IQueryAttribut
     };
 
     public string RecipientText => Shipment is { } s
-        ? $"{s.RecipientName} · {s.RecipientPhone}\n{s.RecipientAddressLine}, {s.RecipientCity}, {s.RecipientRegionOrPostcode}"
+        ? $"{s.RecipientName} · {s.RecipientPhone}\n" +
+          string.Join(", ", new[] { s.RecipientAddressLine, s.RecipientCity,
+                                    s.RecipientDistrictName is null ? null : $"{s.RecipientDistrictName} LGA",
+                                    s.RecipientRegionOrPostcode }.Where(x => !string.IsNullOrWhiteSpace(x))) +
+          (s.Delivery == ParcelDelivery.CollectFromHub ? "\nCollects from our hub" : string.Empty)
         : string.Empty;
 
     public string SenderText => Shipment is { } s ? $"{s.SenderName} · {s.SenderPhone}" : string.Empty;
@@ -79,10 +89,59 @@ public partial class ShipmentDetailsViewModel : ObservableObject, IQueryAttribut
         ? s.WeighedWeightKg is { } w ? $"{w:0.##} kg (weighed)" : $"about {s.EstimatedWeightKg:0.##} kg (not weighed yet)"
         : string.Empty;
 
+    /// <summary>"2 × 8 kg · 60 × 40 × 40 cm (counts as 39 kg)", one line per box line (measured if weighed).</summary>
+    public string BoxesText
+    {
+        get
+        {
+            if (Shipment is not { } s) return string.Empty;
+            var boxes = s.MeasuredBoxes is { Count: > 0 } m ? m : s.DeclaredBoxes ?? [];
+            if (boxes.Count == 0) return "One parcel (booked before box sizes)";
+            var lines = boxes.Select(b =>
+                $"{b.Quantity} × {ParcelMath.Kg(b.WeightKg)}" +
+                (b.LengthCm is null ? " · size not given" : $" · {b.LengthCm:0.#} × {b.WidthCm:0.#} × {b.HeightCm:0.#} cm") +
+                $" (counts as {ParcelMath.Kg(b.ChargeableWeightKg)})");
+            var heading = s.MeasuredBoxes is { Count: > 0 } ? "Measured at the hub:\n" : string.Empty;
+            return heading + string.Join("\n", lines);
+        }
+    }
+
+    /// <summary>"Charged as 39 kg (weight or size, whichever is higher)".</summary>
+    public string ChargedAsText => Shipment is { } s && (s.ChargeableWeightKg ?? s.EstimatedChargeableWeightKg) is var kg and > 0m
+        ? $"Charged as {ParcelMath.Kg(kg)} (weight or size, whichever is higher)"
+        : string.Empty;
+
+    /// <summary>"Fragile · Home pickup · Recipient collects from our hub".</summary>
+    public string ExtrasText => Shipment is { } s
+        ? string.Join(" · ", new[]
+          {
+              s.IsFragile ? "Fragile" : null,
+              s.HandOver == ParcelHandOver.HomePickup ? "Home pickup" : null,
+              s.Delivery == ParcelDelivery.CollectFromHub ? "Recipient collects from our hub" : null
+          }.Where(x => x is not null))
+        : string.Empty;
+
+    public bool HasExtras => ExtrasText.Length > 0;
+
+    /// <summary>The price, part by part (only parcels booked since the breakdown existed).</summary>
+    public ObservableCollection<PriceLine> Breakdown { get; } = new();
+    public bool HasBreakdown => Breakdown.Count > 0;
+
+    public bool ShowPickup => Shipment is { HandOver: ParcelHandOver.HomePickup, Status: ShipmentStatus.Booked };
+    public string PickupText => Shipment is { } s
+        ? $"{s.PickupAddressLine}, {s.PickupCity}, {s.PickupRegionOrPostcode}" +
+          (string.IsNullOrWhiteSpace(s.PickupNotes) ? string.Empty : $"\n“{s.PickupNotes}”")
+        : string.Empty;
+
+    public bool ShowReadyToCollect => Shipment?.IsReadyToCollect == true;
+    public string ReadyToCollectText => Shipment is { } s
+        ? $"{s.CollectionHubAddress}\n{s.CollectionHubHours}\n{s.RecipientName} can collect it with photo ID and the tracking number."
+        : string.Empty;
+
     public string PriceText => Shipment is { } s ? ShipmentText.Money(s.FinalPrice ?? s.EstimatedPrice, s.Currency) : string.Empty;
     public string PriceCaption => Shipment?.FinalPrice is null ? "Estimated price" : "Final price";
 
-    public bool ShowDropOff => Shipment is { Status: ShipmentStatus.Booked, DropOffAddress: not null };
+    public bool ShowDropOff => Shipment is { Status: ShipmentStatus.Booked, DropOffAddress: not null, HandOver: ParcelHandOver.HubDropOff };
     public string DropOffText => Shipment is { } s ? $"{s.DropOffAddress}\n{s.DropOffHours}" : string.Empty;
 
     public bool NeedsRefund => Shipment?.NeedsRefund == true;
@@ -93,7 +152,15 @@ public partial class ShipmentDetailsViewModel : ObservableObject, IQueryAttribut
     public bool CanCancel => IsSender && Shipment?.CanCancel == true;
 
     // ---------- Staff actions ----------
-    public bool CanReceive => IsStaff && Shipment?.Status == ShipmentStatus.Booked;
+    public bool CanReceive => IsStaff && Shipment?.Status == ShipmentStatus.Booked && !IsMeasuring;
+
+    /// <summary>The weigh-and-measure form is open.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanReceive))]
+    public partial bool IsMeasuring { get; set; }
+
+    /// <summary>Each box as staff weigh and measure it (starts from what the sender declared).</summary>
+    public ObservableCollection<ParcelBoxDraft> HubBoxes { get; } = new();
     /// <summary>Staff move it on up to "Out for delivery"; only the courier can mark it delivered (with a photo).</summary>
     public bool CanMoveOn => IsStaff && Shipment is { } s && ShipmentText.NextJourneyStep(s.Status) is { } next
                              && next != ShipmentStatus.Delivered;
@@ -104,7 +171,9 @@ public partial class ShipmentDetailsViewModel : ObservableObject, IQueryAttribut
     public string CourierText => Shipment switch
     {
         { CourierName: null } or null => string.Empty,
+        { Status: ShipmentStatus.Delivered, Delivery: ParcelDelivery.CollectFromHub } s => $"📦  Collected from our hub · handed over by {s.CourierName}",
         { Status: ShipmentStatus.Delivered } s => $"🛵  Delivered by {s.CourierName}",
+        { IsReadyToCollect: true } s => $"📦  Ready to collect at our hub · {s.CourierName} hands it over",
         var s => $"🛵  {s.CourierName} is delivering it"
     };
 
@@ -113,7 +182,9 @@ public partial class ShipmentDetailsViewModel : ObservableObject, IQueryAttribut
     /// <summary>The courier's photo once delivered; null before.</summary>
     public DeliveryProofView? Proof => DeliveryProofView.From(Shipment?.DeliveryProof, _api);
     public string NextStepText => Shipment is { } s && ShipmentText.NextJourneyStep(s.Status) is { } next
-        ? $"Mark as: {ShipmentText.Step(next)}"
+        ? next == ShipmentStatus.OutForDelivery && s.Delivery == ParcelDelivery.CollectFromHub
+            ? "Mark as: Ready to collect at our hub"
+            : $"Mark as: {ShipmentText.Step(next)}"
         : string.Empty;
 
     [ObservableProperty]
@@ -169,6 +240,16 @@ public partial class ShipmentDetailsViewModel : ObservableObject, IQueryAttribut
 
         Items.Clear();
         foreach (var i in s.Items) Items.Add(ShipmentItemLine.From(i, s.Currency));
+
+        Breakdown.Clear();
+        if (s.FragileCharge + s.HomePickupCharge + s.DoorDeliveryCharge > 0)
+        {
+            Breakdown.Add(new PriceLine("Shipping", ShipmentText.Money(s.FreightCharge, s.Currency)));
+            if (s.FragileCharge > 0) Breakdown.Add(new PriceLine("Fragile handling", ShipmentText.Money(s.FragileCharge, s.Currency)));
+            if (s.HomePickupCharge > 0) Breakdown.Add(new PriceLine("Home pickup", ShipmentText.Money(s.HomePickupCharge, s.Currency)));
+            if (s.DoorDeliveryCharge > 0) Breakdown.Add(new PriceLine("Door delivery", ShipmentText.Money(s.DoorDeliveryCharge, s.Currency)));
+        }
+        OnPropertyChanged(nameof(HasBreakdown));
     }
 
     // ═════════════════════════════ Sender ═════════════════════════════
@@ -216,32 +297,77 @@ public partial class ShipmentDetailsViewModel : ObservableObject, IQueryAttribut
 
     // ═════════════════════════════ Staff ═════════════════════════════
 
-    /// <summary>Dropped off at the hub: enter the weight → sets the final price.</summary>
+    /// <summary>
+    /// Received at the hub: opens the weigh-and-measure form, one line per box line the sender declared (staff fill in
+    /// the real weight and size, and can add or remove lines).
+    /// </summary>
     [RelayCommand]
-    private async Task Receive()
+    private void Receive()
+    {
+        if (IsBusy || Shipment is not { } s) return;
+
+        HubBoxes.Clear();
+        var declared = s.DeclaredBoxes ?? [];
+        if (declared.Count == 0) AddHubBox();
+        else foreach (var box in declared) HubBoxes.Add(ParcelBoxDraft.FromDeclared(box, s.VolumeDivisor));
+        RenumberHubBoxes();
+        IsMeasuring = true;
+    }
+
+    [RelayCommand]
+    private void AddHubBox()
+    {
+        if (HubBoxes.Count >= ParcelMath.MaxLines) return;
+        HubBoxes.Add(new ParcelBoxDraft { Divisor = Shipment?.VolumeDivisor ?? 5000 });
+        RenumberHubBoxes();
+    }
+
+    [RelayCommand]
+    private void RemoveHubBox(ParcelBoxDraft box)
+    {
+        if (HubBoxes.Count <= 1) return;
+        HubBoxes.Remove(box);
+        RenumberHubBoxes();
+    }
+
+    private void RenumberHubBoxes()
+    {
+        for (var i = 0; i < HubBoxes.Count; i++)
+        {
+            HubBoxes[i].Title = $"Box {i + 1}";
+            HubBoxes[i].CanRemove = HubBoxes.Count > 1;
+        }
+    }
+
+    [RelayCommand]
+    private void CancelReceive() => IsMeasuring = false;
+
+    /// <summary>Saves the measured boxes → the final price; the sender is emailed to pay.</summary>
+    [RelayCommand]
+    private async Task SaveReceive()
     {
         if (IsBusy || Shipment is null) return;
 
-        var text = await Shell.Current.DisplayPromptAsync("Received at hub",
-            $"Weight on the scale, in kg (the sender estimated {Shipment.EstimatedWeightKg:0.##} kg):",
-            "Save", "Cancel", placeholder: "e.g. 4.6", keyboard: Keyboard.Numeric);
-        if (text is null) return;
-
-        if (InternationalDeliveryViewModel.ParseDecimal(text) is not { } kg || kg <= 0)
+        if (HubBoxes.Any(b => !b.IsValid || !b.HasSize))
         {
-            await Shell.Current.DisplayAlertAsync("Weight", "Please enter the weight in kg, e.g. 4.6.", "OK");
+            await Shell.Current.DisplayAlertAsync("Weigh and measure",
+                "For every box, enter the weight (kg) and the length, width and height (cm).", "OK");
             return;
         }
 
         IsBusy = true;
         try
         {
-            var result = await _shipments.ReceiveAtHubAsync(_trackingNumber, kg);
+            var result = await _shipments.ReceiveAtHubAsync(_trackingNumber, HubBoxes.Select(b => b.ToInput()).ToList());
             if (result.IsFailure)
             {
                 await Shell.Current.DisplayAlertAsync("Couldn't save", result.Error!.DisplayMessage, "OK");
                 return;
             }
+
+            IsMeasuring = false;
+            await Shell.Current.DisplayAlertAsync("Received at hub",
+                $"Final price {ShipmentText.Money(result.Value, Shipment.Currency)}. {Shipment.SenderName} has been emailed to pay.", "OK");
         }
         finally
         {
@@ -261,11 +387,14 @@ public partial class ShipmentDetailsViewModel : ObservableObject, IQueryAttribut
 
         if (next == ShipmentStatus.OutForDelivery)
         {
-            var courier = await ChooseCourierAsync("Who's delivering it?");
+            var collecting = Shipment.Delivery == ParcelDelivery.CollectFromHub;
+            var courier = await ChooseCourierAsync(collecting ? "Who hands it over at the hub?" : "Who's delivering it?");
             if (courier is null) return;
 
-            var outNote = await Shell.Current.DisplayPromptAsync("Out for delivery",
-                $"Optional note for the timeline (blank = \"With our courier, {courier.Name}\"):",
+            var outNote = await Shell.Current.DisplayPromptAsync(collecting ? "Ready to collect" : "Out for delivery",
+                collecting
+                    ? "Optional note for the timeline (blank = \"Ready to collect at our hub\"):"
+                    : $"Optional note for the timeline (blank = \"With our courier, {courier.Name}\"):",
                 "Save", "Cancel", placeholder: "Note (optional)");
             if (outNote is null) return;
 

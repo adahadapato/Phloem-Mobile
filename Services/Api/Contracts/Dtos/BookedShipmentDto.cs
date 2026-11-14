@@ -8,4 +8,8 @@ public sealed record BookedShipmentDto(
     decimal EstimatedPrice,
     Currency Currency,
     string DropOffAddress,
-    string DropOffHours);
+    string DropOffHours,
+    ParcelHandOver HandOver = ParcelHandOver.HubDropOff,
+    ParcelDelivery Delivery = ParcelDelivery.ToDoor,
+    string? CollectionHubAddress = null,
+    string? CollectionHubHours = null);

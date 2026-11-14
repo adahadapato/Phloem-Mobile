@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    LocationPickerPage: a full-screen list of states or LGAs with a search box (small typos forgiven).
+    Opened over the page with LocationPickerPage.PickAsync(...); tapping a name closes it and returns that name.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Phloem.ViewModels"
+             xmlns:models="clr-namespace:Phloem.Models"
+             x:DataType="vm:LocationPickerViewModel"
+             x:Class="Phloem.Views.LocationPickerPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource BrandCream}"
+             Title="{Binding Title}">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+
+        <!-- Header: title and Close -->
+        <Grid Grid.Row="0" BackgroundColor="{StaticResource BrandDark}" Padding="18,0,12,0" HeightRequest="64"
+              ColumnDefinitions="*,Auto">
+            <Label Text="{Binding Title}" TextColor="White" FontSize="18" FontAttributes="Bold" VerticalOptions="Center" />
+            <Label Grid.Column="1" Text="Close" TextColor="White" FontSize="15" FontAttributes="Bold"
+                   VerticalOptions="Center" Padding="10,8">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnCloseTapped" />
+                </Label.GestureRecognizers>
+            </Label>
+        </Grid>
+
+        <!-- Search box -->
+        <Border Grid.Row="1" Margin="16,14,16,8" BackgroundColor="White" Stroke="{StaticResource BrandBorder}"
+                StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="12,0" HeightRequest="48">
+            <Entry x:Name="Search" Placeholder="Type to search" Text="{Binding SearchText}" FontSize="15"
+                   TextColor="{StaticResource BrandTextDark}" PlaceholderColor="{StaticResource BrandTextMuted}"
+                   BackgroundColor="Transparent" VerticalOptions="Center" ReturnType="Search" />
+        </Border>
+
+        <Grid Grid.Row="2">
+            <CollectionView ItemsSource="{Binding Shown}" SelectionMode="None" Margin="16,0,16,0">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:LocationOption">
+                        <Grid Padding="4,0" HeightRequest="52" ColumnDefinitions="*,Auto">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnOptionTapped" CommandParameter="{Binding .}" />
+                            </Grid.GestureRecognizers>
+                            <VerticalStackLayout VerticalOptions="Center" Spacing="1">
+                                <Label Text="{Binding Name}" FontSize="16" TextColor="{StaticResource BrandTextDark}" />
+                                <Label Text="{Binding Detail}" IsVisible="{Binding HasDetail}" FontSize="12"
+                                       TextColor="{StaticResource BrandTextMuted}" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="1" Text="✓" FontSize="16" FontAttributes="Bold"
+                                   TextColor="{StaticResource BrandGreen}" VerticalOptions="Center"
+                                   IsVisible="{Binding IsSelected}" />
+                            <BoxView Grid.ColumnSpan="2" HeightRequest="1" Color="{StaticResource BrandBorder}"
+                                     VerticalOptions="End" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+            <Label Text="No match. Check the spelling." IsVisible="{Binding NoMatch}" FontSize="14"
+                   TextColor="{StaticResource BrandTextMuted}" HorizontalOptions="Center" Margin="0,24,0,0" />
+        </Grid>
+    </Grid>
+</ContentPage>
