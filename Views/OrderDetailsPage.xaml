@@ -205,6 +205,9 @@
                 <!-- ============ PROOF OF DELIVERY (the courier's photo) ============ -->
                 <controls:DeliveryProofCard Proof="{Binding Order.Proof}" />
 
+                <!-- ============ HOW WAS IT? (once delivered) ============ -->
+                <controls:RateCard BindingContext="{Binding Rate}" />
+
                 <!-- ============ ITEMS ============ -->
                 <Grid ColumnDefinitions="*,Auto" Margin="2,8,0,0">
                     <Label Text="Items" Style="{StaticResource SectionTitle}" FontSize="17" />

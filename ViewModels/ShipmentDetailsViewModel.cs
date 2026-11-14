@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Options;
@@ -30,11 +30,15 @@ public partial class ShipmentDetailsViewModel : ObservableObject, IQueryAttribut
     private readonly ShipmentService _shipments;
     private readonly ApiSettings _api;
 
-    public ShipmentDetailsViewModel(ShipmentService shipments, IOptions<ApiSettings> api)
+    public ShipmentDetailsViewModel(ShipmentService shipments, IOptions<ApiSettings> api, ReviewService reviews)
     {
         _shipments = shipments;
         _api = api.Value;
+        Rate = new RateCardViewModel(reviews);
     }
+
+    /// <summary>"How did we do?" once delivered (senders only, not staff).</summary>
+    public RateCardViewModel Rate { get; }
 
     private string _trackingNumber = string.Empty;
 
@@ -234,6 +238,8 @@ public partial class ShipmentDetailsViewModel : ObservableObject, IQueryAttribut
         var s = result.Value!;
         Shipment = s;
         Message = string.Empty;
+        _ = Rate.LoadAsync(ReviewKind.Parcel, s.TrackingNumber, !IsStaff && s.Status == ShipmentStatus.Delivered,
+                           "How did we do with your parcel?");
 
         Timeline.Clear();
         foreach (var e in s.Timeline.OrderByDescending(e => e.OccurredAt)) Timeline.Add(ShipmentStep.From(e));

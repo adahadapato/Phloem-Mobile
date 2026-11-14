@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    "How was it?" card on the order and parcel pages, bound to a RateCardViewModel (BindingContext="{Binding Rate}").
+    Five big stars to tap, then an optional comment and "show my comment on Phloem as Chioma A. · …".
+    Once sent: my stars, comment and what happens to it. Hidden until the order / parcel is delivered.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Phloem.ViewModels"
+             x:Class="Phloem.Views.Controls.RateCard"
+             x:DataType="vm:RateCardViewModel"
+             IsVisible="{Binding IsVisible}">
+
+    <ContentView.Resources>
+        <Style x:Key="FieldBox" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="{StaticResource BrandBorder}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+        </Style>
+        <Style x:Key="StarButton" TargetType="Label">
+            <Setter Property="Text" Value="★" />
+            <Setter Property="FontSize" Value="36" />
+            <Setter Property="Padding" Value="2,0" />
+            <Setter Property="TextColor" Value="{StaticResource BrandBorder}" />
+            <Setter Property="VerticalOptions" Value="Center" />
+        </Style>
+    </ContentView.Resources>
+
+    <Border BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 16" Padding="14">
+        <Border.Shadow>
+            <Shadow Brush="Black" Opacity="0.06" Radius="10" Offset="0,3" />
+        </Border.Shadow>
+        <VerticalStackLayout Spacing="10">
+
+            <!-- ============ Not reviewed yet: rate it ============ -->
+            <VerticalStackLayout Spacing="10" IsVisible="{Binding CanWrite}">
+                <Label Text="{Binding Title}" FontSize="16" FontAttributes="Bold"
+                       TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+                <Label Text="Tap a star to rate it" FontSize="13" TextColor="{StaticResource BrandTextMuted}" />
+
+                <HorizontalStackLayout Spacing="2">
+                    <Label Style="{StaticResource StarButton}" SemanticProperties.Description="1 star: Poor">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding Star1}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandStar}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding PickStarCommand}" CommandParameter="1" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                    <Label Style="{StaticResource StarButton}" SemanticProperties.Description="2 stars: Not great">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding Star2}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandStar}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding PickStarCommand}" CommandParameter="2" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                    <Label Style="{StaticResource StarButton}" SemanticProperties.Description="3 stars: OK">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding Star3}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandStar}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding PickStarCommand}" CommandParameter="3" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                    <Label Style="{StaticResource StarButton}" SemanticProperties.Description="4 stars: Good">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding Star4}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandStar}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding PickStarCommand}" CommandParameter="4" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                    <Label Style="{StaticResource StarButton}" SemanticProperties.Description="5 stars: Excellent">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding Star5}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandStar}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding PickStarCommand}" CommandParameter="5" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                    <Label Text="{Binding StarWord}" FontSize="14" FontAttributes="Bold" Margin="8,0,0,0"
+                           TextColor="{StaticResource BrandTextMuted}" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+                <!-- After a star: the comment and send -->
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding HasStars}">
+                    <Label FontSize="14" TextColor="{StaticResource BrandTextDark}">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="Tell others about it " FontAttributes="Bold" />
+                                <Span Text="(optional)" TextColor="{StaticResource BrandTextMuted}" />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                    <Border Style="{StaticResource FieldBox}" HeightRequest="110" Padding="8,4">
+                        <Editor Text="{Binding Comment}" MaxLength="500" AutoSize="Disabled" Keyboard="Chat"
+                                Placeholder="What was good? What could be better?"
+                                TextColor="{StaticResource BrandTextDark}" />
+                    </Border>
+                    <Label Text="{Binding CounterText}" Style="{StaticResource SubtleLabel}" FontSize="12"
+                           HorizontalOptions="End" Margin="0,-4,2,0" />
+
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6" IsVisible="{Binding HasComment}">
+                        <CheckBox IsChecked="{Binding ShowPublicly}" Color="{StaticResource BrandGreen}"
+                                  VerticalOptions="Start" />
+                        <Label Grid.Column="1" Text="{Binding ShowAsText}" FontSize="13" LineBreakMode="WordWrap"
+                               TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                    </Grid>
+
+                    <Label Text="{Binding Error}" IsVisible="{Binding HasError}" FontSize="13"
+                           TextColor="{StaticResource BrandDanger}" LineBreakMode="WordWrap" />
+                    <Button Text="Send review" Command="{Binding SendCommand}" Style="{StaticResource PrimaryButton}" />
+                    <ActivityIndicator IsRunning="{Binding IsSending}" IsVisible="{Binding IsSending}"
+                                       Color="{StaticResource BrandDark}" HeightRequest="24" />
+                    <Label Text="Please don't include phone numbers or addresses. Comments are checked before they go on the site."
+                           FontSize="12" TextColor="{StaticResource BrandTextMuted}" LineBreakMode="WordWrap" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <!-- ============ Reviewed: mine and what happens to it ============ -->
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding HasReview}">
+                <Label Text="Your review" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                <Label FontSize="14">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="{Binding MyStarsText}" TextColor="{StaticResource BrandStar}" FontSize="18" />
+                            <Span Text="  " />
+                            <Span Text="{Binding MyWordText}" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
+                <Label Text="{Binding MyCommentText}" IsVisible="{Binding HasMyComment}" FontSize="14"
+                       TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+                <Border StrokeThickness="0" StrokeShape="RoundRectangle 12" Padding="10,8"
+                        BackgroundColor="{StaticResource BrandMintPale}">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsWaiting}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{StaticResource BrandPeach}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Label Text="{Binding StatusText}" FontSize="13" TextColor="{StaticResource BrandTextDark}"
+                           LineBreakMode="WordWrap" />
+                </Border>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

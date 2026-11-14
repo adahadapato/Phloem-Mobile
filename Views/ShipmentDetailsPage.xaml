@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!--
     ShipmentDetailsPage (route "shipmentdetails?tracking=…[&staff=true]"): one parcel from the API.
     Status, where to drop it off / pickup address (until it's received), ready to collect, timeline, recipient (with
@@ -226,6 +226,9 @@
 
                     <!-- Delivered: the courier's photo -->
                     <controls:DeliveryProofCard Proof="{Binding Proof}" />
+
+                    <!-- Delivered: "How did we do?" (the sender only) -->
+                    <controls:RateCard BindingContext="{Binding Rate}" />
                     <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
                                        Color="{StaticResource BrandDark}" HeightRequest="28" />
 
