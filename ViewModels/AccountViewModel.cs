@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Phloem.Services;
+using Phloem.Services.Biometrics;
 
 namespace Phloem.ViewModels;
 
@@ -18,10 +19,12 @@ public partial class AccountViewModel : ObservableObject
     private readonly ShipmentService _shipments;
     private readonly DeliveryAddressService _delivery;
     private readonly ScreenAwakeService _awake;
+    private readonly BiometricSignIn _biometrics;
 
     public AccountViewModel(SessionService session, AuthService auth, OrderService orders, ShipmentService shipments,
-                            DeliveryAddressService delivery, ScreenAwakeService awake)
+                            DeliveryAddressService delivery, ScreenAwakeService awake, BiometricSignIn biometrics)
     {
+        _biometrics = biometrics;
         _session = session;
         _auth = auth;
         _orders = orders;
@@ -43,6 +46,98 @@ public partial class AccountViewModel : ObservableObject
             _awake.IsEnabled = value;
             OnPropertyChanged();
         }
+    }
+
+    // ---------- Sign in with Face ID / fingerprint (saved on this phone) ----------
+    // Checked fresh each time the page appears and when the person comes back from the phone's settings, so a
+    // fingerprint set up in the meantime is picked up straight away.
+
+    private BiometricStatus _biometricStatus = BiometricStatus.NoSensor;
+    private bool _biometricsOn;
+
+    /// <summary>The row shows for signed-in people on phones with a sensor (even if nothing is set up yet).</summary>
+    public bool ShowBiometricsRow => IsLoggedIn && _biometricStatus != BiometricStatus.NoSensor;
+
+    /// <summary>The switch works only when a fingerprint / face is set up on the phone.</summary>
+    public bool CanToggleBiometrics => _biometricStatus == BiometricStatus.Available;
+
+    /// <summary>"Sign in with Face ID", "Sign in with fingerprint"…</summary>
+    public string BiometricsTitle => $"Sign in with {_biometrics.DisplayName}";
+
+    /// <summary>The line under the title: what it does, or what to do first.</summary>
+    public string BiometricsSubtitle => _biometricStatus == BiometricStatus.Available
+        ? "Open Phloem with a scan instead of your password"
+        : _biometrics.CanOpenSetup
+            ? $"Set up a {_biometrics.DisplayName} on your phone first. Tap here"
+            : $"Set up {_biometrics.DisplayName} in your phone's Settings first";
+
+    /// <summary>
+    /// The switch. Turning it on asks for one scan to confirm; if that's cancelled or fails it flips back off.
+    /// </summary>
+    public bool BiometricsOn
+    {
+        get => _biometricsOn;
+        set
+        {
+            if (_biometricsOn == value) return;
+            _biometricsOn = value;
+            OnPropertyChanged();
+            _ = SetBiometricsAsync(value);
+        }
+    }
+
+    /// <summary>Switches quick sign-in on (with a scan) or off.</summary>
+    private async Task SetBiometricsAsync(bool on)
+    {
+        if (!on)
+        {
+            _biometrics.TurnOff();
+            return;
+        }
+
+        if (_biometrics.IsOnFor(_session.Profile?.Id)) return;
+
+        var outcome = await _biometrics.TurnOnAsync();
+        if (outcome == BiometricOutcome.Success) return;
+
+        _biometricsOn = false;
+        OnPropertyChanged(nameof(BiometricsOn));
+        if (outcome == BiometricOutcome.Failed)
+            await Shell.Current.DisplayAlertAsync("Not switched on",
+                $"We couldn't switch on {_biometrics.DisplayName} sign-in. Please try again.", "OK");
+    }
+
+    /// <summary>Tapping the row when nothing is set up yet: opens the phone's "add a fingerprint" screen (Android),
+    /// and checks again when the person comes back to Phloem.</summary>
+    [RelayCommand]
+    private void SetUpBiometrics()
+    {
+        if (CanToggleBiometrics || !_biometrics.CanOpenSetup) return;
+
+        if (Application.Current?.Windows.FirstOrDefault() is { } window)
+        {
+            void OnResumed(object? sender, EventArgs e)
+            {
+                window.Resumed -= OnResumed;
+                LoadBiometrics();
+            }
+            window.Resumed += OnResumed;
+        }
+
+        _biometrics.OpenSetup();
+    }
+
+    /// <summary>Reads the phone's status and the switch.</summary>
+    private void LoadBiometrics()
+    {
+        _biometricStatus = _biometrics.Status;
+        _biometricsOn = IsLoggedIn && _biometrics.IsOnFor(_session.Profile?.Id);
+        foreach (var name in new[]
+                 {
+                     nameof(ShowBiometricsRow), nameof(CanToggleBiometrics), nameof(BiometricsTitle),
+                     nameof(BiometricsSubtitle), nameof(BiometricsOn)
+                 })
+            OnPropertyChanged(name);
     }
 
     // ---------- Who is signed in ----------
@@ -150,6 +245,7 @@ public partial class AccountViewModel : ObservableObject
         })
             OnPropertyChanged(name);
 
+        LoadBiometrics();
         _ = CountAsync();
     }
 

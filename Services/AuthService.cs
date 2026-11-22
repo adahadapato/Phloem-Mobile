@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Maui.Authentication;
 using Phloem.Services.Api;
+using Phloem.Services.Biometrics;
 using Phloem.Settings;
 using Phloem.Services.Api.Contracts;
 using Phloem.Services.Api.Contracts.Commands;
@@ -14,11 +15,15 @@ namespace Phloem.Services;
 /// loads the profile (<see cref="AccountService"/>) and fills <see cref="SessionService"/>, so every screen knows
 /// who is signed in.
 /// </summary>
+/// <remarks>When fingerprint / Face ID sign-in is on (<see cref="BiometricSignIn"/>), the sign-in kept on the phone is
+/// only loaded after a scan: at start-up (<see cref="RestoreSessionAsync"/>) and from the Log in page
+/// (<see cref="SignInWithBiometricsAsync"/>).</remarks>
 public sealed class AuthService(
     ApiClient api,
     TokenStore tokens,
     AccountService account,
     SessionService session,
+    BiometricSignIn biometrics,
     IOptions<ApiSettings> apiSettings,
     ILogger<AuthService> logger)
 {
@@ -139,24 +144,68 @@ public sealed class AuthService(
 
     /// <summary>
     /// App start: if the user ticked "Remember me" last time, renews the sign-in and loads the profile.
+    /// With fingerprint / Face ID sign-in on, a scan is asked for first; closing the prompt simply opens the app
+    /// signed out (the Log in page then offers "Sign in with …").
     /// </summary>
     /// <returns>True when the user is signed in again.</returns>
     public async Task<bool> RestoreSessionAsync()
     {
-        if (!await tokens.LoadAsync()) return false;
+        if (biometrics.IsOn && await tokens.HasSavedSessionAsync()
+            && await biometrics.UnlockAsync() != BiometricOutcome.Success)
+            return false;
+
+        return (await LoadSavedSessionAsync()).IsSuccess;
+    }
+
+    /// <summary>
+    /// The Log in page's "Sign in with Face ID / fingerprint": a scan, then the sign-in kept on the phone.
+    /// </summary>
+    /// <returns>Success when signed in. A closed prompt gives the error code <see cref="ExternalSignIn.CancelledCode"/>
+    /// (show nothing); other errors carry a message to show.</returns>
+    public async Task<ApiResult> SignInWithBiometricsAsync()
+    {
+        switch (await biometrics.UnlockAsync())
+        {
+            case BiometricOutcome.Success:
+                return await LoadSavedSessionAsync();
+            case BiometricOutcome.Cancelled:
+                return new ApiError(0, ExternalSignIn.CancelledCode, "Sign-in cancelled.", NoFieldErrors);
+            case BiometricOutcome.Changed:
+                return new ApiError(0, "Biometrics.Changed", biometrics.TakeNotice() ?? BiometricSignIn.ChangedMessage,
+                                    NoFieldErrors);
+            default:
+                return new ApiError(0, "Biometrics.Failed",
+                                    $"We couldn't check your {biometrics.DisplayName}. Please sign in with your password.",
+                                    NoFieldErrors);
+        }
+    }
+
+    /// <summary>Loads the tokens kept on the phone, renews them if needed and loads the profile.</summary>
+    private async Task<ApiResult> LoadSavedSessionAsync()
+    {
+        if (!await tokens.LoadAsync())
+        {
+            biometrics.TurnOff();   // nothing left to unlock
+            return ApiError.SessionExpired;
+        }
 
         // The token handler renews the tokens on the way if they ran out
         var profile = await account.GetProfileAsync();
         if (profile.IsSuccess)
         {
             session.SignIn(profile.Value!, tokens.Roles);
-            return true;
+            return ApiResult.Success();
         }
 
-        // Rejected = the sign-in is over; no connection = keep the tokens and try again next start
-        if (profile.Error!.IsUnauthorized) await tokens.ClearAsync();
+        // Rejected = the sign-in is over (e.g. password changed elsewhere): forget it, and quick sign-in with it.
+        // No connection = keep the tokens and try again next start.
+        if (profile.Error!.IsUnauthorized)
+        {
+            await tokens.ClearAsync();
+            biometrics.TurnOff();
+        }
         logger.LogInformation("Couldn't restore the sign-in: {Code}.", profile.Error.Code);
-        return false;
+        return profile.Error!;
     }
 
     /// <summary>Reloads the profile (e.g. after opening a shop or changing details).</summary>
@@ -169,7 +218,8 @@ public sealed class AuthService(
         return ApiResult.Success();
     }
 
-    /// <summary>Signs out on this device and cancels the refresh token on the server.</summary>
+    /// <summary>Signs out on this device and cancels the refresh token on the server. Fingerprint / Face ID sign-in
+    /// is switched off too (there's nothing left on the phone for it to unlock).</summary>
     public async Task LogoutAsync()
     {
         if (tokens.RefreshToken is { } refreshToken)
@@ -179,6 +229,7 @@ public sealed class AuthService(
             if (revoked.IsFailure) logger.LogInformation("Logout not confirmed by the API: {Code}.", revoked.Error!.Code);
         }
 
+        biometrics.TurnOff();
         await tokens.ClearAsync();
         session.SignOut();
     }
@@ -193,9 +244,12 @@ public sealed class AuthService(
     // ───────────────────────────── Helpers ─────────────────────────────
 
     /// <summary>Keeps the tokens, then loads the profile into the session.</summary>
+    /// <remarks>Quick sign-in that was on for ANOTHER account is switched off (that account's sign-in has just been
+    /// replaced); when it's on for this account the tokens are kept on the phone even without "Remember me".</remarks>
     private async Task<ApiResult> SignInAsync(AuthTokensDto tokensDto, bool remember)
     {
-        await tokens.SaveAsync(tokensDto, remember);
+        if (biometrics.IsOn && !biometrics.IsOnFor(tokensDto.UserId)) biometrics.TurnOff();
+        await tokens.SaveAsync(tokensDto, remember || biometrics.IsOnFor(tokensDto.UserId));
 
         var profile = await account.GetProfileAsync();
         if (profile.IsFailure)

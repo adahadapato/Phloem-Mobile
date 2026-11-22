@@ -30,6 +30,17 @@ public static class DependencyInjection
 
         // ---- API feature services (one per API area) ----
         services.AddSingleton<AuthService>();       // /api/auth
+
+        // ---- Sign in with Face ID / fingerprint: the phone's own check, one class per platform ----
+#if ANDROID
+        services.AddSingleton<Phloem.Services.Biometrics.IBiometricService, Phloem.Services.Biometrics.AndroidBiometricService>();
+#elif IOS
+        services.AddSingleton<Phloem.Services.Biometrics.IBiometricService, Phloem.Services.Biometrics.IosBiometricService>();
+#else
+        services.AddSingleton<Phloem.Services.Biometrics.IBiometricService, Phloem.Services.Biometrics.NoBiometricService>();
+#endif
+        services.AddSingleton<Phloem.Services.Biometrics.BiometricSettings>();   // on/off, saved on this phone
+        services.AddSingleton<Phloem.Services.Biometrics.BiometricSignIn>();     // start-up, Log in, My account
         services.AddSingleton<AccountService>();    // /api/me
         services.AddSingleton<CountryService>();    // /api/countries (fills CountryOption.All)
         services.AddSingleton<LegalService>();      // /api/legal/{type}: Terms, Privacy, Help (kept on the phone)

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using Phloem.Services;
+using Phloem.Services.Biometrics;
 using Phloem.Settings;
 
 namespace Phloem.Views;
@@ -17,6 +18,7 @@ public sealed class StartupPage : ContentPage
 {
     private readonly CountryService _countries;
     private readonly AuthService _auth;
+    private readonly BiometricSignIn _biometrics;
     private readonly ApiSettings _api;
     /// <summary>The poster stays on screen at least this long, even when loading is quicker.</summary>
     private static readonly TimeSpan MinimumShowTime = TimeSpan.FromSeconds(2);
@@ -50,10 +52,11 @@ public sealed class StartupPage : ContentPage
     private bool _started;
 
     /// <summary>Builds the page (no XAML): the poster, and at the bottom a spinner, a message and a retry button.</summary>
-    public StartupPage(CountryService countries, AuthService auth, IOptions<ApiSettings> api)
+    public StartupPage(CountryService countries, AuthService auth, BiometricSignIn biometrics, IOptions<ApiSettings> api)
     {
         _countries = countries;
         _auth = auth;
+        _biometrics = biometrics;
         _api = api.Value;
 
         BackgroundColor = PosterGreen;
@@ -130,12 +133,18 @@ public sealed class StartupPage : ContentPage
 
         try
         {
-            await _auth.RestoreSessionAsync();   // signed back in if "Remember me" was ticked
+            // Signed back in if "Remember me" was ticked. With Face ID / fingerprint sign-in on, the scan is asked
+            // for here; closing it opens the app signed out (Log in then offers "Sign in with …").
+            await _auth.RestoreSessionAsync();
         }
         catch (Exception)
         {
             // Never block the app because of the sign-in: the user can sign in by hand
         }
+
+        // The phone's fingerprints / faces changed: the saved sign-in was deleted, so say why they're signed out
+        if (_biometrics.TakeNotice() is { } notice)
+            await DisplayAlertAsync("Please sign in again", notice, "OK");
 
         // Let the poster be seen, even on a fast connection
         var left = MinimumShowTime - shown.Elapsed;

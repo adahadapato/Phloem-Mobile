@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Phloem.Services;
+using Phloem.Services.Biometrics;
 
 namespace Phloem.ViewModels;
 
@@ -13,11 +14,16 @@ namespace Phloem.ViewModels;
 /// <para>"Remember me" keeps the user signed in after the app is closed.</para>
 /// <para>"Continue with Google" is an extra way in (shown only when the API has Google switched on); email and
 /// password work exactly as before. The same two-step pop-up is used for both.</para>
+/// <para>"Sign in with Face ID / fingerprint" shows when quick sign-in is on and a sign-in is kept on the phone
+/// (<see cref="BiometricSignIn"/>). After a password or Google login, the quick sign-in offer may pop up
+/// (<see cref="BiometricOptInPrompt"/>).</para>
 /// </remarks>
 public partial class LoginViewModel : ObservableObject
 {
     private readonly AuthService _auth;
     private readonly CartService _cart;
+    private readonly BiometricSignIn _biometrics;
+    private readonly SessionService _session;
 
     /// <summary>
     /// property for the user's email address, which is observable and can be bound to the UI.
@@ -56,14 +62,28 @@ public partial class LoginViewModel : ObservableObject
     public partial bool IsGoogleAvailable { get; set; }
 
     /// <summary>
+    /// true when "Sign in with Face ID / fingerprint" should show: quick sign-in is on and a sign-in is kept on the phone.
+    /// </summary>
+    [ObservableProperty]
+    public partial bool IsBiometricReady { get; set; }
+
+    /// <summary>"Sign in with Face ID", "Sign in with fingerprint"…</summary>
+    [ObservableProperty]
+    public partial string BiometricButtonText { get; set; } = string.Empty;
+
+    /// <summary>
     /// creates a new instance of the LoginViewModel class with the service that signs in through the API.
     /// </summary>
     /// <param name="auth">Signs in and out through the Phloem API.</param>
     /// <param name="cart">Holds the country picked on Home (used if Google creates a new account).</param>
-    public LoginViewModel(AuthService auth, CartService cart)
+    /// <param name="biometrics">Fingerprint / Face ID quick sign-in.</param>
+    /// <param name="session">Who is signed in (for the quick sign-in offer).</param>
+    public LoginViewModel(AuthService auth, CartService cart, BiometricSignIn biometrics, SessionService session)
     {
         _auth = auth;
         _cart = cart;
+        _biometrics = biometrics;
+        _session = session;
     }
 
     /// <summary>
@@ -105,7 +125,37 @@ public partial class LoginViewModel : ObservableObject
     /// Checks whether "Continue with Google" works, so the button only shows when it will (called when the page
     /// appears). Stays hidden while the API has no Google keys, or can't be reached.
     /// </summary>
-    public async Task LoadSignInOptionsAsync() => IsGoogleAvailable = await _auth.IsGoogleAvailableAsync();
+    /// <remarks>Also shows a waiting quick sign-in message (e.g. the phone's fingerprints changed) and whether the
+    /// "Sign in with Face ID / fingerprint" button shows.</remarks>
+    public async Task LoadSignInOptionsAsync()
+    {
+        if (_biometrics.TakeNotice() is { } notice) ShowError(notice);
+
+        BiometricButtonText = $"Sign in with {_biometrics.DisplayName}";
+        IsBiometricReady = await _biometrics.IsReadyAsync();
+        IsGoogleAvailable = await _auth.IsGoogleAvailableAsync();
+    }
+
+    /// <summary>
+    /// command for "Sign in with Face ID / fingerprint": a scan unlocks the sign-in kept on this phone. Closing the
+    /// prompt shows nothing; if the phone's fingerprints changed, the button goes and the password is needed.
+    /// </summary>
+    [RelayCommand]
+    private async Task SignInWithBiometrics()
+    {
+        StatusMessage = string.Empty;
+        var signedIn = await _auth.SignInWithBiometricsAsync();
+        if (signedIn.IsFailure)
+        {
+            IsBiometricReady = await _biometrics.IsReadyAsync();
+            if (signedIn.Error!.Code != ExternalSignIn.CancelledCode) ShowError(signedIn.Error.DisplayMessage);
+            return;
+        }
+
+        Password = string.Empty;
+        ShowInfo("Welcome back!");
+        await GoOnAsync();
+    }
 
     /// <summary>
     /// command for "Continue with Google": Google's page in the secure sign-in sheet, then the two-step code if the
@@ -141,6 +191,13 @@ public partial class LoginViewModel : ObservableObject
     {
         Password = string.Empty;
         ShowInfo("Welcome back!");
+        await BiometricOptInPrompt.OfferAsync(_biometrics, _session);   // "Sign in with Face ID next time?"
+        await GoOnAsync();
+    }
+
+    /// <summary>Back to Checkout if that's where they were heading, otherwise close Log in and go Home.</summary>
+    private async Task GoOnAsync()
+    {
         if (await AppNav.ResumeAfterLoginAsync()) return;
         await Shell.Current.Navigation.PopToRootAsync(false);
         await Shell.Current.GoToAsync("//home");

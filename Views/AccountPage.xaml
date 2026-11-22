@@ -375,6 +375,30 @@
                             </Grid>
                             <BoxView HeightRequest="1" Color="{StaticResource BrandBorder}" Margin="64,0,10,0" />
 
+                            <!-- Sign in with Face ID / fingerprint (saved on this phone). Hidden on phones without a
+                                 sensor; greyed out with a hint until a fingerprint / face is set up (tap = phone's
+                                 setup screen on Android) -->
+                            <VerticalStackLayout Spacing="0" IsVisible="{Binding ShowBiometricsRow}">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14" Padding="10,12">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding SetUpBiometricsCommand}" />
+                                    </Grid.GestureRecognizers>
+                                    <Border Style="{StaticResource RowIcon}">
+                                        <Path Style="{StaticResource IconPath}"
+                                              Data="M12,3 A7,7 0 0 1 19,10 L19,13 M5,13 L5,10 A7,7 0 0 1 8,4.3 M12,7 A3,3 0 0 1 15,10 L15,14 A6,6 0 0 1 13,19 M9,10 A3,3 0 0 1 9.8,8 M9,13 L9,14 A4,4 0 0 1 8,17 M12,11 L12,14 A9,9 0 0 1 10,20" />
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                        <Label Text="{Binding BiometricsTitle}" Style="{StaticResource RowTitle}" />
+                                        <Label Text="{Binding BiometricsSubtitle}" Style="{StaticResource RowSub}"
+                                               LineBreakMode="WordWrap" />
+                                    </VerticalStackLayout>
+                                    <Switch Grid.Column="2" IsToggled="{Binding BiometricsOn}"
+                                            IsEnabled="{Binding CanToggleBiometrics}" VerticalOptions="Center"
+                                            OnColor="{StaticResource BrandGreen}" />
+                                </Grid>
+                                <BoxView HeightRequest="1" Color="{StaticResource BrandBorder}" Margin="64,0,10,0" />
+                            </VerticalStackLayout>
+
                             <!-- Keep screen on (saved on this phone) -->
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14" Padding="10,12">
                                 <Border Style="{StaticResource RowIcon}">

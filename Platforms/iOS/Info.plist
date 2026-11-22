@@ -30,6 +30,9 @@
 	<string>Phloem uses your photos so you can add your profile photo, shop logo and dish photos.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Phloem uses the camera so you can take your profile photo, shop logo and dish photos, and a photo when you deliver an order.</string>
+	<!-- Sign in with Face ID (Services/Biometrics): shown by iOS the first time -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Phloem uses Face ID so you can sign in without typing your password. Your face data stays on your iPhone.</string>
 	<!-- "Continue with Google": the API sends the browser back to phloem://auth (see Services/ExternalSignIn.cs) -->
 	<key>CFBundleURLTypes</key>
 	<array>

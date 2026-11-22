@@ -48,6 +48,8 @@ kept on the phone let the app open offline.
   timeline.
 - **Account**: profile and photo, delivery addresses, notifications, password, sign out. Sign-in asks for the
   two-factor code when it's switched on (setting it up is done on the website).
+- **Sign in with Face ID / fingerprint** (everyone, admins and staff included): offered after a login, or switched
+  on in Account → Settings. See [7.3](#73-sign-in-with-face-id--fingerprint).
 - **Help & support**, **Terms**, **Privacy Policy** (from the API) and **Contact us** (form, email, WhatsApp, phone).
 - **"We've updated our Terms"** when new Terms are published (browse freely; ordering, parcels and selling wait
   until accepted) and a one-time Privacy notice.
@@ -85,7 +87,7 @@ Terms editing and the Contact messages inbox are on the website.
 
 | Target | Framework | Minimum |
 |---|---|---|
-| Android | `net10.0-android` | Android 5.0 (API 21) |
+| Android | `net10.0-android` | Android 6.0 (API 23): the AndroidX libraries need it (raised from 5.0 in Nov 2026) |
 | iOS | `net10.0-ios` | iOS 15 |
 | macOS | `net10.0-maccatalyst` | macOS (Catalyst) 15 |
 | Windows | `net10.0-windows10.0.19041.0` (only when building on Windows) | Windows 10 1809 |
@@ -198,6 +200,8 @@ AfroPhloem/
 │   ├── Api/                 ApiClient, ApiResult/ApiError, TokenStore (SecureStorage), token handler, ApiQuery,
 │   │   └── Contracts/       Dtos/, Commands/, Enums/, Queries/ — same shapes as the API
 │   ├── AuthService, SessionService, AccountService      sign-in, who is signed in, my account
+│   ├── Biometrics/          Face ID / fingerprint sign-in: IBiometricService, BiometricSignIn, BiometricSettings,
+│   │                        BiometricStatus, BiometricOutcome, NoBiometricService (Windows / Mac)
 │   ├── CountryService, DishService, ShopService, SuggestionService
 │   ├── CartService, OrderService, DeliveryAddressService, OrderHistoryService
 │   ├── ShipmentService, ShipmentRouteService, ParcelRulesService
@@ -216,6 +220,7 @@ AfroPhloem/
 │   ├── Styles/Styles.xaml   buttons, cards, labels, fields
 │   ├── Images/              pictures, plus appicon.png / appiconfg.png (app icon) and splash.png
 ├── Platforms/               Android, iOS, MacCatalyst, Windows
+│                            (Android/Biometrics and iOS/Biometrics: each phone's own fingerprint / face check)
 └── .github/workflows/       android-build.yml, android-release.yml, ios-build.yml
 ```
 
@@ -275,14 +280,69 @@ AfroPhloem/
 - Google sign-in (`ExternalSignIn`) uses the system browser and returns to **`phloem://auth`**; it's ready on the API
   side and switched on when the keys are added.
 
-### 7.3 Things that come from the API (no app update needed)
+### 7.3 Sign in with Face ID / fingerprint
+
+**What it is.** A scan unlocks the sign-in that is already kept on the phone; it is not a new kind of sign-in, and the
+API needs nothing new. The first sign-in on a phone is always a normal one (password or Google, plus the two-step
+code when it's on). Available to every account, admins and staff included.
+
+**Switching it on**
+- After a password or Google login, a pop-up asks "Sign in with Face ID?" (`ViewModels/BiometricOptInPrompt`).
+  "Not now" is remembered for that account, so it isn't asked at every login.
+- Or **Account → Settings → Sign in with Face ID / fingerprint** (a switch). Turning it on asks for one scan.
+- Switching it on keeps the sign-in on the phone even if "Remember me" wasn't ticked.
+
+**Using it**
+- **App start:** the scan is asked for before the saved sign-in is loaded. Closing the prompt opens the app signed
+  out, and **Log in** then shows a "Sign in with …" button.
+- Only the phone's biometrics are accepted, never the phone's PIN / passcode (someone who knows the PIN must still
+  type the Phloem password). "Use password" closes the prompt.
+
+**What the phone can do** (`BiometricStatus`, checked fresh each time)
+
+| Phone | What the person sees |
+|---|---|
+| No sensor (or Android older than 7.0, Windows, Mac) | Nothing: no pop-up, no button, no Settings row. |
+| Sensor, but no fingerprint / face set up | No pop-up. The Settings row is greyed out with a hint; on Android, tapping it opens the phone's "add a fingerprint" screen, and the row is checked again on return. iOS doesn't allow opening that screen, so it only says where to go. |
+| Fingerprint / face set up | Everything works. |
+
+**When it switches off**
+- **Log out** (the sign-in on the phone is deleted, so there's nothing to unlock). It's offered again at the next
+  login.
+- The sign-in can't be renewed (unused for 30 days, or ended on the server: a password change or reset ends every
+  session).
+- **Someone else signs in** on the phone.
+- **The phone's fingerprints / faces change** (one added, or all removed): the saved sign-in is also deleted, and the
+  person sees "Your phone's fingerprint or face settings changed, so please sign in with your password." They can
+  switch it back on afterwards.
+
+**How it's built**
+- `Services/Biometrics/BiometricSignIn` holds the rules above; `AuthService.RestoreSessionAsync` (start-up) and
+  `AuthService.SignInWithBiometricsAsync` (Log in button) use it. The on/off choice is in `Preferences`
+  (`BiometricSettings`); the tokens stay in `SecureStorage` (`TokenStore`), as with "Remember me".
+- **Android** (`Platforms/Android/Biometrics`): AndroidX `BiometricPrompt` (package `Xamarin.AndroidX.Biometric`),
+  STRONG biometrics only (fingerprint and secure face sensors). A Keystore key is made when it's switched on; Android
+  lets it be used only right after a scan and destroys it when the fingerprints / faces change, which is how a change
+  is detected. Each scan is tied to the key, so it can't be faked. Permission `USE_BIOMETRIC` (no pop-up).
+- **iOS** (`Platforms/iOS/Biometrics`): LocalAuthentication, biometrics only (no passcode fallback). The phone's
+  biometric "state" is saved when it's switched on and compared before every scan. Info.plist needs
+  `NSFaceIDUsageDescription`.
+- **Privacy:** the check happens on the phone; Phloem never receives fingerprint or face data.
+
+**Testing it**
+- Android emulator: Settings → Security → set a screen lock, then add a fingerprint; touch the sensor with the
+  emulator's Extended controls → Fingerprint. Adding a second fingerprint afterwards should trigger the "settings
+  changed" message.
+- iOS simulator: Features → Face ID → Enrolled, then Matching Face / Non-matching Face.
+
+### 7.4 Things that come from the API (no app update needed)
 
 - Countries, flags, currencies and parcel routes (`GET /api/countries`, also kept on the phone for offline start).
 - Terms, Privacy Policy and Help (rendered by `Helpers/SimpleMarkdown`; headings carry anchors such as
   `{#orders}`, `{#parcels}`, `{#sellers}` that the app links to).
 - The "what can be sent" list, delivery times and charges, price ranges, contact details.
 
-### 7.4 Terms acceptance
+### 7.5 Terms acceptance
 
 `TermsPromptService` checks the profile's `terms` status whenever Home appears: if new Terms need accepting it opens
 **`TermsUpdatePage`** (once per app run; "Not now" lets people keep browsing), and if the Privacy Policy changed it
@@ -352,6 +412,8 @@ Keep the keystore and its passwords safe: Google Play only accepts updates signe
 | "Please read and agree to the Seller terms" | tick the box above "Submit seller profile" (required since the Terms update) |
 | Build error about a missing workload | `dotnet workload install maui` (or `maui-android`) |
 | Release build signing fails | check the four Android secrets and that the keystore decodes |
+| No "Sign in with fingerprint" row in Account | the phone has no STRONG biometric sensor (some face unlock is only "weak" on Android), or Android is older than 7.0 |
+| "Sign in with fingerprint" button gone from Log in | it was switched off (log out, expired sign-in, fingerprints changed): sign in with the password and switch it on again |
 
 ---
 

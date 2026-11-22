@@ -84,6 +84,30 @@ public sealed class TokenStore
             return;
         }
 
+        await WriteAllAsync();
+    }
+
+    /// <summary>
+    /// Keeps the CURRENT tokens on the device from now on, as if "Remember me" had been ticked (used when fingerprint /
+    /// Face ID sign-in is switched on: there must be a sign-in on the phone for the scan to unlock).
+    /// </summary>
+    public async Task KeepOnDeviceAsync()
+    {
+        if (!CanRefresh) return;
+
+        Remember = true;
+        await WriteAllAsync();
+    }
+
+    /// <summary>
+    /// True when a sign-in is kept on the device, WITHOUT loading it (fingerprint / Face ID sign-in checks this before
+    /// asking for a scan, and loads the tokens only after the scan).
+    /// </summary>
+    public async Task<bool> HasSavedSessionAsync() => !string.IsNullOrEmpty(await ReadAsync(RefreshTokenKey));
+
+    /// <summary>Writes every token to the device's secure storage.</summary>
+    private async Task WriteAllAsync()
+    {
         await WriteAsync(AccessTokenKey, AccessToken);
         await WriteAsync(AccessTokenExpiresKey, AccessTokenExpiresAt?.ToString("O"));
         await WriteAsync(RefreshTokenKey, RefreshToken);

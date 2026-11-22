@@ -125,6 +125,23 @@
                                        TextColor="{StaticResource BrandTextDark}" HorizontalOptions="Center" />
                             </VerticalStackLayout>
 
+                            <!-- Quick sign-in: only when Face ID / fingerprint sign-in is on and a sign-in is kept
+                                 on this phone (the scan unlocks it) -->
+                            <VerticalStackLayout Spacing="16" IsVisible="{Binding IsBiometricReady}">
+                                <Button Text="{Binding BiometricButtonText}" Command="{Binding SignInWithBiometricsCommand}"
+                                        BackgroundColor="{StaticResource BrandMintPale}"
+                                        TextColor="{StaticResource BrandDark}"
+                                        BorderColor="{StaticResource BrandGreen}" BorderWidth="1"
+                                        FontAttributes="Bold" FontSize="16" CornerRadius="12" HeightRequest="52" />
+                                <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="10">
+                                    <BoxView HeightRequest="1" Color="{StaticResource BrandBorder}" VerticalOptions="Center" />
+                                    <Label Grid.Column="1" Text="or use your password" FontSize="13"
+                                           TextColor="{StaticResource BrandTextMuted}" VerticalOptions="Center" />
+                                    <BoxView Grid.Column="2" HeightRequest="1" Color="{StaticResource BrandBorder}"
+                                             VerticalOptions="Center" />
+                                </Grid>
+                            </VerticalStackLayout>
+
                             <!-- Email -->
                             <VerticalStackLayout>
                                 <Label Text="Email address" Style="{StaticResource FieldLabel}" />
