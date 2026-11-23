@@ -100,7 +100,7 @@ public partial class ChangePasswordViewModel : ObservableObject
             await Shell.Current.DisplayAlertAsync("Password changed",
                 "For your security you've been signed out on all your devices. Please log in with your new password.",
                 "Log in");
-            await _auth.LogoutAsync();
+            await _auth.LogoutAsync(forgetThisPhone: true);   // the old sign-in is dead: nothing to unlock
             await Shell.Current.Navigation.PopToRootAsync(false);
             await Shell.Current.GoToAsync("//account/login");
         }

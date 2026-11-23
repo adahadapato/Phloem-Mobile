@@ -294,7 +294,11 @@ code when it's on). Available to every account, admins and staff included.
 
 **Using it**
 - **App start:** the scan is asked for before the saved sign-in is loaded. Closing the prompt opens the app signed
-  out, and **Log in** then shows a "Sign in with …" button.
+  out.
+- **Log in page:** the scan comes FIRST. The prompt opens by itself (once per visit) and there's a "Sign in with …"
+  button to try again; the password form is the fallback if the scan fails or is cancelled.
+- **Log out only locks** while it's on: the session ends in the app, but the sign-in stays on the phone (still valid
+  on the server), so the next login is a scan. The Log out pop-up says so.
 - Only the phone's biometrics are accepted, never the phone's PIN / passcode (someone who knows the PIN must still
   type the Phloem password). "Use password" closes the prompt.
 
@@ -307,11 +311,12 @@ code when it's on). Available to every account, admins and staff included.
 | Fingerprint / face set up | Everything works. |
 
 **When it switches off**
-- **Log out** (the sign-in on the phone is deleted, so there's nothing to unlock). It's offered again at the next
-  login.
-- The sign-in can't be renewed (unused for 30 days, or ended on the server: a password change or reset ends every
-  session).
-- **Someone else signs in** on the phone.
+- **The My account switch** is turned off (then Log out works normally again: the sign-in is cancelled on the server
+  and deleted from the phone).
+- **Password changed** in the app (`LogoutAsync(forgetThisPhone: true)`), or the sign-in can't be renewed (unused for
+  30 days, or ended on the server: a password change or reset elsewhere ends every session).
+- **Someone else signs in** on the phone (the locked sign-in of the previous account is cancelled on the server
+  first).
 - **The phone's fingerprints / faces change** (one added, or all removed): the saved sign-in is also deleted, and the
   person sees "Your phone's fingerprint or face settings changed, so please sign in with your password." They can
   switch it back on afterwards.

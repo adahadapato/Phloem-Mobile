@@ -218,10 +218,23 @@ public sealed class AuthService(
         return ApiResult.Success();
     }
 
-    /// <summary>Signs out on this device and cancels the refresh token on the server. Fingerprint / Face ID sign-in
-    /// is switched off too (there's nothing left on the phone for it to unlock).</summary>
-    public async Task LogoutAsync()
+    /// <summary>
+    /// Log out. With Face ID / fingerprint sign-in on for this account, the app only LOCKS: the session ends in the
+    /// app, but the sign-in stays on the phone so the next login starts with a scan (password only if the scan fails
+    /// or is cancelled). Otherwise, or with <paramref name="forgetThisPhone"/>, the refresh token is cancelled on the
+    /// server, deleted from the phone, and quick sign-in is switched off.
+    /// </summary>
+    /// <param name="forgetThisPhone">True to remove the sign-in completely even with quick sign-in on (after a
+    /// password change, which has already ended every session on the server).</param>
+    public async Task LogoutAsync(bool forgetThisPhone = false)
     {
+        if (!forgetThisPhone && biometrics.IsOnFor(session.Profile?.Id) && tokens.Remember)
+        {
+            tokens.ForgetInMemory();
+            session.SignOut();
+            return;
+        }
+
         if (tokens.RefreshToken is { } refreshToken)
         {
             // Best effort: the user is signed out here even if the server can't be reached
@@ -248,7 +261,13 @@ public sealed class AuthService(
     /// replaced); when it's on for this account the tokens are kept on the phone even without "Remember me".</remarks>
     private async Task<ApiResult> SignInAsync(AuthTokensDto tokensDto, bool remember)
     {
-        if (biometrics.IsOn && !biometrics.IsOnFor(tokensDto.UserId)) biometrics.TurnOff();
+        if (biometrics.IsOn && !biometrics.IsOnFor(tokensDto.UserId))
+        {
+            // Another account's locked sign-in is on this phone: cancel it on the server before it's replaced
+            if (await tokens.ReadSavedRefreshTokenAsync() is { Length: > 0 } locked && locked != tokensDto.RefreshToken)
+                await api.PostAsync("api/auth/logout", new RevokeTokenCommand(locked));
+            biometrics.TurnOff();
+        }
         await tokens.SaveAsync(tokensDto, remember || biometrics.IsOnFor(tokensDto.UserId));
 
         var profile = await account.GetProfileAsync();

@@ -149,6 +149,25 @@ public sealed class TokenStore
         await RemoveFromDeviceAsync();
     }
 
+    /// <summary>
+    /// Log out with Face ID / fingerprint sign-in on: forgets the tokens in memory only. The sign-in stays on the
+    /// device (still valid on the server) so the next scan can unlock it.
+    /// </summary>
+    public void ForgetInMemory()
+    {
+        AccessToken = null;
+        AccessTokenExpiresAt = null;
+        RefreshToken = null;
+        Roles = [];
+        Permissions = [];
+        Countries = [];
+        Remember = false;
+    }
+
+    /// <summary>The refresh token kept on the device, WITHOUT loading it (used to cancel a locked sign-in on the
+    /// server when another account signs in on this phone).</summary>
+    public Task<string?> ReadSavedRefreshTokenAsync() => ReadAsync(RefreshTokenKey);
+
     /// <summary>The sign-in couldn't be renewed: forget the tokens and tell the app.</summary>
     public async Task ExpireAsync()
     {

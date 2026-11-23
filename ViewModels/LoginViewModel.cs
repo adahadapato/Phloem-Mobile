@@ -25,6 +25,9 @@ public partial class LoginViewModel : ObservableObject
     private readonly BiometricSignIn _biometrics;
     private readonly SessionService _session;
 
+    /// <summary>The scan is offered by itself only once per visit to Log in (after that, use the button).</summary>
+    private bool _askedForScan;
+
     /// <summary>
     /// property for the user's email address, which is observable and can be bound to the UI.
     /// </summary>
@@ -133,6 +136,14 @@ public partial class LoginViewModel : ObservableObject
 
         BiometricButtonText = $"Sign in with {_biometrics.DisplayName}";
         IsBiometricReady = await _biometrics.IsReadyAsync();
+
+        // Quick sign-in comes FIRST: ask for the scan straight away; the password form is the fallback
+        if (IsBiometricReady && !_askedForScan)
+        {
+            _askedForScan = true;
+            MainThread.BeginInvokeOnMainThread(async () => await SignInWithBiometricsCommand.ExecuteAsync(null));
+        }
+
         IsGoogleAvailable = await _auth.IsGoogleAvailableAsync();
     }
 

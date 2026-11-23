@@ -292,11 +292,17 @@ public partial class AccountViewModel : ObservableObject
     [RelayCommand]
     private async Task Logout()
     {
+        var quick = _biometrics.IsOnFor(_session.Profile?.Id);
         var ok = await Shell.Current.DisplayAlertAsync("Log out?",
-            $"You're signed in as {Email}.", "Log out", "Stay signed in");
+            quick
+                ? $"You're signed in as {Email}. Next time you can sign back in with your {_biometrics.DisplayName}."
+                : $"You're signed in as {Email}.",
+            "Log out", "Stay signed in");
         if (!ok) return;
 
-        await _auth.LogoutAsync();          // cancels the sign-in on the server and on this device
+        // With quick sign-in on this only locks (the scan unlocks it again); otherwise it cancels the sign-in on the
+        // server and on this device
+        await _auth.LogoutAsync();
         _delivery.SelectedAddress = null;
         Load();
     }

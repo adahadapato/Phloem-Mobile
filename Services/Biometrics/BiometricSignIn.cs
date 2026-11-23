@@ -12,9 +12,11 @@ namespace Phloem.Services.Biometrics;
 /// it loads them, at start-up and from the Log in page. No new kind of sign-in exists on the API: the scan only
 /// unlocks the session the person already has, and the API's own rules still apply (the refresh token runs out
 /// after 30 days of not being used; a password change or reset ends every session).</para>
-/// <para><b>Switched off</b> on log out, when the sign-in can't be renewed, when someone else signs in on this phone,
-/// and when the phone's fingerprints / faces change (then the saved sign-in is also deleted, so the password is
-/// needed).</para>
+/// <para><b>Log out only locks</b> while this is on: the sign-in stays on the phone, and the next login starts with
+/// a scan (the Log in page asks at once; the password is the fallback).</para>
+/// <para><b>Switched off</b> when the sign-in can't be renewed, after a password change, when someone else signs in
+/// on this phone, from the My account switch, and when the phone's fingerprints / faces change (then the saved
+/// sign-in is also deleted, so the password is needed).</para>
 /// <para>Phloem never receives fingerprint or face data.</para>
 /// </remarks>
 public sealed class BiometricSignIn
