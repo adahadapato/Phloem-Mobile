@@ -29,6 +29,9 @@ public partial class App : Application
             MinimumWidth = 380,
             MinimumHeight = 640
         };
+
+        // Sellers and staff: sign in again after too long in the background
+        _services.GetRequiredService<Phloem.Services.SessionLock>().Attach(window);
         return window;
     }
 }

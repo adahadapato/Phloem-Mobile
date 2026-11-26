@@ -133,6 +133,7 @@ public partial class LoginViewModel : ObservableObject
     public async Task LoadSignInOptionsAsync()
     {
         if (_biometrics.TakeNotice() is { } notice) ShowError(notice);
+        else if (_session.TakeSignedOutReason() is { } reason) ShowInfo(reason);
 
         BiometricButtonText = $"Sign in with {_biometrics.DisplayName}";
         IsBiometricReady = await _biometrics.IsReadyAsync();

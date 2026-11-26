@@ -39,6 +39,7 @@ public sealed class BiometricSignIn
         _settings = settings;
         _tokens = tokens;
         _session = session;
+        tokens.KeepStrictOnDevice = settings.IsOn;   // seller / staff sign-ins may stay on the phone only behind the scan
         tokens.SessionExpired += (_, _) => TurnOff();
     }
 
@@ -121,16 +122,21 @@ public sealed class BiometricSignIn
             return outcome;
         }
 
+        _tokens.KeepStrictOnDevice = true;
         await _tokens.KeepOnDeviceAsync();
         _settings.TurnOn(profile.Id);
         return BiometricOutcome.Success;
     }
 
     /// <summary>Switches it off (the sign-in itself is left alone). Safe to call any time.</summary>
+    /// <remarks>For a seller / staff sign-in the saved copy is removed too: without the scan they sign in again
+    /// when the app closes.</remarks>
     public void TurnOff()
     {
         _settings.TurnOff();
         _biometrics.Forget();
+        _tokens.KeepStrictOnDevice = false;
+        _ = _tokens.ForgetStrictOnDeviceAsync();
     }
 
     /// <summary>True when the offer after login should be shown to this account.</summary>

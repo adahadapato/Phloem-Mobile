@@ -340,14 +340,37 @@ code when it's on). Available to every account, admins and staff included.
   changed" message.
 - iOS simulator: Features → Face ID → Enrolled, then Matching Face / Non-matching Face.
 
-### 7.4 Things that come from the API (no app update needed)
+### 7.4 Sign-in for sellers and staff (stricter)
+
+Agreed 24 Nov 2026. The API decides, from the person's roles, and sends `sessionKind` + `lockAfterMinutes` with
+every sign-in and renewal (strictest role wins):
+
+| `sessionKind` | Who | Kept on the phone when the app closes? | Locks after … in the background | API ends the sign-in |
+|---|---|---|---|---|
+| `Staff` | Admin + every staff role | No (only behind the fingerprint / Face ID scan) | 15 min | 12 h after signing in |
+| `Seller` | Seller, Courier | No (only behind the scan) | 60 min | 7 days after signing in |
+| `Buyer` | everyone else | Yes, with "Remember me" | never | 30 days unused |
+
+- **App closed:** `TokenStore.SaveAsync` never writes a Seller / Staff sign-in to the phone unless quick sign-in is
+  on (`TokenStore.KeepStrictOnDevice`, set by `BiometricSignIn`). So reopening the app means signing in again, or a
+  scan when quick sign-in is on. A buyer who becomes a seller loses the saved copy at the next renewal.
+- **Background lock:** `Services/SessionLock` (attached to the window in `App.CreateWindow`) notes when the app goes
+  to the background; on return after the limit it calls `AuthService.LogoutAsync()` (locks with quick sign-in on,
+  otherwise signs out completely) and opens Log in with a short message.
+- **The 12 h / 7 day limit is the API's** and counts from the password / two-step / Google sign-in; a scan doesn't
+  restart it. Past it, the next renewal fails and the person signs in with their password.
+- Switching quick sign-in off during a seller / staff sign-in removes the saved copy.
+- The numbers are API settings (`Jwt:StaffSessionHours`, `SellerSessionHours`, `StaffIdleMinutes`,
+  `SellerIdleMinutes`): changing them needs no app update.
+
+### 7.5 Things that come from the API (no app update needed)
 
 - Countries, flags, currencies and parcel routes (`GET /api/countries`, also kept on the phone for offline start).
 - Terms, Privacy Policy and Help (rendered by `Helpers/SimpleMarkdown`; headings carry anchors such as
   `{#orders}`, `{#parcels}`, `{#sellers}` that the app links to).
 - The "what can be sent" list, delivery times and charges, price ranges, contact details.
 
-### 7.5 Terms acceptance
+### 7.6 Terms acceptance
 
 `TermsPromptService` checks the profile's `terms` status whenever Home appears: if new Terms need accepting it opens
 **`TermsUpdatePage`** (once per app run; "Not now" lets people keep browsing), and if the Privacy Policy changed it

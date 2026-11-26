@@ -10,6 +10,11 @@ namespace Phloem.Services.Api.Contracts.Dtos;
 /// <para><see cref="Permissions"/> and <see cref="Countries"/> (staff only): what the BACKEND decided this person may
 /// do and where ("*" = everything / every country). The app uses them only to show or hide menus; the API checks
 /// every call itself.</para></remarks>
+/// <remarks>
+/// <b>SessionKind / LockAfterMinutes</b> (API, 26 Nov 2026): "Buyer", "Seller" or "Staff", and the minutes in the
+/// background before the app locks (null for buyers). Seller and Staff sign-ins aren't kept on the phone when the app
+/// closes (unless fingerprint / Face ID sign-in is on); the API also ends them 7 days / 12 hours after signing in.
+/// </remarks>
 public sealed record AuthTokensDto(
     string? AccessToken,
     string? RefreshToken,
@@ -22,4 +27,6 @@ public sealed record AuthTokensDto(
     bool RequiresTwoFactor = false,
     string? TwoFactorChallengeToken = null,
     IReadOnlyCollection<string>? Permissions = null,
-    IReadOnlyCollection<string>? Countries = null);
+    IReadOnlyCollection<string>? Countries = null,
+    string? SessionKind = null,
+    int? LockAfterMinutes = null);

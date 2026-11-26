@@ -19,6 +19,8 @@ public sealed class TokenStore
     private const string RolesKey = "phloem.roles";
     private const string PermissionsKey = "phloem.permissions";
     private const string CountriesKey = "phloem.countries";
+    private const string SessionKindKey = "phloem.session_kind";
+    private const string LockAfterMinutesKey = "phloem.lock_after_minutes";
 
     /// <summary>Refresh this long before the access token runs out, so a request never leaves with a dying token.</summary>
     private static readonly TimeSpan RefreshMargin = TimeSpan.FromSeconds(30);
@@ -43,6 +45,22 @@ public sealed class TokenStore
 
     /// <summary>The countries the backend says this staff member covers ("*" = every country).</summary>
     public IReadOnlyCollection<string> Countries { get; private set; } = [];
+
+    /// <summary>"Buyer", "Seller" or "Staff" from the API (null = an older API: treated as Buyer).</summary>
+    public string? SessionKind { get; private set; }
+
+    /// <summary>Minutes in the background before the app locks; null for buyers (no lock).</summary>
+    public int? LockAfterMinutes { get; private set; }
+
+    /// <summary>
+    /// True for sellers, couriers, admins and staff: their sign-in isn't kept on the phone when the app closes,
+    /// unless <see cref="KeepStrictOnDevice"/> (fingerprint / Face ID sign-in is on).
+    /// </summary>
+    public bool IsStrict => SessionKind is not null && !string.Equals(SessionKind, "Buyer", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Set by <c>BiometricSignIn</c> while quick sign-in is on: then a strict sign-in may stay on the phone,
+    /// locked behind the scan.</summary>
+    public bool KeepStrictOnDevice { get; set; }
 
     /// <summary>True when the tokens are also kept on the device ("Remember me").</summary>
     public bool Remember { get; private set; }
@@ -76,6 +94,12 @@ public sealed class TokenStore
         Roles = tokens.Roles ?? [];
         Permissions = tokens.Permissions ?? [];
         Countries = tokens.Countries ?? [];
+        SessionKind = tokens.SessionKind;
+        LockAfterMinutes = tokens.LockAfterMinutes;
+
+        // Sellers and staff: never on the phone without the scan, whatever "Remember me" says (this also catches a
+        // buyer who becomes a seller: the next renewal removes the saved copy)
+        if (IsStrict && !KeepStrictOnDevice) remember = false;
         Remember = remember;
 
         if (!remember)
@@ -114,6 +138,17 @@ public sealed class TokenStore
         await WriteAsync(RolesKey, string.Join(',', Roles));
         await WriteAsync(PermissionsKey, string.Join(',', Permissions));
         await WriteAsync(CountriesKey, string.Join(',', Countries));
+        await WriteAsync(SessionKindKey, SessionKind);
+        await WriteAsync(LockAfterMinutesKey, LockAfterMinutes?.ToString(System.Globalization.CultureInfo.InvariantCulture));
+    }
+
+    /// <summary>Quick sign-in was switched off during a seller / staff sign-in: remove the saved copy (they sign in
+    /// again when the app closes, like before it was switched on).</summary>
+    public async Task ForgetStrictOnDeviceAsync()
+    {
+        if (!IsStrict || KeepStrictOnDevice) return;
+        Remember = false;
+        await RemoveFromDeviceAsync();
     }
 
     /// <summary>Reads tokens kept on the device (app start).</summary>
@@ -132,6 +167,8 @@ public sealed class TokenStore
         Roles = (await ReadAsync(RolesKey))?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [];
         Permissions = (await ReadAsync(PermissionsKey))?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [];
         Countries = (await ReadAsync(CountriesKey))?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [];
+        SessionKind = await ReadAsync(SessionKindKey);
+        LockAfterMinutes = int.TryParse(await ReadAsync(LockAfterMinutesKey), out var minutes) ? minutes : null;
         Remember = true;
         return true;
     }
@@ -145,6 +182,8 @@ public sealed class TokenStore
         Roles = [];
         Permissions = [];
         Countries = [];
+        SessionKind = null;
+        LockAfterMinutes = null;
         Remember = false;
         await RemoveFromDeviceAsync();
     }
@@ -161,6 +200,8 @@ public sealed class TokenStore
         Roles = [];
         Permissions = [];
         Countries = [];
+        SessionKind = null;
+        LockAfterMinutes = null;
         Remember = false;
     }
 
@@ -207,6 +248,8 @@ public sealed class TokenStore
             SecureStorage.Default.Remove(RolesKey);
             SecureStorage.Default.Remove(PermissionsKey);
             SecureStorage.Default.Remove(CountriesKey);
+            SecureStorage.Default.Remove(SessionKindKey);
+            SecureStorage.Default.Remove(LockAfterMinutesKey);
         }
         catch (Exception)
         {

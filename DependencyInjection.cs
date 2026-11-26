@@ -41,6 +41,7 @@ public static class DependencyInjection
 #endif
         services.AddSingleton<Phloem.Services.Biometrics.BiometricSettings>();   // on/off, saved on this phone
         services.AddSingleton<Phloem.Services.Biometrics.BiometricSignIn>();     // start-up, Log in, My account
+        services.AddSingleton<SessionLock>();   // sellers / staff: sign in again after too long in the background
         services.AddSingleton<AccountService>();    // /api/me
         services.AddSingleton<CountryService>();    // /api/countries (fills CountryOption.All)
         services.AddSingleton<LegalService>();      // /api/legal/{type}: Terms, Privacy, Help (kept on the phone)

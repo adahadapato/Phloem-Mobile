@@ -187,6 +187,10 @@
                                 </Label>
                             </Grid>
 
+                            <!-- Sellers and staff: why "Remember me" doesn't keep them signed in (API SessionKind) -->
+                            <Label Text="Sellers, couriers and Phloem staff sign in again when the app closes or has been in the background for a while. Turn on fingerprint / Face ID sign-in to make it quicker."
+                                   FontSize="12" TextColor="{StaticResource BrandTextMuted}" Margin="0,-6,0,0" />
+
                             <!-- Log in -->
                             <Button Text="Log in" Command="{Binding LoginCommand}"
                                     BackgroundColor="{StaticResource BrandDark}" TextColor="White"

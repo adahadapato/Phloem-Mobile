@@ -32,6 +32,20 @@ public class SessionService
     /// </summary>
     public User? CurrentUser { get; set; }
 
+    /// <summary>
+    /// Why the user was just signed out by the app itself (e.g. the background lock); shown once on Log in
+    /// (<see cref="TakeSignedOutReason"/>).
+    /// </summary>
+    public string? SignedOutReason { get; set; }
+
+    /// <summary>Returns <see cref="SignedOutReason"/> once and clears it.</summary>
+    public string? TakeSignedOutReason()
+    {
+        var reason = SignedOutReason;
+        SignedOutReason = null;
+        return reason;
+    }
+
     /// <summary>The signed-in user's full profile from the API; null when signed out.</summary>
     public ProfileDto? Profile { get; private set; }
 
