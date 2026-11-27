@@ -52,20 +52,19 @@ public partial class VoiceSearchButton : ContentView
     private void ShowListening(bool listening)
     {
         this.AbortAnimation(PulseAnimation);
+        SemanticProperties.SetDescription(this, listening ? "Listening. Tap to stop" : "Search by voice");
 
         if (!listening)
         {
             Disc.Fill = new SolidColorBrush(Colors.Transparent);
-            Mic.Stroke = new SolidColorBrush((Color)Application.Current!.Resources["BrandTextDark"]);
+            Mic.Stroke = new SolidColorBrush(Brand("BrandTextDark", Color.FromArgb("#070F19")));
             Ring.Opacity = 0;
             Ring.Scale = 1;
-            SemanticScreenReader.Announce("Stopped listening");
             return;
         }
 
-        Disc.Fill = new SolidColorBrush((Color)Application.Current!.Resources["BrandGreen"]);
+        Disc.Fill = new SolidColorBrush(Brand("BrandGreen", Color.FromArgb("#046334")));
         Mic.Stroke = new SolidColorBrush(Colors.White);
-        SemanticScreenReader.Announce("Listening");
 
         // The ring grows from the button and fades, over and over, while listening
         new Animation(progress =>
@@ -74,4 +73,8 @@ public partial class VoiceSearchButton : ContentView
             Ring.Opacity = 0.9 * (1 - progress);
         }).Commit(this, PulseAnimation, length: 1100, easing: Easing.CubicOut, repeat: () => IsListening);
     }
+
+    /// <summary>A colour from Colors.xaml (or the fallback if it can't be found).</summary>
+    private static Color Brand(string key, Color fallback) =>
+        Application.Current?.Resources.TryGetValue(key, out var value) == true && value is Color color ? color : fallback;
 }

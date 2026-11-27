@@ -41,7 +41,13 @@ public partial class LoginPage : ContentPage
             Shell.Current.FlyoutIsPresented = true;
     }
 
-    // Eye icon: show / hide the password
+    // Eye icon: show / hide the password; the icon changes to an eye crossed out while it shows
     void OnTogglePasswordTapped(object? sender, TappedEventArgs e)
-        => PasswordEntry.IsPassword = !PasswordEntry.IsPassword;
+    {
+        PasswordEntry.IsPassword = !PasswordEntry.IsPassword;
+        var showing = !PasswordEntry.IsPassword;
+        EyeOpen.IsVisible = !showing;
+        EyeClosed.IsVisible = showing;
+        SemanticProperties.SetDescription(PasswordEyeButton, showing ? "Hide password" : "Show password");
+    }
 }

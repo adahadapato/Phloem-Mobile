@@ -67,6 +67,11 @@ public sealed class IosVoiceSearchService : IVoiceSearchService
 
             var input = _engine.InputNode;
             var format = input.GetBusOutputFormat(0);
+            if (format.SampleRate <= 0 || format.ChannelCount == 0)
+            {
+                done.TrySetResult(new VoiceSearchResult(null, "The microphone isn't available right now. Please type instead."));
+                return;
+            }
             var request = _request;
             input.InstallTapOnBus(0, 1024, format, (buffer, _) => request.Append(buffer));
             _engine.Prepare();

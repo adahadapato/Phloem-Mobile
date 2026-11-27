@@ -258,6 +258,11 @@ public partial class HomeViewModel : ObservableObject
             SearchText = heard.Text;
             await SearchNow();
         }
+        catch (Exception ex)
+        {
+            // Never let the 🎤 close the app (an async command's error would)
+            await Shell.Current.DisplayAlertAsync("Voice search", VoiceSearch.Problem(ex), "OK");
+        }
         finally
         {
             IsListening = false;

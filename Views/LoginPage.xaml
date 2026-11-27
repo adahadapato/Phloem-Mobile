@@ -158,9 +158,17 @@
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                                         <Entry x:Name="PasswordEntry" Placeholder="Your password" IsPassword="True"
                                                Text="{Binding Password}" Style="{StaticResource FieldEntry}" />
-                                        <Grid Grid.Column="1" WidthRequest="32" HeightRequest="32" VerticalOptions="Center">
-                                            <Path Data="M2,12 C5,6.5 8.5,4.5 12,4.5 C15.5,4.5 19,6.5 22,12 C19,17.5 15.5,19.5 12,19.5 C8.5,19.5 5,17.5 2,12 Z M9,12 A3,3 0 1 0 15,12 A3,3 0 1 0 9,12"
+                                        <Grid x:Name="PasswordEyeButton" Grid.Column="1" WidthRequest="32" HeightRequest="32"
+                                              VerticalOptions="Center" SemanticProperties.Description="Show password">
+                                            <!-- Eye = password hidden (tap to show); eye crossed out = showing (tap to hide) -->
+                                            <Path x:Name="EyeOpen"
+                                                  Data="M2,12 C5,6.5 8.5,4.5 12,4.5 C15.5,4.5 19,6.5 22,12 C19,17.5 15.5,19.5 12,19.5 C8.5,19.5 5,17.5 2,12 Z M9,12 A3,3 0 1 0 15,12 A3,3 0 1 0 9,12"
                                                   Stroke="{StaticResource BrandGreen}" StrokeThickness="1.8"
+                                                  WidthRequest="22" HeightRequest="22"
+                                                  HorizontalOptions="Center" VerticalOptions="Center" />
+                                            <Path x:Name="EyeClosed" IsVisible="False"
+                                                  Data="M2,12 C5,6.5 8.5,4.5 12,4.5 C15.5,4.5 19,6.5 22,12 C19,17.5 15.5,19.5 12,19.5 C8.5,19.5 5,17.5 2,12 Z M9,12 A3,3 0 1 0 15,12 A3,3 0 1 0 9,12 M3,3 L21,21"
+                                                  Stroke="{StaticResource BrandGreen}" StrokeThickness="1.8" StrokeLineCap="Round"
                                                   WidthRequest="22" HeightRequest="22"
                                                   HorizontalOptions="Center" VerticalOptions="Center" />
                                             <Grid.GestureRecognizers>

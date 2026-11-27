@@ -127,6 +127,11 @@ public partial class FoodListingViewModel : ObservableObject
             }
             if (!string.IsNullOrWhiteSpace(heard.Text)) SearchText = heard.Text;
         }
+        catch (Exception ex)
+        {
+            // Never let the 🎤 close the app (an async command's error would)
+            await Shell.Current.DisplayAlertAsync("Voice search", VoiceSearch.Problem(ex), "OK");
+        }
         finally
         {
             IsListening = false;

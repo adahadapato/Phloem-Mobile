@@ -32,25 +32,28 @@ public sealed class VoiceSearch(IVoiceSearchService speech)
     {
         if (_listening is not null) return VoiceSearchResult.Nothing;
 
-        var permission = await Permissions.CheckStatusAsync<Permissions.Microphone>();
-        if (permission != PermissionStatus.Granted)
-            permission = await Permissions.RequestAsync<Permissions.Microphone>();
-        if (permission != PermissionStatus.Granted)
-            return new VoiceSearchResult(null,
-                "Phloem needs the microphone to search by voice. You can allow it in your phone's settings.");
-
         var listening = _listening = new CancellationTokenSource(TimeSpan.FromSeconds(15));
         try
         {
+            // Permissions must be asked on the main thread (Android throws otherwise)
+            var permission = await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                var status = await Permissions.CheckStatusAsync<Permissions.Microphone>();
+                return status == PermissionStatus.Granted ? status : await Permissions.RequestAsync<Permissions.Microphone>();
+            });
+            if (permission != PermissionStatus.Granted)
+                return new VoiceSearchResult(null,
+                    "Phloem needs the microphone to search by voice. You can allow it in your phone's settings.");
+
             return await speech.ListenAsync(LocaleFor(country), hints, onWords, listening.Token);
         }
         catch (OperationCanceledException)
         {
             return VoiceSearchResult.Nothing;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return new VoiceSearchResult(null, "Voice search isn't working right now. Please type instead.");
+            return new VoiceSearchResult(null, Problem(ex));
         }
         finally
         {
@@ -61,6 +64,17 @@ public sealed class VoiceSearch(IVoiceSearchService speech)
 
     /// <summary>Stops listening and keeps what was heard.</summary>
     public void StopListening() => speech.Stop();
+
+    /// <summary>The message for an unexpected error; Debug builds add the cause, to help fix it.</summary>
+    public static string Problem(Exception ex)
+    {
+        System.Diagnostics.Debug.WriteLine($"[VoiceSearch] {ex}");
+#if DEBUG
+        return $"Voice search isn't working right now. Please type instead.\n\n({ex.GetType().Name}: {ex.Message})";
+#else
+        return "Voice search isn't working right now. Please type instead.";
+#endif
+    }
 
     /// <summary>The accent from the country flag.</summary>
     private static string LocaleFor(Country? country) => country switch
