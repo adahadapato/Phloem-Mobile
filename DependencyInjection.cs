@@ -41,7 +41,19 @@ public static class DependencyInjection
 #endif
         services.AddSingleton<Phloem.Services.Biometrics.BiometricSettings>();   // on/off, saved on this phone
         services.AddSingleton<Phloem.Services.Biometrics.BiometricSignIn>();     // start-up, Log in, My account
-        services.AddSingleton<SessionLock>();   // sellers / staff: sign in again after too long in the background
+        services.AddSingleton<SessionLock>();
+
+        // ---- Voice search (🎤) and dish-name pronunciation (🔊) ----
+#if ANDROID
+        services.AddSingleton<Phloem.Services.Voice.IVoiceSearchService, Phloem.Services.Voice.AndroidVoiceSearchService>();
+#elif IOS
+        services.AddSingleton<Phloem.Services.Voice.IVoiceSearchService, Phloem.Services.Voice.IosVoiceSearchService>();
+#else
+        services.AddSingleton<Phloem.Services.Voice.IVoiceSearchService, Phloem.Services.Voice.NoVoiceSearchService>();
+#endif
+        services.AddSingleton<Phloem.Services.Voice.VoiceSearch>();
+        services.AddSingleton<Phloem.Services.Pronunciation.PronunciationPlayer>();
+        services.AddTransient<Phloem.Services.Pronunciation.PronunciationRecorder>();   // sellers / staff: sign in again after too long in the background
         services.AddSingleton<AccountService>();    // /api/me
         services.AddSingleton<CountryService>();    // /api/countries (fills CountryOption.All)
         services.AddSingleton<LegalService>();      // /api/legal/{type}: Terms, Privacy, Help (kept on the phone)
@@ -99,6 +111,7 @@ public static class DependencyInjection
         services.AddTransient<AdminShopDetailsViewModel>();
         services.AddTransient<ShopOrderDetailsViewModel>();
         services.AddTransient<AdminDishCatalogViewModel>();
+        services.AddTransient<AdminDishPronunciationViewModel>();
         services.AddTransient<LegalViewModel>();
         services.AddTransient<AdminParcelRulesViewModel>();
         services.AddTransient<AdminStaffViewModel>();
@@ -143,6 +156,7 @@ public static class DependencyInjection
         services.AddTransient<AdminShopDetailsPage>();
         services.AddTransient<ShopOrderDetailsPage>();
         services.AddTransient<AdminDishCatalogPage>();
+        services.AddTransient<AdminDishPronunciationPage>();
         services.AddTransient<AdminPricingPage>();
         services.AddTransient<ContactPage>();
         services.AddTransient<MyDeliveriesPage>();

@@ -8,6 +8,7 @@ using Phloem.Services.Api;
 using Phloem.Services.Api.Contracts.Commands;
 using Phloem.Services.Api.Contracts.Dtos;
 using Phloem.Services.Api.Contracts.Enums;
+using Phloem.Services.Pronunciation;
 using Phloem.Settings;
 
 namespace Phloem.ViewModels;
@@ -43,8 +44,10 @@ public partial class DishEditorViewModel : ObservableObject, IQueryAttributable
     private bool _removeExistingPhoto;
     private bool _saving;
 
-    public DishEditorViewModel(SellerService seller, DishCatalogService catalog, IOptions<ApiSettings> api)
+    public DishEditorViewModel(SellerService seller, DishCatalogService catalog, IOptions<ApiSettings> api,
+                               PronunciationPlayer pronunciation)
     {
+        _pronunciation = pronunciation;
         _seller = seller;
         _catalog = catalog;
         _api = api.Value;
@@ -251,6 +254,12 @@ public partial class DishEditorViewModel : ObservableObject, IQueryAttributable
 
     [RelayCommand]
     private void ToggleDetail(string chip) => Detail = Detail == chip ? string.Empty : chip;
+
+    /// <summary>The 🔊 next to a dish name: hear how it's said (recorded by Phloem staff).</summary>
+    [RelayCommand]
+    private Task PlayName(CatalogDish? dish) => _pronunciation.PlayAsync(dish?.PronunciationAudioUrl);
+
+    private readonly PronunciationPlayer _pronunciation;
 
     // ---------- Suggest a new name ----------
     [RelayCommand]

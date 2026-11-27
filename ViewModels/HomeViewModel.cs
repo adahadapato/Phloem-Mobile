@@ -5,6 +5,7 @@ using Phloem.Models;
 using Phloem.Services;
 using Phloem.Services.Api;
 using Phloem.Services.Api.Contracts.Enums;
+using Phloem.Services.Voice;
 using Phloem.Views;
 
 namespace Phloem.ViewModels;
@@ -22,6 +23,7 @@ public partial class HomeViewModel : ObservableObject
     private readonly SessionService _session;
     private readonly SuggestionService _suggestions;
     private readonly TermsPromptService _terms;
+    private readonly VoiceSearch _voice;
     private CancellationTokenSource? _dishesLoad;
     private CancellationTokenSource? _shopsLoad;
     private CancellationTokenSource? _suggestionsLoad;
@@ -104,9 +106,10 @@ public partial class HomeViewModel : ObservableObject
     /// <param name="suggestions">"Order again" / "You might like" / "Popular in …".</param>
     /// <param name="terms">"We've updated our Terms" / Privacy notice when the signed-in person needs them.</param>
     public HomeViewModel(DishService dishes, ShopService shops, CartService cart, SessionService session,
-                         SuggestionService suggestions, TermsPromptService terms)
+                         SuggestionService suggestions, TermsPromptService terms, VoiceSearch voice)
     {
         _terms = terms;
+        _voice = voice;
         _dishes = dishes;
         _shops = shops;
         _cart = cart;
@@ -209,6 +212,56 @@ public partial class HomeViewModel : ObservableObject
             SearchText = prediction.Text;
         }
         await Shell.Current.GoToAsync($"//listing?search={Uri.EscapeDataString(prediction.Text)}");
+    }
+
+
+    // ---------- Voice search (the 🎤 on the search bar) ----------
+
+    /// <summary>True when the phone can search by voice (the 🎤 shows).</summary>
+    public bool CanUseVoice => _voice.IsSupported;
+
+    /// <summary>True while listening (the 🎤 turns green and its ring pulses).</summary>
+    [ObservableProperty]
+    public partial bool IsListening { get; set; }
+
+    /// <summary>
+    /// The 🎤: listens and fills the search box as the person speaks, then opens Explore searched for it (the API's
+    /// "sounds-like" search finds dishes whose names were misheard). Tapping again while listening stops early.
+    /// </summary>
+    [RelayCommand]
+    private async Task Voice()
+    {
+        if (IsListening)
+        {
+            _voice.StopListening();
+            return;
+        }
+
+        IsListening = true;
+        try
+        {
+            var hints = FeaturedDishes.Select(d => d.Name).Distinct().ToList();
+            var heard = await _voice.ListenAsync(SelectedCountry?.ApiCountry, hints, words =>
+            {
+                _picking = true;   // no predictions list while they're still talking
+                SearchText = words;
+            });
+
+            if (heard.Problem is { } problem)
+            {
+                await Shell.Current.DisplayAlertAsync("Voice search", problem, "OK");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(heard.Text)) return;
+
+            _picking = true;
+            SearchText = heard.Text;
+            await SearchNow();
+        }
+        finally
+        {
+            IsListening = false;
+        }
     }
 
     /// <summary>The keyboard's Search key: Explore searched for what was typed.</summary>

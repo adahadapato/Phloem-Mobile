@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    AdminDishPronunciationPage: Admin → Dish names → Pronunciation (route "admindishsound").
+    How a dish name is said: written guide, other spellings (search), and a recording (record, listen, upload).
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Phloem.ViewModels"
+             xmlns:controls="clr-namespace:Phloem.Views.Controls"
+             xmlns:phloem="clr-namespace:Phloem"
+             x:DataType="vm:AdminDishPronunciationViewModel"
+             x:Class="Phloem.Views.AdminDishPronunciationPage"
+             Shell.NavBarIsVisible="False"
+             Title="Pronunciation">
+
+    <ContentPage.Resources>
+        <Style x:Key="FieldBox" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="{StaticResource BrandBorder}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+            <Setter Property="Padding" Value="12,0" />
+        </Style>
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="{StaticResource BrandBorder}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*">
+
+        <!-- ============ GREEN HEADER (back arrow) ============ -->
+        <Grid Grid.Row="0" BackgroundColor="{StaticResource BrandDark}" HeightRequest="72">
+            <Ellipse Stroke="#1AFFFFFF" StrokeThickness="10" WidthRequest="320" HeightRequest="320"
+                     HorizontalOptions="Start" VerticalOptions="Start" Margin="-60,-30,0,0" InputTransparent="True" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14" Padding="14,0,16,0">
+                <Grid WidthRequest="40" HeightRequest="40" VerticalOptions="Center">
+                    <Path Data="M15,5 L8,12 L15,19" Stroke="White" StrokeThickness="2.6"
+                          StrokeLineCap="Round" StrokeLineJoin="Round" WidthRequest="24" HeightRequest="24"
+                          HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Grid.GestureRecognizers>
+                </Grid>
+                <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                    <HorizontalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{x:Static phloem:AppNav.GoHomeCommand}" />
+                    </HorizontalStackLayout.GestureRecognizers>
+                    <Image Source="header_logo.png" WidthRequest="34" HeightRequest="34" />
+                    <Label Text="Phloem" TextColor="White" FontSize="22" FontAttributes="Bold" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </Grid>
+        </Grid>
+
+        <controls:StatusBanner Grid.Row="1" Message="{Binding Message}" IsError="{Binding IsError}" Margin="16,10,16,0" />
+
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="16,14,16,28" Spacing="14" MaximumWidthRequest="620" HorizontalOptions="Fill">
+
+                <VerticalStackLayout Spacing="2" Margin="2,0,0,0">
+                    <Label Text="{Binding Name}" FontSize="22" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                    <Label Text="How this dish name is said, for every shop that sells it." FontSize="13"
+                           TextColor="{StaticResource BrandTextMuted}" />
+                </VerticalStackLayout>
+
+                <!-- ============ RECORDING ============ -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Recording" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                        <Label Text="Say the name once, clearly, in a quiet place (up to 10 seconds)." FontSize="12"
+                               TextColor="{StaticResource BrandTextMuted}" />
+                        <Label Text="{Binding RecordingText}" FontSize="13" TextColor="{StaticResource BrandGreen}" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button Text="{Binding RecordButtonText}" Command="{Binding RecordCommand}"
+                                    BackgroundColor="{StaticResource BrandOrange}" TextColor="White"
+                                    FontAttributes="Bold" CornerRadius="12" HeightRequest="46" />
+                            <Button Grid.Column="1" Text="▶  Listen" Command="{Binding PlayCommand}"
+                                    BackgroundColor="White" TextColor="{StaticResource BrandDark}"
+                                    BorderColor="{StaticResource BrandMint}" BorderWidth="1.5"
+                                    FontAttributes="Bold" CornerRadius="12" HeightRequest="46" />
+                        </Grid>
+                        <Button Text="Upload recording" Command="{Binding UploadCommand}" IsVisible="{Binding HasNewRecording}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                                BackgroundColor="{StaticResource BrandDark}" TextColor="White"
+                                FontAttributes="Bold" CornerRadius="12" HeightRequest="46" />
+                        <Button Text="Remove saved recording" Command="{Binding RemoveCommand}" IsVisible="{Binding HasSavedRecording}"
+                                BackgroundColor="Transparent" TextColor="{StaticResource BrandOrange}"
+                                FontAttributes="Bold" HeightRequest="40" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ GUIDE + OTHER SPELLINGS ============ -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Written guide" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                        <Label Text="How it sounds, e.g. WAH-chay (shown under the name)." FontSize="12"
+                               TextColor="{StaticResource BrandTextMuted}" />
+                        <Border Style="{StaticResource FieldBox}" HeightRequest="46">
+                            <Entry Text="{Binding Guide}" Placeholder="e.g. WAH-chay" MaxLength="60"
+                                   TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                        </Border>
+
+                        <Label Text="Other spellings" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}"
+                               Margin="0,6,0,0" />
+                        <Label Text="One per line (max 10): misspellings and what phones mishear when people search by voice, e.g. waache, whatchy."
+                               FontSize="12" TextColor="{StaticResource BrandTextMuted}" />
+                        <Border Style="{StaticResource FieldBox}" Padding="8,4">
+                            <Editor Text="{Binding Aliases}" AutoSize="TextChanges" MinimumHeightRequest="110"
+                                    Placeholder="jolof&#10;jellof rice" TextColor="{StaticResource BrandTextDark}" />
+                        </Border>
+
+                        <Button Text="Save guide &amp; spellings" Command="{Binding SaveTextCommand}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                                BackgroundColor="{StaticResource BrandDark}" TextColor="White"
+                                FontAttributes="Bold" CornerRadius="12" HeightRequest="46" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

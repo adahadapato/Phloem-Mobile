@@ -5,6 +5,7 @@ using Phloem.Models;
 using Phloem.Services;
 using Phloem.Services.Api;
 using Phloem.Services.Api.Contracts.Enums;
+using Phloem.Services.Voice;
 using Phloem.Settings;
 
 namespace Phloem.ViewModels;
@@ -18,6 +19,7 @@ public partial class FoodListingViewModel : ObservableObject
 {
     private readonly DishService _dishes;
     private readonly CartService _cart;
+    private readonly VoiceSearch _voice;
     private CancellationTokenSource? _load;
 
     public ObservableCollection<CountryOption> Countries { get; } = new(CountryOption.All);
@@ -76,8 +78,9 @@ public partial class FoodListingViewModel : ObservableObject
     partial void OnEmptyMessageChanged(string value) => OnPropertyChanged(nameof(IsEmpty));
     partial void OnCartTotalChanged(decimal value) => OnPropertyChanged(nameof(CartTotalText));
 
-    public FoodListingViewModel(DishService dishes, CartService cart, PagingFactory paging)
+    public FoodListingViewModel(DishService dishes, CartService cart, PagingFactory paging, VoiceSearch voice)
     {
+        _voice = voice;
         _dishes = dishes;
         _cart = cart;
         Pager = paging.Create(PagedLists.Dishes, () => LoadDishesAsync(debounce: false));
@@ -86,6 +89,48 @@ public partial class FoodListingViewModel : ObservableObject
         _cart.Items.CollectionChanged += (_, _) => RefreshCartSummary();
         RefreshDishes();
         RefreshCartSummary();
+    }
+
+
+    // ---------- Voice search (the 🎤 on the search bar) ----------
+
+    /// <summary>True when the phone can search by voice (the 🎤 shows).</summary>
+    public bool CanUseVoice => _voice.IsSupported;
+
+    /// <summary>True while listening (the 🎤 turns green and its ring pulses).</summary>
+    [ObservableProperty]
+    public partial bool IsListening { get; set; }
+
+    /// <summary>
+    /// The 🎤: listens and fills the search box as the person speaks; the list follows the words (the API's
+    /// "sounds-like" search finds dishes whose names were misheard). Tapping again while listening stops early.
+    /// </summary>
+    [RelayCommand]
+    private async Task Voice()
+    {
+        if (IsListening)
+        {
+            _voice.StopListening();
+            return;
+        }
+
+        IsListening = true;
+        try
+        {
+            var hints = Dishes.Select(d => d.Name).Distinct().ToList();
+            var heard = await _voice.ListenAsync(SelectedCountry?.ApiCountry, hints, words => SearchText = words);
+
+            if (heard.Problem is { } problem)
+            {
+                await Shell.Current.DisplayAlertAsync("Voice search", problem, "OK");
+                return;
+            }
+            if (!string.IsNullOrWhiteSpace(heard.Text)) SearchText = heard.Text;
+        }
+        finally
+        {
+            IsListening = false;
+        }
     }
 
     /// <summary>Called from the page when it's navigated to with a vendorId query parameter.</summary>

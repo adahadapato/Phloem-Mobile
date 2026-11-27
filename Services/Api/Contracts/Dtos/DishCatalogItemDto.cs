@@ -14,4 +14,6 @@ public sealed record DishCatalogItemDto(
     bool HasPriceRange,
     decimal? MinPrice,
     decimal? MaxPrice,
-    Currency? Currency);
+    Currency? Currency,
+    string? PronunciationGuide = null,
+    string? PronunciationAudioUrl = null);

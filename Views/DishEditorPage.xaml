@@ -344,12 +344,27 @@
                                             <Setter Property="Opacity" Value="0.55" />
                                         </DataTrigger>
                                     </Border.Triggers>
-                                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8">
+                                    <Grid ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8">
                                         <Label Text="{Binding Name}" FontSize="15" FontAttributes="Bold"
                                                TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
-                                        <Label Grid.Column="1" Text="{Binding Category}" FontSize="11"
+                                        <!-- 🔊 how the name is said (only when staff recorded it) -->
+                                        <Border Grid.Column="1" IsVisible="{Binding HasSound}"
+                                                BackgroundColor="{StaticResource BrandMintPale}" StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 14" Padding="8,3" VerticalOptions="Center"
+                                                SemanticProperties.Description="Hear how this dish name is said">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding BindingContext.PlayNameCommand, Source={x:Reference RootPage}}"
+                                                    CommandParameter="{Binding .}" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="🔊" FontSize="13" />
+                                        </Border>
+                                        <Label Grid.Column="2" Text="{Binding Category}" FontSize="11"
                                                TextColor="{StaticResource BrandGreen}" VerticalOptions="Center" />
-                                        <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding RangeText}" FontSize="12"
+                                        <Label Grid.Row="1" Grid.ColumnSpan="3" Text="{Binding PronunciationGuide}"
+                                               IsVisible="{Binding HasGuide}" FontSize="12" FontAttributes="Italic"
+                                               TextColor="{StaticResource BrandTextMuted}" />
+                                        <Label Grid.Row="2" Grid.ColumnSpan="3" Text="{Binding RangeText}" FontSize="12"
                                                TextColor="{StaticResource BrandTextMuted}" />
                                     </Grid>
                                 </Border>

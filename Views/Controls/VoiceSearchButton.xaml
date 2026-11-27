@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    The 🎤 on the search bars: Phloem's own voice button.
+    Idle: a dark microphone. Listening: a green circle with a white microphone and a gold-edged ring that
+    glows and pulses outwards (VoiceSearchButton.xaml.cs), so it's clear the phone is listening.
+    Bind Command (tap) and IsListening.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Phloem.Views.Controls.VoiceSearchButton"
+             x:Name="Root"
+             WidthRequest="40" HeightRequest="40"
+             SemanticProperties.Description="Search by voice"
+             SemanticProperties.Hint="Tap and say what you're looking for">
+    <Grid WidthRequest="40" HeightRequest="40">
+        <!-- Pulsing ring (only while listening) -->
+        <Ellipse x:Name="Ring" WidthRequest="40" HeightRequest="40"
+                 Stroke="{StaticResource BrandGold}" StrokeThickness="2"
+                 Fill="#33046334" Opacity="0" InputTransparent="True" />
+
+        <!-- The button itself -->
+        <Ellipse x:Name="Disc" WidthRequest="32" HeightRequest="32"
+                 Fill="Transparent" InputTransparent="True" />
+        <Path x:Name="Mic"
+              Data="M12,3 A3,3 0 0 1 15,6 L15,12 A3,3 0 0 1 9,12 L9,6 A3,3 0 0 1 12,3 Z M5.5,11 A6.5,6.5 0 0 0 18.5,11 M12,17.5 L12,21 M8.5,21 L15.5,21"
+              Stroke="{StaticResource BrandTextDark}" StrokeThickness="2" StrokeLineCap="Round" StrokeLineJoin="Round"
+              WidthRequest="22" HeightRequest="22" Aspect="Uniform"
+              HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" />
+
+        <Grid.GestureRecognizers>
+            <TapGestureRecognizer Tapped="OnTapped" />
+        </Grid.GestureRecognizers>
+    </Grid>
+</ContentView>

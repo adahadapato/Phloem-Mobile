@@ -9,4 +9,7 @@ public sealed record AdminDishCatalogDto(
     string Name,
     DishCategory Category,
     CatalogGroup Group,
-    IReadOnlyList<DishPriceRangeDto> PriceRanges);
+    IReadOnlyList<DishPriceRangeDto> PriceRanges,
+    string? PronunciationGuide = null,
+    IReadOnlyList<string>? Aliases = null,
+    string? PronunciationAudioUrl = null);

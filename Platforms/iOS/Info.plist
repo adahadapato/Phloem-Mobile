@@ -30,6 +30,11 @@
 	<string>Phloem uses your photos so you can add your profile photo, shop logo and dish photos.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Phloem uses the camera so you can take your profile photo, shop logo and dish photos, and a photo when you deliver an order.</string>
+	<!-- Voice search (Services/Voice) and staff recording dish-name pronunciations: shown by iOS the first time -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Phloem uses the microphone when you search by voice, and when staff record how a dish name is said.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Phloem turns what you say into search words. Apple may process the audio; Phloem only receives the text.</string>
 	<!-- Sign in with Face ID (Services/Biometrics): shown by iOS the first time -->
 	<key>NSFaceIDUsageDescription</key>
 	<string>Phloem uses Face ID so you can sign in without typing your password. Your face data stays on your iPhone.</string>

@@ -10,6 +10,7 @@
              xmlns:phloem="clr-namespace:Phloem"
              xmlns:vm="clr-namespace:Phloem.ViewModels"
              xmlns:models="clr-namespace:Phloem.Models"
+             xmlns:controls="clr-namespace:Phloem.Views.Controls"
              x:DataType="vm:HomeViewModel"
              x:Class="Phloem.Views.HomePage"
              x:Name="RootPage"
@@ -468,7 +469,7 @@
                 <Border.Shadow>
                     <Shadow Brush="Black" Opacity="0.15" Radius="10" Offset="0,3" />
                 </Border.Shadow>
-                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="10">
                     <Path Data="M3,10 A7,7 0 1 0 17,10 A7,7 0 1 0 3,10 M15.5,15.5 L21,21"
                           Stroke="{StaticResource BrandTextDark}" StrokeThickness="2"
                           StrokeLineCap="Round"
@@ -481,9 +482,14 @@
                            BackgroundColor="Transparent"
                            FontSize="14" ReturnType="Search" ReturnCommand="{Binding SearchNowCommand}"
                            VerticalOptions="Center" />
-                    <BoxView Grid.Column="2" WidthRequest="1" HeightRequest="24"
+                    <!-- Voice search: Phloem's 🎤 (green + pulsing gold ring while listening) -->
+                    <controls:VoiceSearchButton Grid.Column="2" VerticalOptions="Center"
+                                                IsVisible="{Binding CanUseVoice}"
+                                                Command="{Binding VoiceCommand}"
+                                                IsListening="{Binding IsListening}" />
+                    <BoxView Grid.Column="3" WidthRequest="1" HeightRequest="24"
                              Color="{StaticResource BrandBorder}" VerticalOptions="Center" />
-                    <Path Grid.Column="3"
+                    <Path Grid.Column="4"
                           Data="M3,6 L21,6 M3,12 L21,12 M3,18 L21,18 M7,4 L7,8 M16,10 L16,14 M10,16 L10,20"
                           Stroke="{StaticResource BrandTextDark}" StrokeThickness="2"
                           StrokeLineCap="Round"

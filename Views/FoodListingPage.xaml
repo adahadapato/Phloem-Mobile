@@ -121,7 +121,7 @@
                 <!-- ============ SEARCH ============ -->
                 <Border BackgroundColor="White" Stroke="{StaticResource BrandBorder}" StrokeThickness="1"
                         StrokeShape="RoundRectangle 12" Padding="14,0" HeightRequest="48">
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
                         <Path Data="M3,10 A7,7 0 1 0 17,10 A7,7 0 1 0 3,10 M15.5,15.5 L21,21"
                               Stroke="{StaticResource BrandTextMuted}" StrokeThickness="2" StrokeLineCap="Round"
                               WidthRequest="20" HeightRequest="20" VerticalOptions="Center" />
@@ -131,7 +131,12 @@
                                TextColor="{StaticResource BrandTextDark}"
                                PlaceholderColor="{StaticResource BrandTextMuted}"
                                VerticalOptions="Center" />
-                        <Path Grid.Column="2"
+                        <!-- Voice search: Phloem's 🎤 (green + pulsing gold ring while listening) -->
+                        <controls:VoiceSearchButton Grid.Column="2" VerticalOptions="Center"
+                                                    IsVisible="{Binding CanUseVoice}"
+                                                    Command="{Binding VoiceCommand}"
+                                                    IsListening="{Binding IsListening}" />
+                        <Path Grid.Column="3"
                               Data="M3,6 L21,6 M3,12 L21,12 M3,18 L21,18 M7,4 L7,8 M16,10 L16,14 M10,16 L10,20"
                               Stroke="{StaticResource BrandTextMuted}" StrokeThickness="2" StrokeLineCap="Round"
                               WidthRequest="20" HeightRequest="20" VerticalOptions="Center" />

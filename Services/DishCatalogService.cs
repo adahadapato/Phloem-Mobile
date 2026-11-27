@@ -27,6 +27,18 @@ public record CatalogDish(string Name, string Category, string Group)
         : "Price not set yet";
 
     /// <summary>Flag / icon shown next to the group in the picker.</summary>
+    /// <summary>How the name sounds ("WAH-chay"); null when staff haven't added it.</summary>
+    public string? PronunciationGuide { get; init; }
+
+    /// <summary>The recording of the name (the 🔊); null when there isn't one.</summary>
+    public string? PronunciationAudioUrl { get; init; }
+
+    /// <summary>True when there's a recording to play.</summary>
+    public bool HasSound => !string.IsNullOrEmpty(PronunciationAudioUrl);
+
+    /// <summary>True when the written guide shows.</summary>
+    public bool HasGuide => !string.IsNullOrEmpty(PronunciationGuide);
+
     public string GroupIcon => Group switch
     {
         "Ghana" => "🇬🇭",
@@ -95,6 +107,8 @@ public sealed class DishCatalogService(ApiClient api)
             HasPriceRange = d.HasPriceRange,
             MinPrice = d.MinPrice,
             MaxPrice = d.MaxPrice,
-            CurrencySymbol = d.Currency is { } c ? OrderService.SymbolOf(c) : string.Empty
+            CurrencySymbol = d.Currency is { } c ? OrderService.SymbolOf(c) : string.Empty,
+            PronunciationGuide = d.PronunciationGuide,
+            PronunciationAudioUrl = d.PronunciationAudioUrl
         };
 }

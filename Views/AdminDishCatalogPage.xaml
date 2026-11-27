@@ -160,6 +160,18 @@
                                                TextColor="{StaticResource BrandGreen}" VerticalOptions="Center" />
                                     </Grid>
                                     <Label Text="{Binding GroupText}" FontSize="11" TextColor="{StaticResource BrandTextMuted}" />
+                                    <!-- How it's said (guide, spellings, recording): its own page -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding OpenPronunciationCommand, Source={RelativeSource AncestorType={x:Type vm:AdminDishCatalogViewModel}}}"
+                                                CommandParameter="{Binding .}" />
+                                        </Grid.GestureRecognizers>
+                                        <Label Text="{Binding PronunciationText}" FontSize="12" FontAttributes="Italic"
+                                               TextColor="{StaticResource BrandTextMuted}" VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="Pronunciation  ›" FontSize="12" FontAttributes="Bold"
+                                               TextColor="{StaticResource BrandGreen}" VerticalOptions="Center" />
+                                    </Grid>
                                     <FlexLayout BindableLayout.ItemsSource="{Binding Ranges}" Wrap="Wrap">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="vm:PriceRangeChip">

@@ -84,6 +84,21 @@ public sealed class AdminService(ApiClient api)
     public Task<ApiResult> RejectDishNameAsync(Guid id, CancellationToken ct = default) =>
         api.PostAsync($"{DishNames}/{id}/reject", null, ct);
 
+    /// <summary>Sets how a dish name sounds ("WAH-chay") and its other spellings (used by search).</summary>
+    public Task<ApiResult> SetPronunciationAsync(Guid id, string? guide, IReadOnlyList<string> aliases,
+                                                 CancellationToken ct = default) =>
+        api.PutAsync($"{DishNames}/{id}/pronunciation", new PronunciationRequest(guide, aliases), ct);
+
+    /// <summary>Uploads the dish name said properly (m4a, mp3 or wav, max 2 MB); returns its link.</summary>
+    public Task<ApiResult<string>> UploadPronunciationAsync(Guid id, Stream audio, string fileName, string contentType,
+                                                            CancellationToken ct = default) =>
+        api.UploadAsync<string>(HttpMethod.Post, $"{DishNames}/{id}/pronunciation/audio", "file", audio, fileName,
+                                contentType, ct: ct);
+
+    /// <summary>Removes the dish name's recording.</summary>
+    public Task<ApiResult> RemovePronunciationAsync(Guid id, CancellationToken ct = default) =>
+        api.DeleteAsync($"{DishNames}/{id}/pronunciation/audio", ct);
+
     // ───────────────────────────── 3. Users ─────────────────────────────
 
     /// <summary>Everyone who has signed up, newest first; optionally a name search, or only suspended people; one page.</summary>

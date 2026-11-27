@@ -30,6 +30,23 @@ public sealed class DishNameCard
 
     /// <summary>Missing a range in some country: sellers there can't sell it.</summary>
     public bool NeedsPrice => Ranges.Any(r => !r.IsSet);
+
+    /// <summary>How the name is said, in short: "WAH-chay · 🔊", "🔊 recorded", or "Add how it's said".</summary>
+    public string PronunciationText
+    {
+        get
+        {
+            var guide = Item.PronunciationGuide;
+            var sound = !string.IsNullOrEmpty(Item.PronunciationAudioUrl);
+            return (string.IsNullOrEmpty(guide), sound) switch
+            {
+                (false, true) => $"{guide} · 🔊",
+                (false, false) => guide!,
+                (true, true) => "🔊 recorded",
+                _ => "Add how it's said"
+            };
+        }
+    }
 }
 
 /// <summary>
@@ -41,6 +58,11 @@ public partial class AdminDishCatalogViewModel : ObservableObject
 {
     private readonly AdminService _admin;
     private IReadOnlyList<DishNameCard> _all = [];
+
+    /// <summary>"Pronunciation ›" on a name: the written guide, other spellings and recording.</summary>
+    [RelayCommand]
+    private async Task OpenPronunciation(DishNameCard card) =>
+        await Shell.Current.GoToAsync("admindishsound", new Dictionary<string, object> { ["DishName"] = card.Item });
 
     public AdminDishCatalogViewModel(AdminService admin, PagingFactory paging)
     {

@@ -36,6 +36,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute("adminshop", typeof(AdminShopDetailsPage));        // Admin → one shop + documents
         Routing.RegisterRoute("shoporder", typeof(ShopOrderDetailsPage));        // Seller dashboard → one order
         Routing.RegisterRoute("admindishes", typeof(AdminDishCatalogPage));      // Admin → dish names & price ranges
+        Routing.RegisterRoute("admindishsound", typeof(AdminDishPronunciationPage)); // … → how a name is said
         Routing.RegisterRoute("adminparcelrules", typeof(AdminParcelRulesPage)); // Admin → What can be sent
         Routing.RegisterRoute("adminpricing", typeof(AdminPricingPage));         // Admin → Pricing
         Routing.RegisterRoute("adminstaff", typeof(AdminStaffPage));             // Admin → Staff (read-only)

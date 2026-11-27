@@ -50,6 +50,8 @@ kept on the phone let the app open offline.
   two-factor code when it's switched on (setting it up is done on the website).
 - **Sign in with Face ID / fingerprint** (everyone, admins and staff included): offered after a login, or switched
   on in Account → Settings. See [7.3](#73-sign-in-with-face-id--fingerprint).
+- **Voice search** 🎤 on the Home and Explore search bars, and 🔊 **dish-name pronunciation** in the seller's dish
+  picker (staff record them in Admin → Dish names). See [7.5](#75-voice-search-and-dish-name-pronunciation).
 - **Help & support**, **Terms**, **Privacy Policy** (from the API) and **Contact us** (form, email, WhatsApp, phone).
 - **"We've updated our Terms"** when new Terms are published (browse freely; ordering, parcels and selling wait
   until accepted) and a one-time Privacy notice.
@@ -200,6 +202,8 @@ AfroPhloem/
 │   ├── Api/                 ApiClient, ApiResult/ApiError, TokenStore (SecureStorage), token handler, ApiQuery,
 │   │   └── Contracts/       Dtos/, Commands/, Enums/, Queries/ — same shapes as the API
 │   ├── AuthService, SessionService, AccountService      sign-in, who is signed in, my account
+│   ├── Voice/               🎤 voice search: IVoiceSearchService, VoiceSearch, VoiceSearchResult, NoVoiceSearchService
+│   ├── Pronunciation/       🔊 dish-name clips: PronunciationPlayer, PronunciationRecorder (staff)
 │   ├── Biometrics/          Face ID / fingerprint sign-in: IBiometricService, BiometricSignIn, BiometricSettings,
 │   │                        BiometricStatus, BiometricOutcome, NoBiometricService (Windows / Mac)
 │   ├── CountryService, DishService, ShopService, SuggestionService
@@ -363,14 +367,41 @@ every sign-in and renewal (strictest role wins):
 - The numbers are API settings (`Jwt:StaffSessionHours`, `SellerSessionHours`, `StaffIdleMinutes`,
   `SellerIdleMinutes`): changing them needs no app update.
 
-### 7.5 Things that come from the API (no app update needed)
+### 7.5 Voice search and dish-name pronunciation
+
+Built 27 Nov 2026 (with the API's "sounds-like" search). English only for now; no AI.
+
+**🎤 Voice search** (Home and Explore search bars, `Views/Controls/VoiceSearchButton`)
+- Phloem's own button: a dark microphone; while listening it turns green with a gold-edged ring that pulses outwards.
+  Tap again to stop early.
+- `Services/Voice/VoiceSearch` asks for the microphone, picks the accent from the country flag (en-GB / en-GH /
+  en-NG) and calls the phone's own speech recognition (`IVoiceSearchService`):
+  - **Android** (`Platforms/Android/Voice`): `SpeechRecognizer`, partial results, stops when the person stops
+    talking. Manifest: `RECORD_AUDIO` + `<queries>` for `android.speech.RecognitionService` (Android 11+).
+  - **iPhone** (`Platforms/iOS/Voice`): Apple's Speech framework with the dish names on screen as hints
+    (`ContextualStrings`); stops after 1.5 s without new words or 10 s in all. Info.plist:
+    `NSMicrophoneUsageDescription`, `NSSpeechRecognitionUsageDescription`.
+  - Windows / Mac: no 🎤 (`NoVoiceSearchService`).
+- The words fill the search box as they're said; when listening ends, Home opens Explore searched for them and
+  Explore just searches. The API's sounds-like matching finds dishes whose names were misheard ("kelly wally" →
+  Kelewele).
+- **Privacy:** Phloem only receives the text; Google or Apple may process the audio (privacy policy line needed).
+
+**🔊 Pronunciation** (package `Plugin.Maui.Audio` 3.1.1)
+- The seller's dish-name picker (Dish editor) shows the written guide ("WAH-chay") and a 🔊 when staff recorded the
+  name (`Services/Pronunciation/PronunciationPlayer`, clips cached in memory).
+- **Admin → Dish names → Pronunciation ›** (`AdminDishPronunciationPage`, route `admindishsound`): record (up to
+  10 s, wav), listen, upload or remove; the written guide; other spellings (one per line, max 10) that search uses.
+- The app has no dish page yet, so buyers hear names on the website's dish pages.
+
+### 7.6 Things that come from the API (no app update needed)
 
 - Countries, flags, currencies and parcel routes (`GET /api/countries`, also kept on the phone for offline start).
 - Terms, Privacy Policy and Help (rendered by `Helpers/SimpleMarkdown`; headings carry anchors such as
   `{#orders}`, `{#parcels}`, `{#sellers}` that the app links to).
 - The "what can be sent" list, delivery times and charges, price ranges, contact details.
 
-### 7.6 Terms acceptance
+### 7.7 Terms acceptance
 
 `TermsPromptService` checks the profile's `terms` status whenever Home appears: if new Terms need accepting it opens
 **`TermsUpdatePage`** (once per app run; "Not now" lets people keep browsing), and if the Privacy Policy changed it

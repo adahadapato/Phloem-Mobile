@@ -6,9 +6,15 @@
   <uses-permission android:name="android.permission.CAMERA" />
   <!-- Sign in with fingerprint / face (granted automatically, no pop-up) -->
   <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+  <!-- Voice search (🎤) and recording dish-name pronunciations (staff); asked the first time it's used -->
+  <uses-permission android:name="android.permission.RECORD_AUDIO" />
   <queries>
     <intent>
       <action android:name="android.media.action.IMAGE_CAPTURE" />
+    </intent>
+    <!-- Voice search: lets the app find the phone's speech recognition service (Android 11+) -->
+    <intent>
+      <action android:name="android.speech.RecognitionService" />
     </intent>
     <!-- "Continue with Google": lets the app open Google's page in Chrome Custom Tabs (Android 11+) -->
     <intent>
