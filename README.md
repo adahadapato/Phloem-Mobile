@@ -392,7 +392,9 @@ Built 27 Nov 2026 (with the API's "sounds-like" search). English only for now; n
   name (`Services/Pronunciation/PronunciationPlayer`, clips cached in memory).
 - **Admin → Dish names → Pronunciation ›** (`AdminDishPronunciationPage`, route `admindishsound`): record (up to
   10 s, wav), listen, upload or remove; the written guide; other spellings (one per line, max 10) that search uses.
-- The app has no dish page yet, so buyers hear names on the website's dish pages.
+- **Buyers:** a 🔊 on the photo of every dish card that has a recording (Home, Explore, suggestion rows). One
+  shared command plays it (`Services/Pronunciation/SayName.PlayCommand`, used with `x:Static` in the card
+  templates); the API sends `pronunciationAudioUrl` with each card.
 
 ### 7.6 Things that come from the API (no app update needed)
 

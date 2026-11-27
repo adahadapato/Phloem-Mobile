@@ -11,6 +11,7 @@
              xmlns:vm="clr-namespace:Phloem.ViewModels"
              xmlns:models="clr-namespace:Phloem.Models"
              xmlns:controls="clr-namespace:Phloem.Views.Controls"
+             xmlns:pron="clr-namespace:Phloem.Services.Pronunciation"
              x:DataType="vm:HomeViewModel"
              x:Class="Phloem.Views.HomePage"
              x:Name="RootPage"
@@ -23,6 +24,17 @@
             <Border Style="{StaticResource DishCard}" WidthRequest="170" Margin="0,0,0,8">
                 <Grid RowDefinitions="110,Auto">
                     <Image Source="{Binding Dish.ImageUrl}" Aspect="AspectFill" />
+                    <!-- 🔊 how the dish name is said (only when staff recorded it) -->
+                    <Border IsVisible="{Binding Dish.HasSound}" BackgroundColor="#E6FFFFFF" StrokeThickness="0"
+                            StrokeShape="RoundRectangle 15" WidthRequest="30" HeightRequest="30"
+                            HorizontalOptions="Start" VerticalOptions="Start" Margin="8"
+                            SemanticProperties.Description="{Binding Dish.SoundDescription}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{x:Static pron:SayName.PlayCommand}"
+                                                  CommandParameter="{Binding Dish.PronunciationAudioUrl}" />
+                        </Border.GestureRecognizers>
+                        <Label Text="🔊" FontSize="14" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
                     <Border Style="{StaticResource RatingBadge}" HorizontalOptions="End" VerticalOptions="Start" Margin="8">
                         <Label FontSize="11" FontAttributes="Bold" TextColor="White">
                             <Label.FormattedText>
@@ -276,6 +288,17 @@
                                     <Border Style="{StaticResource DishCard}">
                                         <Grid RowDefinitions="120,Auto">
                                             <Image Source="{Binding ImageUrl}" Aspect="AspectFill" />
+                                            <!-- 🔊 how the dish name is said (only when staff recorded it) -->
+                                            <Border IsVisible="{Binding HasSound}" BackgroundColor="#E6FFFFFF" StrokeThickness="0"
+                                                    StrokeShape="RoundRectangle 15" WidthRequest="30" HeightRequest="30"
+                                                    HorizontalOptions="Start" VerticalOptions="Start" Margin="8"
+                                                    SemanticProperties.Description="{Binding SoundDescription}">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Command="{x:Static pron:SayName.PlayCommand}"
+                                                                          CommandParameter="{Binding PronunciationAudioUrl}" />
+                                                </Border.GestureRecognizers>
+                                                <Label Text="🔊" FontSize="14" HorizontalOptions="Center" VerticalOptions="Center" />
+                                            </Border>
                                             <Border Style="{StaticResource RatingBadge}"
                                                     HorizontalOptions="End" VerticalOptions="Start" Margin="8">
                                                 <Label FontSize="11" FontAttributes="Bold" TextColor="White">

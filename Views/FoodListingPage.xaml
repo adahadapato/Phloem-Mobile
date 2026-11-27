@@ -9,6 +9,7 @@
              xmlns:phloem="clr-namespace:Phloem"
              xmlns:vm="clr-namespace:Phloem.ViewModels"
              xmlns:controls="clr-namespace:Phloem.Views.Controls"
+             xmlns:pron="clr-namespace:Phloem.Services.Pronunciation"
              xmlns:models="clr-namespace:Phloem.Models"
              x:DataType="vm:FoodListingViewModel"
              x:Class="Phloem.Views.FoodListingPage"
@@ -262,10 +263,23 @@
                                 </Border.Shadow>
                                 <Grid ColumnDefinitions="100,*" ColumnSpacing="14">
                                     <!-- Dish photo -->
-                                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 12"
-                                            WidthRequest="100" HeightRequest="80">
-                                        <Image Source="{Binding ImageUrl}" Aspect="AspectFill" />
-                                    </Border>
+                                    <Grid WidthRequest="100" HeightRequest="80">
+                                        <Border StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                                                WidthRequest="100" HeightRequest="80">
+                                            <Image Source="{Binding ImageUrl}" Aspect="AspectFill" />
+                                        </Border>
+                                        <!-- 🔊 how the dish name is said (only when staff recorded it) -->
+                                        <Border IsVisible="{Binding HasSound}" BackgroundColor="#E6FFFFFF" StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 15" WidthRequest="30" HeightRequest="30"
+                                                HorizontalOptions="Start" VerticalOptions="Start" Margin="4"
+                                                SemanticProperties.Description="{Binding SoundDescription}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{x:Static pron:SayName.PlayCommand}"
+                                                                      CommandParameter="{Binding PronunciationAudioUrl}" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="🔊" FontSize="14" HorizontalOptions="Center" VerticalOptions="Center" />
+                                        </Border>
+                                    </Grid>
 
                                     <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*" ColumnDefinitions="*,Auto"
                                           RowSpacing="2" Padding="0,4,4,0">

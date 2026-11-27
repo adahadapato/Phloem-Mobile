@@ -21,6 +21,20 @@ public partial class Dish : ObservableObject
     public string Description { get; set; } = string.Empty;
     public bool IsAvailable { get; set; } = true;
 
+    /// <summary>How the dish name is said ("WAH-chay"), from the dish list; null when staff haven't added it.</summary>
+    public string? PronunciationGuide { get; set; }
+
+    /// <summary>The recording of the dish name (the 🔊 on the card); null when there isn't one.</summary>
+    public string? PronunciationAudioUrl { get; set; }
+
+    /// <summary>True when the card shows the 🔊.</summary>
+    public bool HasSound => !string.IsNullOrEmpty(PronunciationAudioUrl);
+
+    /// <summary>What a screen reader says for the 🔊 ("Hear how Waakye is said, WAH-chay").</summary>
+    public string SoundDescription => string.IsNullOrEmpty(PronunciationGuide)
+        ? $"Hear how {Name} is said"
+        : $"Hear how {Name} is said, {PronunciationGuide}";
+
     /// <summary>Seller's dishes: why buyers can't see it yet ("Being checked", "Not allowed: …"); null when fine.</summary>
     public string? ReviewText { get; set; }
 

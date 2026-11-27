@@ -17,4 +17,6 @@ public sealed record DishCardDto(
     string? ImageUrl,
     Guid VendorId,
     string VendorName,
-    bool IsVerifiedShop);
+    bool IsVerifiedShop,
+    string? PronunciationGuide = null,
+    string? PronunciationAudioUrl = null);

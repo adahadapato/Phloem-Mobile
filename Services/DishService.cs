@@ -93,6 +93,8 @@ public sealed class DishService(ApiClient api, IOptions<ApiSettings> settings)
         VendorName = d.VendorName,
         VendorId = d.VendorId.ToString(),
         Description = d.Description ?? string.Empty,
-        IsAvailable = true
+        IsAvailable = true,
+        PronunciationGuide = d.PronunciationGuide,
+        PronunciationAudioUrl = settings.Value.ResolveFileUrl(d.PronunciationAudioUrl)
     };
 }

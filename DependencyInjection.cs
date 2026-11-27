@@ -52,7 +52,7 @@ public static class DependencyInjection
         services.AddSingleton<Phloem.Services.Voice.IVoiceSearchService, Phloem.Services.Voice.NoVoiceSearchService>();
 #endif
         services.AddSingleton<Phloem.Services.Voice.VoiceSearch>();
-        services.AddSingleton<Phloem.Services.Pronunciation.PronunciationPlayer>();
+        services.AddSingleton(_ => Phloem.Services.Pronunciation.SayName.Player);   // shared with the 🔊 on cards
         services.AddTransient<Phloem.Services.Pronunciation.PronunciationRecorder>();   // sellers / staff: sign in again after too long in the background
         services.AddSingleton<AccountService>();    // /api/me
         services.AddSingleton<CountryService>();    // /api/countries (fills CountryOption.All)
