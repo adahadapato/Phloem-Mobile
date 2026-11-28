@@ -236,7 +236,8 @@ public partial class ShopOrderDetailsViewModel : ObservableObject, IQueryAttribu
         });
     }
 
-    /// <summary>The choices from the API ("I'll deliver it myself" first); null when cancelled.</summary>
+    /// <summary>The choices from the API ("I'll deliver it myself" first, when the seller is an approved courier); null
+    /// when cancelled.</summary>
     private async Task<CourierOptionDto?> ChooseCourierAsync(string title)
     {
         var result = await _seller.GetCouriersAsync();
@@ -247,9 +248,20 @@ public partial class ShopOrderDetailsViewModel : ObservableObject, IQueryAttribu
         }
 
         var options = result.Value!;
+        if (options.Count == 0)
+        {
+            // "I'll deliver it myself" needs an approved courier registration (same checks for every courier)
+            var register = await Shell.Current.DisplayAlertAsync("No courier yet",
+                "There are no approved couriers in your country yet. To deliver it yourself, register as a courier " +
+                "first: Phloem checks your ID and vehicle, then you can deliver your own orders.",
+                "Become a courier", "Not now");
+            if (register) await Shell.Current.GoToAsync("//account/becomecourier");
+            return null;
+        }
+
         var labels = options.Select(c => c.IsMe ? "🙋  I'll deliver it myself" : $"🛵  {c.Name}").ToArray();
         var picked = await Shell.Current.DisplayActionSheetAsync(
-            options.Count == 1 ? $"{title}\n(No couriers in your country yet.)" : title, "Cancel", null, labels);
+            options.All(c => c.IsMe) ? $"{title}\n(No other couriers in your country yet.)" : title, "Cancel", null, labels);
 
         var index = Array.IndexOf(labels, picked);
         return index < 0 ? null : options[index];

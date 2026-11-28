@@ -82,6 +82,29 @@ public sealed class ApiClient(IHttpClientFactory httpClientFactory, ILogger<ApiC
             Content = Form(fieldName, content, fileName, contentType, fields)
         }, ct);
 
+    /// <summary>Uploads several files in one form (multipart), e.g. a vehicle's front and side photos.</summary>
+    /// <param name="method">POST or PUT, as the endpoint expects.</param>
+    /// <param name="path">The endpoint.</param>
+    /// <param name="files">The files, each with the form field the endpoint reads it from.</param>
+    /// <param name="fields">Other form fields, or null.</param>
+    /// <param name="ct">Cancellation.</param>
+    public Task<ApiResult<T>> UploadFilesAsync<T>(HttpMethod method, string path, IReadOnlyList<UploadFile> files,
+                                                  IReadOnlyDictionary<string, string>? fields = null,
+                                                  CancellationToken ct = default)
+    {
+        var form = new MultipartFormDataContent();
+        foreach (var f in files)
+        {
+            var file = new StreamContent(f.Content);
+            file.Headers.ContentType = new MediaTypeHeaderValue(f.ContentType);
+            form.Add(file, f.FieldName, f.FileName);
+        }
+        foreach (var (name, value) in fields ?? new Dictionary<string, string>())
+            form.Add(new StringContent(value), name);
+
+        return SendAsync<T>(new HttpRequestMessage(method, path) { Content = form }, ct);
+    }
+
     /// <summary>The multipart form: the file, then the other fields.</summary>
     private static MultipartFormDataContent Form(string fieldName, Stream content, string fileName, string contentType,
                                                  IReadOnlyDictionary<string, string>? fields)
@@ -212,3 +235,10 @@ public sealed class ApiClient(IHttpClientFactory httpClientFactory, ILogger<ApiC
 
     private static ApiError Fallback(int status) => status == 401 ? ApiError.SessionExpired : ApiError.Unexpected(status);
 }
+
+/// <summary>One file in <see cref="ApiClient.UploadFilesAsync{T}"/>.</summary>
+/// <param name="FieldName">The form field the endpoint reads it from (e.g. "frontPhoto").</param>
+/// <param name="Content">The file.</param>
+/// <param name="FileName">Its name.</param>
+/// <param name="ContentType">Its type, e.g. "image/jpeg".</param>
+public sealed record UploadFile(string FieldName, Stream Content, string FileName, string ContentType);

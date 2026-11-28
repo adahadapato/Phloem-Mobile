@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    BecomeCourierPage (route "becomecourier"): register as a courier. 1. How you get around, with two LIVE photos of
+    the vehicle (front with the number plate, and side), checked by the AI at once; 2. the documents your country and
+    vehicle need, each photographed with its number; 3. send it to Phloem staff. Shows where it stands.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Phloem.ViewModels"
+             xmlns:helpers="clr-namespace:Phloem.Helpers"
+             x:DataType="vm:BecomeCourierViewModel"
+             x:Class="Phloem.Views.BecomeCourierPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource BrandCream}"
+             Title="Become a courier">
+
+    <ContentPage.Behaviors>
+        <helpers:KeepScreenAwakeBehavior />
+    </ContentPage.Behaviors>
+
+    <ContentPage.Resources>
+        <Style x:Key="FieldLabel" TargetType="Label">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{StaticResource BrandTextDark}" />
+            <Setter Property="Margin" Value="2,0,0,6" />
+        </Style>
+        <Style x:Key="FieldBox" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="{StaticResource BrandBorder}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="HeightRequest" Value="50" />
+        </Style>
+        <Style x:Key="WhiteCard" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="StrokeThickness" Value="0" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 18" />
+            <Setter Property="Padding" Value="16,18" />
+            <Setter Property="Shadow">
+                <Setter.Value>
+                    <Shadow Brush="Black" Opacity="0.06" Radius="12" Offset="0,3" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SectionTitle" TargetType="Label">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{StaticResource BrandTextDark}" />
+        </Style>
+        <Style x:Key="PhotoBox" TargetType="Border">
+            <Setter Property="StrokeThickness" Value="0" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+            <Setter Property="HeightRequest" Value="150" />
+            <Setter Property="BackgroundColor" Value="{StaticResource BrandMintPale}" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- ============ GREEN HEADER (back arrow) ============ -->
+        <Grid Grid.Row="0" BackgroundColor="{StaticResource BrandDark}" HeightRequest="72">
+            <Ellipse Stroke="#1AFFFFFF" StrokeThickness="10" WidthRequest="320" HeightRequest="320"
+                     HorizontalOptions="Start" VerticalOptions="Start" Margin="-60,-30,0,0" InputTransparent="True" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14" Padding="14,0,16,0">
+                <Grid WidthRequest="40" HeightRequest="40" VerticalOptions="Center">
+                    <Path Data="M15,5 L8,12 L15,19" Stroke="White" StrokeThickness="2.6"
+                          StrokeLineCap="Round" StrokeLineJoin="Round" WidthRequest="24" HeightRequest="24"
+                          HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped" />
+                    </Grid.GestureRecognizers>
+                </Grid>
+                <Label Grid.Column="1" Text="Become a courier" TextColor="White" FontSize="22" FontAttributes="Bold"
+                       VerticalOptions="Center" />
+            </Grid>
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="16,18,16,28" Spacing="14" MaximumWidthRequest="560" HorizontalOptions="Fill">
+
+                <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}"
+                                   Color="{StaticResource BrandDark}" HeightRequest="28" />
+
+                <!-- ============ WHERE IT STANDS ============ -->
+                <Border Style="{StaticResource WhiteCard}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{Binding StatusTitle}" FontSize="20" FontAttributes="Bold"
+                               TextColor="{StaticResource BrandTextDark}" />
+                        <Label Text="{Binding StatusMessage}" Style="{StaticResource SubtleLabel}" FontSize="14"
+                               LineBreakMode="WordWrap" />
+                        <Border BackgroundColor="#FFF8E6" StrokeThickness="0" StrokeShape="RoundRectangle 10"
+                                Padding="12,8" IsVisible="{Binding HasDecisionNote}">
+                            <Label Text="{Binding DecisionNote}" FontSize="13" TextColor="{StaticResource BrandTextDark}"
+                                   LineBreakMode="WordWrap" />
+                        </Border>
+                        <Label Text="Phloem checks every courier, so customers know exactly who comes to their door. Your ID and photos are kept private: only Phloem staff checking couriers can see them."
+                               Style="{StaticResource SubtleLabel}" FontSize="12" LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ 1. VEHICLE ============ -->
+                <Border Style="{StaticResource WhiteCard}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="1. How do you get around?" Style="{StaticResource SectionTitle}" />
+                        <FlexLayout Wrap="Wrap" Direction="Row" JustifyContent="Start" Margin="-4,0"
+                                    BindableLayout.ItemsSource="{Binding Mobilities}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:MobilityOption">
+                                    <ContentView FlexLayout.Basis="50%" Padding="4">
+                                        <Border StrokeShape="RoundRectangle 12" StrokeThickness="1" Padding="12,12"
+                                                Stroke="{StaticResource BrandBorder}" BackgroundColor="White">
+                                            <Border.Triggers>
+                                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="Stroke" Value="{StaticResource BrandGreen}" />
+                                                    <Setter Property="StrokeThickness" Value="2" />
+                                                    <Setter Property="BackgroundColor" Value="{StaticResource BrandMintPale}" />
+                                                </DataTrigger>
+                                            </Border.Triggers>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding SelectMobilityCommand, Source={RelativeSource AncestorType={x:Type vm:BecomeCourierViewModel}}}"
+                                                    CommandParameter="{Binding .}" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="{Binding Label}" FontSize="14" FontAttributes="Bold"
+                                                   TextColor="{StaticResource BrandTextDark}" />
+                                        </Border>
+                                    </ContentView>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </FlexLayout>
+
+                        <VerticalStackLayout IsVisible="{Binding NeedsRegistration}">
+                            <Label Text="Registration number (as on the number plate)" Style="{StaticResource FieldLabel}" />
+                            <Border Style="{StaticResource FieldBox}">
+                                <Entry Text="{Binding RegistrationNumber}" MaxLength="20" Placeholder="e.g. LND 123 AB"
+                                       Keyboard="Plain" IsReadOnly="{Binding IsEditable, Converter={StaticResource InvertedBoolConverter}}"
+                                       TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10" IsVisible="{Binding NeedsPhotos}">
+                            <VerticalStackLayout>
+                                <Label Text="Make (optional)" Style="{StaticResource FieldLabel}" />
+                                <Border Style="{StaticResource FieldBox}">
+                                    <Entry Text="{Binding Make}" MaxLength="50" Placeholder="e.g. Bajaj Boxer"
+                                           TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1">
+                                <Label Text="Colour" Style="{StaticResource FieldLabel}" />
+                                <Border Style="{StaticResource FieldBox}">
+                                    <Entry Text="{Binding Colour}" MaxLength="30" Placeholder="e.g. Red"
+                                           TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                                </Border>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10" IsVisible="{Binding NeedsPhotos}">
+                            <VerticalStackLayout Spacing="6">
+                                <Border Style="{StaticResource PhotoBox}">
+                                    <Grid>
+                                        <Image Source="{Binding FrontPhoto}" Aspect="AspectFill" IsVisible="{Binding HasFront}" />
+                                        <Label Text="📷&#10;Front, with the&#10;number plate" FontSize="13" HorizontalTextAlignment="Center"
+                                               VerticalOptions="Center" TextColor="{StaticResource BrandTextMuted}"
+                                               IsVisible="{Binding HasFront, Converter={StaticResource InvertedBoolConverter}}" />
+                                    </Grid>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding TakeFrontCommand}" />
+                                    </Border.GestureRecognizers>
+                                </Border>
+                                <Button Text="📷  Front" Command="{Binding TakeFrontCommand}" Style="{StaticResource OutlineButton}"
+                                        IsEnabled="{Binding IsEditable}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="6">
+                                <Border Style="{StaticResource PhotoBox}">
+                                    <Grid>
+                                        <Image Source="{Binding SidePhoto}" Aspect="AspectFill" IsVisible="{Binding HasSide}" />
+                                        <Label Text="📷&#10;Side" FontSize="13" HorizontalTextAlignment="Center"
+                                               VerticalOptions="Center" TextColor="{StaticResource BrandTextMuted}"
+                                               IsVisible="{Binding HasSide, Converter={StaticResource InvertedBoolConverter}}" />
+                                    </Grid>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding TakeSideCommand}" />
+                                    </Border.GestureRecognizers>
+                                </Border>
+                                <Button Text="📷  Side" Command="{Binding TakeSideCommand}" Style="{StaticResource OutlineButton}"
+                                        IsEnabled="{Binding IsEditable}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                        <Label Text="Take both photos now with your camera, outdoors in good light, with the whole vehicle in view. Our AI checks them straight away."
+                               Style="{StaticResource SubtleLabel}" FontSize="12" LineBreakMode="WordWrap"
+                               IsVisible="{Binding NeedsPhotos}" />
+
+                        <VerticalStackLayout Spacing="4" IsVisible="{Binding HasVehicleStatus}">
+                            <Label Text="{Binding VehicleStatus}" FontSize="14" FontAttributes="Bold"
+                                   TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+                            <VerticalStackLayout Spacing="4" BindableLayout.ItemsSource="{Binding VehicleHints}"
+                                                 IsVisible="{Binding HasVehicleHints}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <Border BackgroundColor="#FFF8E6" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="12,8">
+                                            <Label Text="{Binding .}" FontSize="13" TextColor="{StaticResource BrandTextDark}"
+                                                   LineBreakMode="WordWrap" />
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+
+                        <Button Text="Send my vehicle details" Command="{Binding SendVehicleCommand}"
+                                Style="{StaticResource PrimaryButton}" IsVisible="{Binding IsEditable}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ 2. DOCUMENTS ============ -->
+                <Border Style="{StaticResource WhiteCard}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="2. Your documents" Style="{StaticResource SectionTitle}" />
+                        <Label Text="Type the number first, then photograph the document. What's needed depends on your country and how you get around."
+                               Style="{StaticResource SubtleLabel}" FontSize="12" LineBreakMode="WordWrap" />
+                        <VerticalStackLayout Spacing="14" BindableLayout.ItemsSource="{Binding Documents}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:CourierDocumentRow">
+                                    <Border StrokeShape="RoundRectangle 14" Stroke="{StaticResource BrandBorder}"
+                                            StrokeThickness="1" Padding="12">
+                                        <VerticalStackLayout Spacing="8">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <Label Text="{Binding Name}" FontSize="15" FontAttributes="Bold"
+                                                       TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+                                                <Label Grid.Column="1" Text="{Binding StatusText}" FontSize="12"
+                                                       FontAttributes="Bold" TextColor="{StaticResource BrandGreen}"
+                                                       IsVisible="{Binding HasStatus}" VerticalOptions="Center" />
+                                            </Grid>
+                                            <Label Text="{Binding RejectionReason}" FontSize="13"
+                                                   TextColor="{StaticResource BrandDanger}" IsVisible="{Binding HasRejection}"
+                                                   LineBreakMode="WordWrap" />
+                                            <VerticalStackLayout IsVisible="{Binding NeedsNumber}">
+                                                <Border Style="{StaticResource FieldBox}">
+                                                    <Entry Text="{Binding Number}" MaxLength="25"
+                                                           Placeholder="{Binding NumberPlaceholder}"
+                                                           TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                                                </Border>
+                                                <Label Text="{Binding NumberHelp}" Style="{StaticResource SubtleLabel}"
+                                                       FontSize="12" Margin="2,4,0,0" />
+                                            </VerticalStackLayout>
+                                            <Border Style="{StaticResource PhotoBox}" IsVisible="{Binding HasPhoto}">
+                                                <Image Source="{Binding PhotoSource}" Aspect="AspectFit" />
+                                            </Border>
+                                            <Button Text="{Binding ButtonText}" Style="{StaticResource OutlineButton}"
+                                                    Command="{Binding TakeDocumentCommand, Source={RelativeSource AncestorType={x:Type vm:BecomeCourierViewModel}}}"
+                                                    CommandParameter="{Binding .}"
+                                                    IsVisible="{Binding IsEditable, Source={RelativeSource AncestorType={x:Type vm:BecomeCourierViewModel}}}" />
+                                            <ActivityIndicator IsRunning="{Binding IsSending}" IsVisible="{Binding IsSending}"
+                                                               Color="{StaticResource BrandDark}" HeightRequest="24" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ 3. SEND ============ -->
+                <Border Style="{StaticResource WhiteCard}" IsVisible="{Binding ShowSubmit}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="3. Send to Phloem" Style="{StaticResource SectionTitle}" />
+                        <VerticalStackLayout Spacing="2" IsVisible="{Binding HasStillNeeded}">
+                            <Label Text="Still needed:" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource BrandTextDark}" />
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding StillNeeded}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <Label Text="{Binding ., StringFormat='•  {0}'}" FontSize="13"
+                                               TextColor="{StaticResource BrandTextMuted}" LineBreakMode="WordWrap" />
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                        <Label Text="You must be 18 or over, with your date of birth on your profile."
+                               Style="{StaticResource SubtleLabel}" FontSize="12" LineBreakMode="WordWrap" />
+                        <Button Text="Check my profile" Command="{Binding EditProfileCommand}" Style="{StaticResource OutlineButton}" />
+                        <Button Text="Send for checking" Command="{Binding SubmitCommand}" Style="{StaticResource CtaButton}"
+                                IsEnabled="{Binding CanSubmit}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border BackgroundColor="#FDECEA" StrokeThickness="0" StrokeShape="RoundRectangle 12" Padding="14,10"
+                        IsVisible="{Binding HasMessage}">
+                    <Label Text="{Binding Message}" FontSize="13" TextColor="{StaticResource BrandDanger}"
+                           LineBreakMode="WordWrap" />
+                </Border>
+
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                                   Color="{StaticResource BrandDark}" HeightRequest="28" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

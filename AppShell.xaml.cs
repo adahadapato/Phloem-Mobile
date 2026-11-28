@@ -42,6 +42,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute("adminstaff", typeof(AdminStaffPage));             // Admin → Staff (read-only)
         Routing.RegisterRoute("deliveries", typeof(MyDeliveriesPage));           // couriers (and sellers): My deliveries
         Routing.RegisterRoute("deliveryproof", typeof(DeliveryProofPage));       // "Delivered": photo + handover
+        Routing.RegisterRoute("becomecourier", typeof(BecomeCourierPage));       // register as a courier (ID, vehicle)
 
         // Checkout (was already reached with GoToAsync(nameof(CheckoutPage))).
         Routing.RegisterRoute(nameof(CheckoutPage), typeof(CheckoutPage));
@@ -60,6 +61,7 @@ public partial class AppShell : Shell
     //   Become a Seller   hidden once the user has a shop
     //   Seller Dashboard  only when the user has a shop
     //   My Deliveries     couriers, and sellers (who can deliver their own orders)
+    //   Become a Courier  signed in and not a courier yet ("My courier details" for couriers)
     // ------------------------------------------------------------------
     private readonly SessionService? _session;
 
@@ -77,6 +79,8 @@ public partial class AppShell : Shell
         SetFlyoutItemIsVisible(BecomeSellerMenuItem, !hasShop);
         SetFlyoutItemIsVisible(SellerDashMenuItem, hasShop);
         SetFlyoutItemIsVisible(MyDeliveriesMenuItem, (_session?.IsCourier ?? false) || hasShop);
+        SetFlyoutItemIsVisible(BecomeCourierMenuItem, signedIn);
+        BecomeCourierMenuItem.Text = (_session?.IsCourier ?? false) ? "My Courier Details" : "Become a Courier";
     }
 
     /// <summary>Stops listening to the session when this shell is closed.</summary>

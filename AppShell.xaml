@@ -148,6 +148,7 @@
     <MenuItem x:Name="SellerDashMenuItem"    Text="Seller Dashboard" CommandParameter="//home/dashboard"   Clicked="OnMenuItemClicked" />
     <MenuItem x:Name="MyShipmentsMenuItem"   Text="My Shipments"     CommandParameter="//account/myshipments" Clicked="OnMenuItemClicked" />
     <MenuItem x:Name="MyDeliveriesMenuItem"  Text="My Deliveries"    CommandParameter="//account/deliveries"  Clicked="OnMenuItemClicked" />
+    <MenuItem x:Name="BecomeCourierMenuItem" Text="Become a Courier" CommandParameter="//account/becomecourier" Clicked="OnMenuItemClicked" />
     <MenuItem x:Name="SignUpMenuItem"        Text="Sign Up"          CommandParameter="//account/register"   Clicked="OnMenuItemClicked" />
 
 </Shell>
