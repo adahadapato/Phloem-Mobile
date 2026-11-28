@@ -28,6 +28,8 @@
 	<string>Assets.xcassets/appicon.appiconset</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Phloem uses your photos so you can add your profile photo, shop logo and dish photos.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>When you confirm a delivery, Phloem records where your phone is, for Phloem staff only in case of a problem.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Phloem uses the camera so you can take your profile photo, shop logo and dish photos, and a photo when you deliver an order.</string>
 	<!-- Voice search (Services/Voice) and staff recording dish-name pronunciations: shown by iOS the first time -->

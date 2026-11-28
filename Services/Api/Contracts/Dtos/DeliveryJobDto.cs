@@ -16,4 +16,6 @@ public sealed record DeliveryJobDto(
     DeliveryWindow? DeliveryWindow,
     DateTime? AssignedAt,
     DateTime? DeliveredAt,
-    string? HandoverSummary);
+    string? HandoverSummary,
+    string? DoorWord = null,
+    bool HasHandoverPin = false);

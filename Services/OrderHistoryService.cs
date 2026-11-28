@@ -65,6 +65,9 @@ public partial class PlacedOrder : ObservableObject
     /// <summary>The courier's photo once delivered (Order details only); null before.</summary>
     public DeliveryProofView? Proof { get; init; }
 
+    /// <summary>Door safety while it's on its way (who is coming, door word, PIN); null otherwise.</summary>
+    public DoorCheckView? DoorCheck { get; init; }
+
     /// <summary>The API's answer to "can it still be cancelled?" when the order was loaded.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanCancel), nameof(StatusText))]
@@ -357,7 +360,8 @@ public class OrderHistoryService
             CancelledAt = o.CancelledAt?.ToLocalTime(),
             DeclineReason = o.DeclinedByShop ? o.DeclineReason ?? string.Empty : null,
             CourierName = o.CourierName,
-            Proof = DeliveryProofView.From(o.DeliveryProof, _api)
+            Proof = DeliveryProofView.From(o.DeliveryProof, _api),
+            DoorCheck = DoorCheckView.From(o.DoorCheck, CourierConcernKind.Order, o.OrderNumber, _api)
         };
     }
 

@@ -202,6 +202,9 @@
                     </VerticalStackLayout>
                 </Border>
 
+                <!-- ============ DOOR SAFETY (while it's on its way) ============ -->
+                <controls:DoorCheckCard Check="{Binding Order.DoorCheck}" />
+
                 <!-- ============ PROOF OF DELIVERY (the courier's photo) ============ -->
                 <controls:DeliveryProofCard Proof="{Binding Order.Proof}" />
 

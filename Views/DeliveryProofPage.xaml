@@ -74,6 +74,12 @@
                     <Label Text="{Binding ForText}" Style="{StaticResource SubtleLabel}" FontSize="14" />
                 </VerticalStackLayout>
 
+                <Border BackgroundColor="#FFF8E6" StrokeThickness="0" StrokeShape="RoundRectangle 12" Padding="14,10"
+                        IsVisible="{Binding HasDoorWord}">
+                    <Label Text="{Binding DoorWordText}" FontSize="14" TextColor="{StaticResource BrandTextDark}"
+                           LineBreakMode="WordWrap" />
+                </Border>
+
                 <!-- ============ PHOTO ============ -->
                 <Border Style="{StaticResource WhiteCard}">
                     <VerticalStackLayout Spacing="12">
@@ -142,6 +148,14 @@
                             </Border>
                         </VerticalStackLayout>
 
+                        <VerticalStackLayout IsVisible="{Binding ShowPin}">
+                            <Label Text="Their handover PIN (from their Phloem app)" Style="{StaticResource FieldLabel}" />
+                            <Border Style="{StaticResource FieldBox}">
+                                <Entry Text="{Binding HandoverPin}" MaxLength="4" Placeholder="4 digits" Keyboard="Numeric"
+                                       TextColor="{StaticResource BrandTextDark}" VerticalOptions="Center" />
+                            </Border>
+                        </VerticalStackLayout>
+
                         <VerticalStackLayout>
                             <Label Text="Note for the customer (optional)" Style="{StaticResource FieldLabel}" />
                             <Border Style="{StaticResource FieldBox}" HeightRequest="96" Padding="8,4">
@@ -158,6 +172,9 @@
                     <Label Text="{Binding Message}" FontSize="13" TextColor="{StaticResource BrandDanger}"
                            LineBreakMode="WordWrap" />
                 </Border>
+
+                <Label Text="Your location at hand-over is kept for Phloem staff only, in case of a problem."
+                       Style="{StaticResource SubtleLabel}" FontSize="12" LineBreakMode="WordWrap" />
 
                 <Button Text="✓  Confirm delivered" Command="{Binding ConfirmCommand}" Style="{StaticResource CtaButton}"
                         IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />

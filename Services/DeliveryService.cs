@@ -23,15 +23,27 @@ public sealed class DeliveryService(ApiClient api)
     /// <param name="handover">How it was handed over.</param>
     /// <param name="receivedBy">Who took it (required for a neighbour).</param>
     /// <param name="note">An optional note for the customer.</param>
+    /// <param name="handoverPin">Door safety: the customer's 4-digit PIN (required when handed over in person).</param>
+    /// <param name="location">Where the phone is (staff only); null when not allowed or not found.</param>
     /// <param name="ct">Cancellation.</param>
     public async Task<ApiResult> MarkDeliveredAsync(DeliveryKind kind, string reference, Stream photo, string fileName,
                                                     string contentType, HandoverMethod handover, string? receivedBy,
-                                                    string? note, CancellationToken ct = default)
+                                                    string? note, CancellationToken ct = default,
+                                                    string? handoverPin = null, Location? location = null)
     {
         var folder = kind == DeliveryKind.Parcel ? "parcels" : "orders";
         var fields = new Dictionary<string, string> { ["handover"] = handover.ToString() };
         if (!string.IsNullOrWhiteSpace(receivedBy)) fields["receivedBy"] = receivedBy.Trim();
         if (!string.IsNullOrWhiteSpace(note)) fields["note"] = note.Trim();
+        if (!string.IsNullOrWhiteSpace(handoverPin)) fields["handoverPin"] = handoverPin.Trim();
+        if (location is not null)
+        {
+            // Staff only, for disputes (never shown to the customer)
+            var invariant = System.Globalization.CultureInfo.InvariantCulture;
+            fields["latitude"] = location.Latitude.ToString(invariant);
+            fields["longitude"] = location.Longitude.ToString(invariant);
+            if (location.Accuracy is { } accuracy) fields["accuracy"] = Math.Round(accuracy).ToString(invariant);
+        }
 
         return await api.UploadAsync(HttpMethod.Post,
             $"api/deliveries/{folder}/{Uri.EscapeDataString(reference)}/delivered", "photo", photo, fileName,

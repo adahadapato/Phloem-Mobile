@@ -4,6 +4,9 @@
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
   <uses-permission android:name="android.permission.CAMERA" />
+  <!-- Door safety: where the courier's phone is at hand-over (staff only, for disputes) -->
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
   <!-- Sign in with fingerprint / face (granted automatically, no pop-up) -->
   <uses-permission android:name="android.permission.USE_BIOMETRIC" />
   <!-- Voice search (🎤) and recording dish-name pronunciations (staff); asked the first time it's used -->

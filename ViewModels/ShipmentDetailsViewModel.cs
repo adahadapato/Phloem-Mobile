@@ -55,7 +55,7 @@ public partial class ShipmentDetailsViewModel : ObservableObject, IQueryAttribut
                               nameof(WeightText), nameof(PriceText), nameof(PriceCaption), nameof(DropOffText),
                               nameof(ShowDropOff), nameof(CanPay), nameof(CanCancel), nameof(CanReceive),
                               nameof(NextStepText), nameof(CanMoveOn), nameof(RefundText), nameof(NeedsRefund),
-                              nameof(CourierText), nameof(HasCourier), nameof(CanChangeCourier), nameof(Proof),
+                              nameof(CourierText), nameof(HasCourier), nameof(CanChangeCourier), nameof(Proof), nameof(DoorCheck),
                               nameof(BoxesText), nameof(ChargedAsText), nameof(ExtrasText), nameof(HasExtras),
                               nameof(ShowPickup), nameof(PickupText), nameof(ShowReadyToCollect),
                               nameof(ReadyToCollectText), nameof(HasBreakdown))]
@@ -185,6 +185,10 @@ public partial class ShipmentDetailsViewModel : ObservableObject, IQueryAttribut
 
     /// <summary>The courier's photo once delivered; null before.</summary>
     public DeliveryProofView? Proof => DeliveryProofView.From(Shipment?.DeliveryProof, _api);
+
+    /// <summary>Door safety while it's on its way (the sender shares the door word and PIN with the recipient).</summary>
+    public DoorCheckView? DoorCheck => Shipment is null ? null
+        : DoorCheckView.From(Shipment.DoorCheck, CourierConcernKind.Parcel, Shipment.TrackingNumber, _api);
     public string NextStepText => Shipment is { } s && ShipmentText.NextJourneyStep(s.Status) is { } next
         ? next == ShipmentStatus.OutForDelivery && s.Delivery == ParcelDelivery.CollectFromHub
             ? "Mark as: Ready to collect at our hub"

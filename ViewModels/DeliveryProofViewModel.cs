@@ -73,7 +73,8 @@ public partial class DeliveryProofViewModel : ObservableObject, IQueryAttributab
     public string PhotoButtonText => HasPhoto ? "📷  Retake photo" : "📷  Take a photo";
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowReceivedBy), nameof(ReceivedByLabel), nameof(ReceivedByPlaceholder))]
+    [NotifyPropertyChangedFor(nameof(ShowReceivedBy), nameof(ReceivedByLabel), nameof(ReceivedByPlaceholder),
+                              nameof(ShowPin))]
     public partial HandoverOption? SelectedHandover { get; set; }
 
     /// <summary>"Who took it?" for in person, neighbour and reception.</summary>
@@ -97,6 +98,21 @@ public partial class DeliveryProofViewModel : ObservableObject, IQueryAttributab
     [ObservableProperty]
     public partial string Note { get; set; } = string.Empty;
 
+    /// <summary>Door safety: the customer's 4-digit handover PIN (asked when handed over in person).</summary>
+    [ObservableProperty]
+    public partial string HandoverPin { get; set; } = string.Empty;
+
+    /// <summary>Door safety: the word the customer asks for at the door (empty on older deliveries).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDoorWord), nameof(DoorWordText))]
+    public partial string DoorWord { get; set; } = string.Empty;
+
+    public bool HasDoorWord => DoorWord.Length > 0;
+    public string DoorWordText => $"🔑  Door word: {DoorWord}. Say it when they ask, so they know it's really you.";
+
+    /// <summary>"Their handover PIN" shows when handed over in person.</summary>
+    public bool ShowPin => SelectedHandover?.Value == HandoverMethod.InPerson;
+
     [ObservableProperty]
     public partial bool IsBusy { get; set; }
 
@@ -111,6 +127,8 @@ public partial class DeliveryProofViewModel : ObservableObject, IQueryAttributab
         if (query.TryGetValue("Kind", out var kind) && kind is DeliveryKind k) Kind = k;
         if (query.TryGetValue("Reference", out var reference)) Reference = reference?.ToString() ?? string.Empty;
         if (query.TryGetValue("Recipient", out var recipient)) Recipient = recipient?.ToString() ?? string.Empty;
+        DoorWord = query.TryGetValue("DoorWord", out var word) ? word?.ToString() ?? string.Empty : string.Empty;
+        HandoverPin = string.Empty;
 
         // A fresh delivery: nothing from the last one
         _photo = null;
@@ -196,6 +214,12 @@ public partial class DeliveryProofViewModel : ObservableObject, IQueryAttributab
             Message = "Please say which neighbour took it.";
             return;
         }
+        if (ShowPin && HandoverPin.Count(char.IsAsciiDigit) != 4)
+        {
+            Message = "Ask them for their 4-digit handover PIN (it's in their Phloem app). If nobody can give it, " +
+                      "choose another way you left it.";
+            return;
+        }
 
         _saving = true;
         IsBusy = true;
@@ -206,8 +230,10 @@ public partial class DeliveryProofViewModel : ObservableObject, IQueryAttributab
             var contentType = string.IsNullOrWhiteSpace(_photo.ContentType) ? "image/jpeg" : _photo.ContentType;
             var who = ShowReceivedBy ? ReceivedBy : null;
 
+            var location = await CurrentLocationAsync();
             var result = await _deliveries.MarkDeliveredAsync(Kind, Reference, stream, _photo.FileName, contentType,
-                                                              SelectedHandover.Value, who, Note);
+                                                              SelectedHandover.Value, who, Note, default,
+                                                              ShowPin ? HandoverPin : null, location);
             if (result.IsFailure)
             {
                 Message = result.Error!.DisplayMessage;
@@ -229,6 +255,29 @@ public partial class DeliveryProofViewModel : ObservableObject, IQueryAttributab
         {
             IsBusy = false;
             _saving = false;
+        }
+    }
+
+    /// <summary>
+    /// Where the phone is, for Phloem staff if there's ever a dispute (never shown to the customer). Null when the
+    /// courier doesn't allow location or it takes longer than 8 seconds: the delivery still goes through.
+    /// </summary>
+    private static async Task<Location?> CurrentLocationAsync()
+    {
+        try
+        {
+            var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+            if (status != PermissionStatus.Granted)
+                status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+            if (status != PermissionStatus.Granted) return null;
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+            return await Geolocation.Default.GetLocationAsync(
+                new GeolocationRequest(GeolocationAccuracy.Best, TimeSpan.FromSeconds(8)), cts.Token);
+        }
+        catch (Exception)
+        {
+            return null;
         }
     }
 }

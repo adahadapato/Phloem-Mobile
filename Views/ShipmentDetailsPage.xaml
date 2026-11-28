@@ -225,6 +225,7 @@
                             Style="{StaticResource OutlineButton}" IsVisible="{Binding CanChangeCourier}" />
 
                     <!-- Delivered: the courier's photo -->
+                    <controls:DoorCheckCard Check="{Binding DoorCheck}" />
                     <controls:DeliveryProofCard Proof="{Binding Proof}" />
 
                     <!-- Delivered: "How did we do?" (the sender only) -->

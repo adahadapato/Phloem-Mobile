@@ -53,4 +53,5 @@ public sealed record ShipmentDetailsDto(
     decimal FreightCharge = 0,
     decimal FragileCharge = 0,
     decimal HomePickupCharge = 0,
-    decimal DoorDeliveryCharge = 0);
+    decimal DoorDeliveryCharge = 0,
+    DoorCheckDto? DoorCheck = null);

@@ -146,7 +146,8 @@ public partial class MyDeliveriesViewModel : ObservableObject
         {
             ["Kind"] = card.Kind,
             ["Reference"] = card.Reference,
-            ["Recipient"] = card.Job.RecipientName
+            ["Recipient"] = card.Job.RecipientName,
+            ["DoorWord"] = card.Job.DoorWord ?? string.Empty
         });
 
     private static async Task CallAsync(string? phone)

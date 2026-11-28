@@ -30,4 +30,5 @@ public sealed record OrderDetailsDto(
     string? DeliveryPhone = null,
     string? CourierName = null,
     DeliveryProofDto? DeliveryProof = null,
-    bool CanMarkDelivered = false);
+    bool CanMarkDelivered = false,
+    DoorCheckDto? DoorCheck = null);

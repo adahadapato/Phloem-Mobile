@@ -67,6 +67,12 @@ public sealed class CourierService(ApiClient api)
     public Task<ApiResult<MyCourierRegistrationDto>> SubmitAsync(CancellationToken ct = default) =>
         api.PostAsync<MyCourierRegistrationDto>("api/couriers/me/registration/submit", null, ct);
 
+    /// <summary>"This isn't my courier": alerts Phloem staff at once (my own delivery, while it's on its way).</summary>
+    public Task<ApiResult<CourierConcernRaisedDto>> RaiseConcernAsync(CourierConcernKind kind, string reference,
+                                                                      string? note, CancellationToken ct = default) =>
+        api.PostAsync<CourierConcernRaisedDto>("api/couriers/concerns",
+                                               new RaiseCourierConcernCommand(kind, reference, note), ct);
+
     private static string ContentTypeOf(FileResult photo) =>
         string.IsNullOrWhiteSpace(photo.ContentType) ? "image/jpeg" : photo.ContentType;
 }

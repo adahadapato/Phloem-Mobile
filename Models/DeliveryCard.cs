@@ -28,6 +28,13 @@ public sealed class DeliveryCard
         : (Job.DeliveryWindow is { } window ? $"Deliver: {DeliveryTimeOption.TextOf(window)}" : "Deliver today") +
           (Job.AssignedAt is { } at ? $" · given to you {at.ToLocalTime():HH:mm}" : string.Empty);
 
+    /// <summary>Door safety: "🔑 Door word: MANGO 47. They'll ask for it before opening."</summary>
+    public string DoorWordText => string.IsNullOrWhiteSpace(Job.DoorWord) ? string.Empty
+        : $"🔑  Door word: {Job.DoorWord}. They'll ask for it before opening." +
+          (Job.HasHandoverPin ? " When you hand it over, ask for their 4-digit PIN." : string.Empty);
+
+    public bool HasDoorWord => IsToDo && DoorWordText.Length > 0;
+
     public bool IsDone => Job.DeliveredAt is not null;
     public bool IsToDo => !IsDone;
 }

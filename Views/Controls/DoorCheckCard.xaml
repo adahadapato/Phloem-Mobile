@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    Door safety card (customer's order page, sender's parcel page) while the delivery is on its way: who is coming
+    (photo, first name, vehicle, plate), the door word to ask for BEFORE opening, the handover PIN to give when taking
+    it, and "This isn't my courier" (alerts Phloem staff at once). Hidden while Check is null.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Phloem.Views.Controls"
+             xmlns:models="clr-namespace:Phloem.Models"
+             x:Class="Phloem.Views.Controls.DoorCheckCard"
+             x:DataType="controls:DoorCheckCard"
+             x:Name="Root"
+             IsVisible="False">
+
+    <Border BackgroundColor="White" Stroke="{StaticResource BrandGreen}" StrokeThickness="2"
+            StrokeShape="RoundRectangle 16" Padding="14">
+        <VerticalStackLayout Spacing="10" BindingContext="{Binding Check, Source={x:Reference Root}}"
+                             x:DataType="models:DoorCheckView">
+            <Label Text="🛡️  Before you open the door" FontSize="17" FontAttributes="Bold"
+                   TextColor="{StaticResource BrandTextDark}" />
+            <Label Text="Share the door word and PIN with the person receiving the parcel." FontSize="13"
+                   TextColor="{StaticResource BrandTextMuted}" IsVisible="{Binding IsParcel}" LineBreakMode="WordWrap" />
+
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                <Border StrokeThickness="3" Stroke="{StaticResource BrandMintPale}" StrokeShape="Ellipse"
+                        WidthRequest="80" HeightRequest="80" BackgroundColor="{StaticResource BrandMintPale}">
+                    <Grid>
+                        <Label Text="🛵" FontSize="32" HorizontalOptions="Center" VerticalOptions="Center" />
+                        <Image Source="{Binding PhotoUrl}" Aspect="AspectFill" IsVisible="{Binding HasPhoto}" />
+                    </Grid>
+                </Border>
+                <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
+                    <Label Text="{Binding ComingText}" FontSize="16" FontAttributes="Bold"
+                           TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+                    <Label Text="{Binding VehicleText}" FontSize="13" TextColor="{StaticResource BrandTextMuted}" />
+                    <Border BackgroundColor="#FFD400" Stroke="#222222" StrokeThickness="2" StrokeShape="RoundRectangle 6"
+                            Padding="8,2" HorizontalOptions="Start" IsVisible="{Binding HasPlate}">
+                        <Label Text="{Binding Plate}" FontFamily="monospace" FontAttributes="Bold" TextColor="#111111" />
+                    </Border>
+                </VerticalStackLayout>
+            </Grid>
+
+            <Label Text="{Binding CheckText}" FontSize="14" TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap" />
+            <Label FontSize="14" TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap">
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span Text="2. Ask them for the door word. It must be " />
+                        <Span Text="{Binding DoorWord}" FontAttributes="Bold" BackgroundColor="{StaticResource BrandMintPale}" />
+                    </FormattedString>
+                </Label.FormattedText>
+            </Label>
+            <Label FontSize="14" TextColor="{StaticResource BrandTextDark}" LineBreakMode="WordWrap">
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span Text="3. When you take it, give them your PIN: " />
+                        <Span Text="{Binding HandoverPin}" FontAttributes="Bold" FontSize="18"
+                              BackgroundColor="{StaticResource BrandMintPale}" />
+                    </FormattedString>
+                </Label.FormattedText>
+            </Label>
+
+            <Button Text="⚠  This isn't my courier" Clicked="OnConcernClicked" Style="{StaticResource OutlineButton}"
+                    x:Name="ConcernButton" />
+            <Border BackgroundColor="#FDECEA" StrokeThickness="0" StrokeShape="RoundRectangle 12" Padding="12,10"
+                    x:Name="AlertedBox" IsVisible="False">
+                <Label x:Name="AlertedText" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource BrandDanger}"
+                       LineBreakMode="WordWrap" />
+            </Border>
+        </VerticalStackLayout>
+    </Border>
+</ContentView>
